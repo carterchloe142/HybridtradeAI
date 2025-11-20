@@ -1,0 +1,238 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+// Looking for ways to speed up your queries, or scale easily with your serverless or edge functions?
+// Try Prisma Accelerate: https://pris.ly/cli/accelerate-init
+
+generator client {
+  provider = "prisma-client"
+  output   = "../lib/generated/prisma"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+enum Role {
+  USER
+  ADMIN
+}
+
+enum KycStatus {
+  PENDING
+  VERIFIED
+  REJECTED
+}
+
+enum InvestmentStatus {
+  PENDING
+  ACTIVE
+  MATURED
+  CANCELLED
+}
+
+enum PayoutFrequency {
+  WEEKLY
+  MONTHLY
+  NONE
+}
+
+enum TransactionType {
+  DEPOSIT
+  WITHDRAWAL
+  PROFIT
+  FEE
+  TRANSFER
+  ADMIN_CREDIT
+}
+
+enum TransactionStatus {
+  PENDING
+  COMPLETED
+  FAILED
+  CANCELLED
+}
+
+model User {
+  id            String           @id @default(cuid())
+  email         String           @unique
+  name          String?
+  role          Role             @default(USER)
+  currency      String?
+  locale        String?
+  kycStatus     KycStatus        @default(PENDING)
+  wallets       Wallet[]
+  investments   Investment[]
+  transactions  Transaction[]
+  notifications Notification[]
+  deliveries    NotificationDelivery[]
+  createdAt     DateTime         @default(now())
+  updatedAt     DateTime         @updatedAt
+}
+
+model Wallet {
+  id        String   @id @default(cuid())
+  userId    String
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  currency  String
+  balance   Decimal  @db.Decimal(24, 8)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+  transactions WalletTransaction[]
+
+  @@unique([userId, currency])
+}
+
+model InvestmentPlan {
+  id              String  @id @default(cuid())
+  slug            String  @unique
+  name            String
+  minAmount       Decimal @db.Decimal(24, 8)
+  maxAmount       Decimal @db.Decimal(24, 8)
+  minDurationDays Int
+  maxDurationDays Int
+  roiMinPct       Decimal @db.Decimal(10, 4)
+  roiMaxPct       Decimal @db.Decimal(10, 4)
+  createdAt       DateTime @default(now())
+  investments     Investment[]
+}
+
+model Investment {
+  id              String            @id @default(cuid())
+  userId          String
+  user            User              @relation(fields: [userId], references: [id], onDelete: Cascade)
+  planId          String
+  plan            InvestmentPlan    @relation(fields: [planId], references: [id], onDelete: Restrict)
+  amount          Decimal           @db.Decimal(24, 8)
+  status          InvestmentStatus  @default(PENDING)
+  payoutFrequency PayoutFrequency   @default(WEEKLY)
+  nextPayoutAt    DateTime?
+  createdAt       DateTime          @default(now())
+  maturedAt       DateTime?
+  profitLogs      ProfitLog[]
+  transactions    Transaction[]
+
+  @@index([userId])
+  @@index([planId])
+}
+
+model Transaction {
+  id           String            @id @default(cuid())
+  userId       String
+  user         User              @relation(fields: [userId], references: [id], onDelete: Cascade)
+  investmentId String?
+  investment   Investment?       @relation(fields: [investmentId], references: [id], onDelete: SetNull)
+  type         TransactionType
+  amount       Decimal           @db.Decimal(24, 8)
+  status       TransactionStatus @default(PENDING)
+  metadata     Json?
+  createdAt    DateTime          @default(now())
+
+  @@index([userId])
+  @@index([investmentId])
+}
+
+model Notification {
+  id        String   @id @default(cuid())
+  userId    String?
+  user      User?    @relation(fields: [userId], references: [id], onDelete: SetNull)
+  type      String
+  title     String
+  message   String
+  link      String?
+  read      Boolean  @default(false)
+  createdAt DateTime @default(now())
+}
+
+model GlobalNotification {
+  id         String                @id @default(cuid())
+  type       String
+  title      String
+  message    String
+  createdAt  DateTime              @default(now())
+  deliveries NotificationDelivery[]
+}
+
+model NotificationDelivery {
+  id                   String             @id @default(cuid())
+  globalNotificationId String?
+  globalNotification   GlobalNotification? @relation(fields: [globalNotificationId], references: [id], onDelete: SetNull)
+  userId               String
+  user                 User               @relation(fields: [userId], references: [id], onDelete: Cascade)
+  deliveredAt          DateTime           @default(now())
+  readAt               DateTime?
+
+  @@index([userId])
+  @@index([globalNotificationId])
+}
+
+model ProfitLog {
+  id           String   @id @default(cuid())
+  investmentId String
+  investment   Investment @relation(fields: [investmentId], references: [id], onDelete: Cascade)
+  amount       Decimal  @db.Decimal(24, 8)
+  weekEnding   DateTime
+  createdAt    DateTime @default(now())
+
+  @@unique([investmentId, weekEnding])
+  @@index([weekEnding])
+}
+
+model ReserveBuffer {
+  id            String   @id @default("main")
+  currentAmount Decimal  @db.Decimal(24, 8)
+  totalAUM      Decimal  @db.Decimal(24, 8)
+  updatedAt     DateTime @updatedAt
+}
+
+model Performance {
+  id         String   @id @default(cuid())
+  weekEnding DateTime @unique
+  createdAt  DateTime @default(now())
+}
+
+// Manual Credit System
+enum WalletChangeType {
+  CREDIT
+  DEBIT
+}
+
+enum AdminActionType {
+  MANUAL_CREDIT
+  APPROVE_CREDIT
+}
+
+enum AdminActionStatus {
+  PENDING
+  COMPLETED
+  REJECTED
+}
+
+model WalletTransaction {
+  id           String           @id @default(cuid())
+  walletId     String
+  wallet       Wallet           @relation(fields: [walletId], references: [id], onDelete: Cascade)
+  amount       Decimal          @db.Decimal(24, 8)
+  type         WalletChangeType
+  source       String
+  reference    String?
+  note         String?
+  performedBy  String           // admin user id
+  createdAt    DateTime         @default(now())
+
+  @@index([walletId])
+}
+
+model AdminAction {
+  id          String            @id @default(cuid())
+  adminId     String
+  userId      String
+  amount      Decimal           @db.Decimal(24, 8)
+  action      AdminActionType
+  note        String?
+  status      AdminActionStatus @default(COMPLETED)
+  createdAt   DateTime          @default(now())
+  approvedBy  String?
+  approvedAt  DateTime?
+}

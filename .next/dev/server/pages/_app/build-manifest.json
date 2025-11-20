@@ -1,0 +1,30 @@
+{
+  "devFiles": [],
+  "ampDevFiles": [],
+  "polyfillFiles": [],
+  "lowPriorityFiles": [],
+  "rootMainFiles": [],
+  "pages": {
+    "/_app": [
+      "static/chunks/node_modules_next_dist_compiled_44618872._.js",
+      "static/chunks/node_modules_next_dist_shared_lib_4025f6b7._.js",
+      "static/chunks/node_modules_next_dist_client_3ede7da4._.js",
+      "static/chunks/node_modules_next_dist_6024eba3._.js",
+      "static/chunks/node_modules_next_87234b82._.js",
+      "static/chunks/node_modules_react_e3593a73._.js",
+      "static/chunks/node_modules_react-dom_cjs_react-dom_development_2b5e0eb3.js",
+      "static/chunks/node_modules_react-dom_8a8085df._.js",
+      "static/chunks/node_modules_@supabase_storage-js_dist_module_31f51af0._.js",
+      "static/chunks/node_modules_@supabase_auth-js_dist_module_e0400d86._.js",
+      "static/chunks/node_modules_@sentry_core_build_esm_b2d4ae79._.js",
+      "static/chunks/node_modules_@sentry_browser_build_npm_esm_dev_06120b90._.js",
+      "static/chunks/node_modules_@sentry-internal_browser-utils_build_esm_cf30c4e7._.js",
+      "static/chunks/node_modules_279b2f27._.js",
+      "static/chunks/[root-of-the-server]__717fefba._.js",
+      "static/chunks/styles_globals_dc36e6c9.css",
+      "static/chunks/pages__app_2da965e7._.js",
+      "static/chunks/turbopack-pages__app_790c98ef._.js"
+    ]
+  },
+  "ampFirstPages": []
+}

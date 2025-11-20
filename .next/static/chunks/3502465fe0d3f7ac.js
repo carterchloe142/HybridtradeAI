@@ -1,0 +1,8 @@
+__turbopack_load_page_chunks__("/admin/deposits", [
+  "static/chunks/a5160b37db8f0c7c.js",
+  "static/chunks/94784e53836edb94.js",
+  "static/chunks/ec34fa30e39e73f1.js",
+  "static/chunks/3cb8ee9ca9068ca7.js",
+  "static/chunks/c0d6d93b2c93ae8f.js",
+  "static/chunks/turbopack-cb2af115ea049fcc.js"
+])

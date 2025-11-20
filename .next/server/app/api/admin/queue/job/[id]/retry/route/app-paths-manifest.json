@@ -1,0 +1,3 @@
+{
+  "/api/admin/queue/job/[id]/retry/route": "app/api/admin/queue/job/[id]/retry/route.js"
+}

@@ -1,0 +1,272 @@
+module.exports = [
+"[externals]/next/dist/compiled/next-server/pages-api-turbo.runtime.dev.js [external] (next/dist/compiled/next-server/pages-api-turbo.runtime.dev.js, cjs)", ((__turbopack_context__, module, exports) => {
+
+const mod = __turbopack_context__.x("next/dist/compiled/next-server/pages-api-turbo.runtime.dev.js", () => require("next/dist/compiled/next-server/pages-api-turbo.runtime.dev.js"));
+
+module.exports = mod;
+}),
+"[project]/lib/rateLimit.ts [api] (ecmascript)", ((__turbopack_context__) => {
+"use strict";
+
+__turbopack_context__.s([
+    "createRateLimiter",
+    ()=>createRateLimiter
+]);
+const store = new Map();
+function getIp(req) {
+    const xfwd = req.headers['x-forwarded-for'] || '';
+    const ip = xfwd.split(',')[0].trim();
+    return ip || req.socket?.remoteAddress || 'unknown';
+}
+function createRateLimiter(opts) {
+    return async function check(req, res, key) {
+        const ip = getIp(req);
+        const id = `${ip}:${key}`;
+        const now = Date.now();
+        const hit = store.get(id);
+        if (!hit || now > hit.resetAt) {
+            store.set(id, {
+                count: 1,
+                resetAt: now + opts.windowMs
+            });
+            res.setHeader('X-RateLimit-Remaining', String(opts.max - 1));
+            return true;
+        }
+        if (hit.count >= opts.max) {
+            const retryMs = hit.resetAt - now;
+            res.setHeader('Retry-After', String(Math.ceil(retryMs / 1000)));
+            res.status(429).json({
+                error: 'Too many requests'
+            });
+            return false;
+        }
+        hit.count += 1;
+        store.set(id, hit);
+        res.setHeader('X-RateLimit-Remaining', String(opts.max - hit.count));
+        return true;
+    };
+}
+}),
+"[externals]/@supabase/supabase-js [external] (@supabase/supabase-js, cjs)", ((__turbopack_context__, module, exports) => {
+
+const mod = __turbopack_context__.x("@supabase/supabase-js", () => require("@supabase/supabase-js"));
+
+module.exports = mod;
+}),
+"[project]/lib/supabaseServer.ts [api] (ecmascript)", ((__turbopack_context__) => {
+"use strict";
+
+__turbopack_context__.s([
+    "supabaseServer",
+    ()=>supabaseServer,
+    "supabaseServiceReady",
+    ()=>supabaseServiceReady
+]);
+var __TURBOPACK__imported__module__$5b$externals$5d2f40$supabase$2f$supabase$2d$js__$5b$external$5d$__$2840$supabase$2f$supabase$2d$js$2c$__cjs$29$__ = __turbopack_context__.i("[externals]/@supabase/supabase-js [external] (@supabase/supabase-js, cjs)");
+;
+const url = process.env.SUPABASE_URL || ("TURBOPACK compile-time value", "https://wdlcttgfwoejqynlylpv.supabase.co") || '';
+const serviceKey = process.env.SUPABASE_SERVICE_ROLE_KEY || '';
+const supabaseServiceReady = Boolean(url && serviceKey);
+function createDisabledClient() {
+    const err = async ()=>{
+        throw new Error('supabase_service_not_configured');
+    };
+    const from = ()=>({
+            select: err,
+            insert: err,
+            update: err,
+            delete: err,
+            eq: ()=>({
+                    select: err,
+                    insert: err,
+                    update: err,
+                    delete: err
+                }),
+            order: ()=>({
+                    select: err
+                }),
+            range: ()=>({
+                    select: err
+                }),
+            maybeSingle: err
+        });
+    return {
+        auth: {
+            getUser: err
+        },
+        from
+    };
+}
+const supabaseServer = supabaseServiceReady ? (0, __TURBOPACK__imported__module__$5b$externals$5d2f40$supabase$2f$supabase$2d$js__$5b$external$5d$__$2840$supabase$2f$supabase$2d$js$2c$__cjs$29$__["createClient"])(url, serviceKey) : createDisabledClient();
+}),
+"[project]/pages/api/kyc/upload.ts [api] (ecmascript)", ((__turbopack_context__) => {
+"use strict";
+
+__turbopack_context__.s([
+    "config",
+    ()=>config,
+    "default",
+    ()=>handler
+]);
+var __TURBOPACK__imported__module__$5b$project$5d2f$lib$2f$rateLimit$2e$ts__$5b$api$5d$__$28$ecmascript$29$__ = __turbopack_context__.i("[project]/lib/rateLimit.ts [api] (ecmascript)");
+var __TURBOPACK__imported__module__$5b$project$5d2f$lib$2f$supabaseServer$2e$ts__$5b$api$5d$__$28$ecmascript$29$__ = __turbopack_context__.i("[project]/lib/supabaseServer.ts [api] (ecmascript)");
+;
+;
+const limiter = (0, __TURBOPACK__imported__module__$5b$project$5d2f$lib$2f$rateLimit$2e$ts__$5b$api$5d$__$28$ecmascript$29$__["createRateLimiter"])({
+    windowMs: 60_000,
+    max: 20
+});
+function parseDataUrl(dataUrl) {
+    const m = /^data:(.+);base64,(.*)$/.exec(dataUrl || '');
+    if (!m) throw new Error('invalid_data_url');
+    const mime = m[1];
+    const b64 = m[2];
+    const buffer = Buffer.from(b64, 'base64');
+    return {
+        mime,
+        buffer
+    };
+}
+async function handler(req, res) {
+    if (req.method !== 'POST') return res.status(405).json({
+        error: 'method_not_allowed'
+    });
+    if (!await limiter(req, res, 'kyc-upload')) return;
+    try {
+        const auth = String(req.headers.authorization || '');
+        const token = auth.startsWith('Bearer ') ? auth.slice(7) : '';
+        if (!token) return res.status(401).json({
+            error: 'unauthorized'
+        });
+        const { data: userData, error: userErr } = await __TURBOPACK__imported__module__$5b$project$5d2f$lib$2f$supabaseServer$2e$ts__$5b$api$5d$__$28$ecmascript$29$__["supabaseServer"].auth.getUser(token);
+        if (userErr || !userData?.user?.id) return res.status(401).json({
+            error: 'invalid_token'
+        });
+        const userId = String(userData.user.id);
+        const body = req.body;
+        const idDataUrl = String(body?.idFileDataUrl || '');
+        const selfieNeutralDataUrl = String(body?.selfieNeutralDataUrl || '');
+        const selfieSmileDataUrl = String(body?.selfieSmileDataUrl || '');
+        const selfieLeftDataUrl = String(body?.selfieLeftDataUrl || '');
+        const selfieRightDataUrl = String(body?.selfieRightDataUrl || '');
+        const payload = body?.payload || {};
+        if (!idDataUrl || !selfieNeutralDataUrl || !selfieSmileDataUrl || !selfieLeftDataUrl || !selfieRightDataUrl) {
+            return res.status(400).json({
+                error: 'missing_files'
+            });
+        }
+        const bucketName = 'kyc';
+        try {
+            const info = await __TURBOPACK__imported__module__$5b$project$5d2f$lib$2f$supabaseServer$2e$ts__$5b$api$5d$__$28$ecmascript$29$__["supabaseServer"].storage.getBucket?.(bucketName);
+            const exists = Boolean(info?.data?.name === bucketName);
+            if (!exists) {
+                await __TURBOPACK__imported__module__$5b$project$5d2f$lib$2f$supabaseServer$2e$ts__$5b$api$5d$__$28$ecmascript$29$__["supabaseServer"].storage.createBucket?.(bucketName, {
+                    public: false,
+                    fileSizeLimit: '10MB',
+                    allowedMimeTypes: [
+                        'image/jpeg',
+                        'image/png',
+                        'application/pdf',
+                        'application/json',
+                        'text/plain'
+                    ]
+                });
+            } else {
+                await __TURBOPACK__imported__module__$5b$project$5d2f$lib$2f$supabaseServer$2e$ts__$5b$api$5d$__$28$ecmascript$29$__["supabaseServer"].storage.updateBucket?.(bucketName, {
+                    public: false,
+                    fileSizeLimit: '10MB',
+                    allowedMimeTypes: [
+                        'image/jpeg',
+                        'image/png',
+                        'application/pdf',
+                        'application/json',
+                        'text/plain'
+                    ]
+                });
+            }
+        } catch  {}
+        const bucket = __TURBOPACK__imported__module__$5b$project$5d2f$lib$2f$supabaseServer$2e$ts__$5b$api$5d$__$28$ecmascript$29$__["supabaseServer"].storage.from(bucketName);
+        const { mime: idMime, buffer: idBuf } = parseDataUrl(idDataUrl);
+        const { mime: nMime, buffer: nBuf } = parseDataUrl(selfieNeutralDataUrl);
+        const { mime: sMime, buffer: sBuf } = parseDataUrl(selfieSmileDataUrl);
+        const { mime: lMime, buffer: lBuf } = parseDataUrl(selfieLeftDataUrl);
+        const { mime: rMime, buffer: rBuf } = parseDataUrl(selfieRightDataUrl);
+        const idExt = idMime.includes('pdf') ? 'pdf' : idMime.includes('png') ? 'png' : 'jpg';
+        const selfieExt = (m)=>m.includes('png') ? 'png' : 'jpg';
+        const idPath = `${userId}/id.${idExt}`;
+        const nPath = `${userId}/selfie_neutral.${selfieExt(nMime)}`;
+        const sPath = `${userId}/selfie_smile.${selfieExt(sMime)}`;
+        const lPath = `${userId}/selfie_left.${selfieExt(lMime)}`;
+        const rPath = `${userId}/selfie_right.${selfieExt(rMime)}`;
+        const jsonPath = `${userId}/data.json`;
+        const idUp = await bucket.upload(idPath, idBuf, {
+            upsert: true,
+            contentType: idMime
+        });
+        if (idUp.error) return res.status(500).json({
+            error: `id_upload_failed:${idUp.error.message}`
+        });
+        const nUp = await bucket.upload(nPath, nBuf, {
+            upsert: true,
+            contentType: nMime
+        });
+        if (nUp.error) return res.status(500).json({
+            error: `selfie_neutral_upload_failed:${nUp.error.message}`
+        });
+        const sUp = await bucket.upload(sPath, sBuf, {
+            upsert: true,
+            contentType: sMime
+        });
+        if (sUp.error) return res.status(500).json({
+            error: `selfie_smile_upload_failed:${sUp.error.message}`
+        });
+        const lUp = await bucket.upload(lPath, lBuf, {
+            upsert: true,
+            contentType: lMime
+        });
+        if (lUp.error) return res.status(500).json({
+            error: `selfie_left_upload_failed:${lUp.error.message}`
+        });
+        const rUp = await bucket.upload(rPath, rBuf, {
+            upsert: true,
+            contentType: rMime
+        });
+        if (rUp.error) return res.status(500).json({
+            error: `selfie_right_upload_failed:${rUp.error.message}`
+        });
+        const payloadBlob = Buffer.from(JSON.stringify({
+            ...payload
+        }), 'utf8');
+        const jsonUp = await bucket.upload(jsonPath, payloadBlob, {
+            upsert: true,
+            contentType: 'application/json'
+        });
+        if (jsonUp.error) {
+            const jsonUpFallback = await bucket.upload(jsonPath, payloadBlob, {
+                upsert: true,
+                contentType: 'text/plain'
+            });
+            if (jsonUpFallback.error) return res.status(500).json({
+                error: `data_upload_failed:${jsonUpFallback.error.message}`
+            });
+        }
+        return res.json({
+            ok: true
+        });
+    } catch (e) {
+        return res.status(500).json({
+            error: e?.message || 'server_error'
+        });
+    }
+}
+const config = {
+    api: {
+        bodyParser: {
+            sizeLimit: '25mb'
+        }
+    }
+};
+}),
+];
+
+//# sourceMappingURL=%5Broot-of-the-server%5D__ae42be0d._.js.map

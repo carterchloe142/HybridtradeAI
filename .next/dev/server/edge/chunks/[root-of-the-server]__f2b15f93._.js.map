@@ -1,0 +1,6 @@
+{
+  "version": 3,
+  "sources": [],
+  "sections": [
+    {"offset": {"line": 16, "column": 0}, "map": {"version":3,"sources":["turbopack:///[project]/middleware.ts"],"sourcesContent":["import { NextResponse } from 'next/server'\nimport type { NextRequest } from 'next/server'\n\nexport async function middleware(req: NextRequest) {\n  const { pathname } = req.nextUrl\n  if (pathname.startsWith('/admin')) {\n    // Admin access is enforced client-side via AdminGuard and server-side in API routes.\n    // Allow navigation; unauthorized users will see \"Not authorized\" and cannot call admin APIs.\n  }\n  return NextResponse.next()\n}\n\nexport const config = {\n  matcher: ['/admin/:path*'],\n}\n"],"names":[],"mappings":";;;;;;AAAA;AAAA;;AAGO,eAAe,WAAW,GAAgB;IAC/C,MAAM,EAAE,QAAQ,EAAE,GAAG,IAAI,OAAO;IAChC,IAAI,SAAS,UAAU,CAAC,WAAW;IACjC,qFAAqF;IACrF,6FAA6F;IAC/F;IACA,OAAO,gMAAY,CAAC,IAAI;AAC1B;AAEO,MAAM,SAAS;IACpB,SAAS;QAAC;KAAgB;AAC5B"}}]
+}

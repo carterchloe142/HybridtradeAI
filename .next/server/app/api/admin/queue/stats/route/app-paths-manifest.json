@@ -1,0 +1,3 @@
+{
+  "/api/admin/queue/stats/route": "app/api/admin/queue/stats/route.js"
+}

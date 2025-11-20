@@ -1,0 +1,5 @@
+{
+  "/admin/withdrawals": [
+    "static/chunks/pages/admin/withdrawals.js"
+  ]
+}

@@ -1,0 +1,5 @@
+var R=require("../../../chunks/[turbopack]_runtime.js")("server/pages/api/admin/performance.js")
+R.c("server/chunks/bd2df_next_dist_ecd3c3dd._.js")
+R.c("server/chunks/[root-of-the-server]__9c122fdb._.js")
+R.m("[project]/Documents/trae_projects/HYBRID TRADE AI/node_modules/next/dist/esm/build/templates/pages-api.js { INNER_PAGE => \"[project]/Documents/trae_projects/HYBRID TRADE AI/pages/api/admin/performance.ts [api] (ecmascript)\" } [api] (ecmascript)")
+module.exports=R.m("[project]/Documents/trae_projects/HYBRID TRADE AI/node_modules/next/dist/esm/build/templates/pages-api.js { INNER_PAGE => \"[project]/Documents/trae_projects/HYBRID TRADE AI/pages/api/admin/performance.ts [api] (ecmascript)\" } [api] (ecmascript)").exports

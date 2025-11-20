@@ -1,0 +1,5 @@
+{
+  "/admin/kyc": [
+    "static/chunks/pages/admin/kyc.js"
+  ]
+}

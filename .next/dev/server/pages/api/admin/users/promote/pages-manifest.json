@@ -1,0 +1,3 @@
+{
+  "/api/admin/users/promote": "pages/api/admin/users/promote.js"
+}

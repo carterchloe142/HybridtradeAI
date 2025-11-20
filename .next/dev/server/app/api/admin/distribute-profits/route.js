@@ -1,0 +1,13 @@
+var R=require("../../../../chunks/[turbopack]_runtime.js")("server/app/api/admin/distribute-profits/route.js")
+R.c("server/chunks/node_modules_next_368e4e76._.js")
+R.c("server/chunks/node_modules_@opentelemetry_api_build_esm_7e8f41ca._.js")
+R.c("server/chunks/node_modules_ioredis_built_3d4b5819._.js")
+R.c("server/chunks/node_modules_@sentry_core_build_esm_9b1bc81f._.js")
+R.c("server/chunks/node_modules_next-auth_ecdd8551._.js")
+R.c("server/chunks/node_modules_openid-client_d15f72b3._.js")
+R.c("server/chunks/node_modules_jose_dist_node_cjs_bd88468e._.js")
+R.c("server/chunks/node_modules_d0ac8ad2._.js")
+R.c("server/chunks/[root-of-the-server]__365d8f0d._.js")
+R.c("server/chunks/_next-internal_server_app_api_admin_distribute-profits_route_actions_ad0cc95f.js")
+R.m("[project]/node_modules/next/dist/esm/build/templates/app-route.js { INNER_APP_ROUTE => \"[project]/app/api/admin/distribute-profits/route.ts [app-route] (ecmascript)\" } [app-route] (ecmascript)")
+module.exports=R.m("[project]/node_modules/next/dist/esm/build/templates/app-route.js { INNER_APP_ROUTE => \"[project]/app/api/admin/distribute-profits/route.ts [app-route] (ecmascript)\" } [app-route] (ecmascript)").exports

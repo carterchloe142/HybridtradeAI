@@ -1,0 +1,171 @@
+module.exports = [
+"[externals]/next/dist/compiled/@opentelemetry/api [external] (next/dist/compiled/@opentelemetry/api, cjs)", ((__turbopack_context__, module, exports) => {
+
+const mod = __turbopack_context__.x("next/dist/compiled/@opentelemetry/api", () => require("next/dist/compiled/@opentelemetry/api"));
+
+module.exports = mod;
+}),
+"[externals]/next/dist/compiled/next-server/pages-api-turbo.runtime.dev.js [external] (next/dist/compiled/next-server/pages-api-turbo.runtime.dev.js, cjs)", ((__turbopack_context__, module, exports) => {
+
+const mod = __turbopack_context__.x("next/dist/compiled/next-server/pages-api-turbo.runtime.dev.js", () => require("next/dist/compiled/next-server/pages-api-turbo.runtime.dev.js"));
+
+module.exports = mod;
+}),
+"[externals]/@supabase/supabase-js [external] (@supabase/supabase-js, cjs)", ((__turbopack_context__, module, exports) => {
+
+const mod = __turbopack_context__.x("@supabase/supabase-js", () => require("@supabase/supabase-js"));
+
+module.exports = mod;
+}),
+"[project]/Documents/trae_projects/HYBRID TRADE AI/lib/supabaseServer.ts [api] (ecmascript)", ((__turbopack_context__) => {
+"use strict";
+
+__turbopack_context__.s([
+    "supabaseServer",
+    ()=>supabaseServer
+]);
+var __TURBOPACK__imported__module__$5b$externals$5d2f40$supabase$2f$supabase$2d$js__$5b$external$5d$__$2840$supabase$2f$supabase$2d$js$2c$__cjs$29$__ = __turbopack_context__.i("[externals]/@supabase/supabase-js [external] (@supabase/supabase-js, cjs)");
+;
+const url = process.env.SUPABASE_URL || ("TURBOPACK compile-time value", "https://wdlcttgfwoejqynlylpv.supabase.co") || '';
+const serviceKey = process.env.SUPABASE_SERVICE_ROLE_KEY || process.env.SUPABASE_ANON_KEY || ("TURBOPACK compile-time value", "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6IndkbGN0dGdmd29lanF5bmx5bHB2Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NjI4ODE0MzAsImV4cCI6MjA3ODQ1NzQzMH0.UZaY0iYoVRS5MioS5Clg6y_CVNdgzm-3OdB_cwWuB8E") || '';
+const supabaseServer = (0, __TURBOPACK__imported__module__$5b$externals$5d2f40$supabase$2f$supabase$2d$js__$5b$external$5d$__$2840$supabase$2f$supabase$2d$js$2c$__cjs$29$__["createClient"])(url, serviceKey);
+}),
+"[project]/Documents/trae_projects/HYBRID TRADE AI/lib/rateLimit.ts [api] (ecmascript)", ((__turbopack_context__) => {
+"use strict";
+
+__turbopack_context__.s([
+    "createRateLimiter",
+    ()=>createRateLimiter
+]);
+const store = new Map();
+function getIp(req) {
+    const xfwd = req.headers['x-forwarded-for'] || '';
+    const ip = xfwd.split(',')[0].trim();
+    return ip || req.socket?.remoteAddress || 'unknown';
+}
+function createRateLimiter(opts) {
+    return async function check(req, res, key) {
+        const ip = getIp(req);
+        const id = `${ip}:${key}`;
+        const now = Date.now();
+        const hit = store.get(id);
+        if (!hit || now > hit.resetAt) {
+            store.set(id, {
+                count: 1,
+                resetAt: now + opts.windowMs
+            });
+            res.setHeader('X-RateLimit-Remaining', String(opts.max - 1));
+            return true;
+        }
+        if (hit.count >= opts.max) {
+            const retryMs = hit.resetAt - now;
+            res.setHeader('Retry-After', String(Math.ceil(retryMs / 1000)));
+            res.status(429).json({
+                error: 'Too many requests'
+            });
+            return false;
+        }
+        hit.count += 1;
+        store.set(id, hit);
+        res.setHeader('X-RateLimit-Remaining', String(opts.max - hit.count));
+        return true;
+    };
+}
+}),
+"[externals]/zod [external] (zod, esm_import)", ((__turbopack_context__) => {
+"use strict";
+
+return __turbopack_context__.a(async (__turbopack_handle_async_dependencies__, __turbopack_async_result__) => { try {
+
+const mod = await __turbopack_context__.y("zod");
+
+__turbopack_context__.n(mod);
+__turbopack_async_result__();
+} catch(e) { __turbopack_async_result__(e); } }, true);}),
+"[project]/Documents/trae_projects/HYBRID TRADE AI/pages/api/deposit.ts [api] (ecmascript)", ((__turbopack_context__) => {
+"use strict";
+
+return __turbopack_context__.a(async (__turbopack_handle_async_dependencies__, __turbopack_async_result__) => { try {
+
+__turbopack_context__.s([
+    "default",
+    ()=>handler
+]);
+var __TURBOPACK__imported__module__$5b$project$5d2f$Documents$2f$trae_projects$2f$HYBRID__TRADE__AI$2f$lib$2f$supabaseServer$2e$ts__$5b$api$5d$__$28$ecmascript$29$__ = __turbopack_context__.i("[project]/Documents/trae_projects/HYBRID TRADE AI/lib/supabaseServer.ts [api] (ecmascript)");
+var __TURBOPACK__imported__module__$5b$project$5d2f$Documents$2f$trae_projects$2f$HYBRID__TRADE__AI$2f$lib$2f$rateLimit$2e$ts__$5b$api$5d$__$28$ecmascript$29$__ = __turbopack_context__.i("[project]/Documents/trae_projects/HYBRID TRADE AI/lib/rateLimit.ts [api] (ecmascript)");
+var __TURBOPACK__imported__module__$5b$externals$5d2f$zod__$5b$external$5d$__$28$zod$2c$__esm_import$29$__ = __turbopack_context__.i("[externals]/zod [external] (zod, esm_import)");
+var __turbopack_async_dependencies__ = __turbopack_handle_async_dependencies__([
+    __TURBOPACK__imported__module__$5b$externals$5d2f$zod__$5b$external$5d$__$28$zod$2c$__esm_import$29$__
+]);
+[__TURBOPACK__imported__module__$5b$externals$5d2f$zod__$5b$external$5d$__$28$zod$2c$__esm_import$29$__] = __turbopack_async_dependencies__.then ? (await __turbopack_async_dependencies__)() : __turbopack_async_dependencies__;
+;
+;
+;
+const DepositSchema = __TURBOPACK__imported__module__$5b$externals$5d2f$zod__$5b$external$5d$__$28$zod$2c$__esm_import$29$__["z"].object({
+    userId: __TURBOPACK__imported__module__$5b$externals$5d2f$zod__$5b$external$5d$__$28$zod$2c$__esm_import$29$__["z"].string().min(1),
+    amount: __TURBOPACK__imported__module__$5b$externals$5d2f$zod__$5b$external$5d$__$28$zod$2c$__esm_import$29$__["z"].number().positive(),
+    currency: __TURBOPACK__imported__module__$5b$externals$5d2f$zod__$5b$external$5d$__$28$zod$2c$__esm_import$29$__["z"].enum([
+        'USD',
+        'EUR',
+        'NGN',
+        'BTC',
+        'ETH'
+    ]),
+    provider: __TURBOPACK__imported__module__$5b$externals$5d2f$zod__$5b$external$5d$__$28$zod$2c$__esm_import$29$__["z"].string().min(1),
+    planId: __TURBOPACK__imported__module__$5b$externals$5d2f$zod__$5b$external$5d$__$28$zod$2c$__esm_import$29$__["z"].enum([
+        'starter',
+        'pro',
+        'elite'
+    ])
+});
+async function handler(req, res) {
+    if (req.method !== 'POST') return res.status(405).json({
+        error: 'Method not allowed'
+    });
+    const limiter = (0, __TURBOPACK__imported__module__$5b$project$5d2f$Documents$2f$trae_projects$2f$HYBRID__TRADE__AI$2f$lib$2f$rateLimit$2e$ts__$5b$api$5d$__$28$ecmascript$29$__["createRateLimiter"])({
+        windowMs: Number(process.env.RATE_LIMIT_WINDOW_MS ?? 15_000),
+        max: Number(process.env.RATE_LIMIT_MAX ?? 20)
+    });
+    const ok = await limiter(req, res, 'deposit');
+    if (!ok) return;
+    const parsed = DepositSchema.safeParse(req.body || {});
+    if (!parsed.success) return res.status(400).json({
+        error: 'Invalid payload',
+        issues: parsed.error.issues
+    });
+    const { userId, amount, currency, provider, planId } = parsed.data;
+    // Record transaction
+    const { error: txErr } = await __TURBOPACK__imported__module__$5b$project$5d2f$Documents$2f$trae_projects$2f$HYBRID__TRADE__AI$2f$lib$2f$supabaseServer$2e$ts__$5b$api$5d$__$28$ecmascript$29$__["supabaseServer"].from('transactions').insert({
+        user_id: userId,
+        type: 'deposit',
+        amount_usd: amount,
+        meta: {
+            provider,
+            currency,
+            planId
+        }
+    });
+    if (txErr) return res.status(500).json({
+        error: 'Failed to record transaction',
+        details: txErr.message
+    });
+    // Create investment (active)
+    const { error: invErr } = await __TURBOPACK__imported__module__$5b$project$5d2f$Documents$2f$trae_projects$2f$HYBRID__TRADE__AI$2f$lib$2f$supabaseServer$2e$ts__$5b$api$5d$__$28$ecmascript$29$__["supabaseServer"].from('investments').insert({
+        user_id: userId,
+        plan_id: planId,
+        amount_usd: amount,
+        status: 'active'
+    });
+    if (invErr) return res.status(500).json({
+        error: 'Failed to create investment'
+    });
+    return res.status(200).json({
+        ok: true,
+        message: `Deposit of ${amount} ${currency} via ${provider} recorded for plan ${planId}.`
+    });
+}
+__turbopack_async_result__();
+} catch(e) { __turbopack_async_result__(e); } }, false);}),
+];
+
+//# sourceMappingURL=%5Broot-of-the-server%5D__412ebc00._.js.map
