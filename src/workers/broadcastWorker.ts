@@ -1,7 +1,5 @@
 import { Worker, Job } from 'bullmq'
-import prisma from '@lib/prisma'
-import { createClient } from '@lib/redis'
-import { publish } from '@lib/sse'
+// dynamic imports inside functions to avoid top-level crashes in tests/envs
 
 const connection = { url: process.env.REDIS_URL || 'redis://localhost:6379' }
 
@@ -13,6 +11,7 @@ function logToRedis(client: any, jobId: string, entry: any) {
 }
 
 async function processJob(job: Job) {
+  const { createClient } = await import('../lib/redis')
   const client = createClient()
   const jobId = String(job.id)
   try {
@@ -21,6 +20,7 @@ async function processJob(job: Job) {
     const globalNotificationId = job.data?.globalNotificationId
     if (!globalNotificationId) throw new Error('missing globalNotificationId')
 
+    const { default: prisma } = await import('../lib/prisma')
     const g = await prisma.globalNotification.findUnique({ where: { id: globalNotificationId } })
     if (!g) throw new Error('global notification not found')
 
@@ -36,6 +36,7 @@ async function processJob(job: Job) {
         ...(cursor ? { cursor: { id: cursor }, skip: 1 } : {}),
       })
       if (!users.length) break
+      const { publish } = await import('../lib/sse')
       for (const u of users) {
         const note = await prisma.notification.create({ data: { userId: u.id, type: g.type, title: g.title, message: g.message } })
         await prisma.notificationDelivery.create({ data: { globalNotificationId: g.id, userId: u.id } })

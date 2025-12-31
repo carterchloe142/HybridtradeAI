@@ -25,10 +25,11 @@ Production-ready fintech web app scaffolding built with Next.js, TypeScript, Tai
    ```bash
    npm install
    ```
-4. Run the dev server:
-   ```bash
-   npm run dev
-   ```
+4. Generate Prisma client and run the dev server:
+  ```bash
+  npx prisma generate
+  npm run dev
+  ```
 5. Open `http://localhost:3000`.
 
 ## Structure
@@ -248,3 +249,43 @@ Add `vercel.json` to configure basic settings and environment variables. Example
 - Secure API routes and validate inputs with `zod`.
 - Run migrations in `backend/migrations/001_performance_profit_logs.sql` to create required tables.
 - Configure Vercel/hosting and environment secrets.
+## Backend Run Instructions
+
+- Create `.env.local` from `.env.example` and set the following (no secrets committed):
+  - `DATABASE_URL`, `REDIS_URL`, `PAYSTACK_SECRET_KEY`, `PAYSTACK_WEBHOOK_SECRET`, `NEXTAUTH_SECRET`
+  - `START_BROADCAST_WORKER=0` (leave off in dev by default)
+- Install and generate:
+  ```bash
+  npm install
+  npx prisma generate
+  ```
+- Migrations:
+  ```bash
+  npx prisma migrate deploy   # in prod/staging
+  # or
+  npx prisma migrate dev      # in local dev
+  ```
+- Start dev:
+  ```bash
+  npm run dev
+  ```
+- Start worker (optional):
+  ```bash
+  START_BROADCAST_WORKER=1 node -e "require('./dist/src/workers/broadcastWorker').startBroadcastWorker()"
+  ```
+
+## SSE Last-Event-ID
+
+- The SSE endpoints support `?lastEventId=<ISO timestamp>` to replay notifications created after that timestamp.
+- Front-end cross-tab sync can use `BroadcastChannel('notifications')` to fan out received events to other tabs and maintain a single active SSE connection.
+
+## Tests
+
+- Run tests without external network or BullMQ:
+  ```bash
+  npm test
+  ```
+- TypeScript typecheck:
+  ```bash
+  npm run typecheck
+  ```
