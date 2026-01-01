@@ -8,10 +8,6 @@ const nextConfig = {
   images: {
     unoptimized: true,
   },
-  turbopack: {
-    // Pin the dev root to this project to avoid workspace misdetection
-    root: path.resolve(__dirname),
-  },
   env: {
     NEXT_PUBLIC_SITE_URL: process.env.NEXT_PUBLIC_SITE_URL || 'https://hybridtradeai.com',
   },
