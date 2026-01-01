@@ -16,6 +16,9 @@ import LogoMark from '../components/LogoMark'
 export default function App({ Component, pageProps }: AppProps & { pageProps: { initialLang?: string } }) {
   const router = useRouter();
   const isDashboard = router.pathname?.startsWith('/dashboard') || router.pathname?.startsWith('/admin');
+  const isLanding = router.pathname === '/';
+  const showNavbar = !isDashboard && !isLanding;
+  const useContentWrapper = !isDashboard && !isLanding;
   const [loading, setLoading] = useState(false)
   useEffect(() => {
     const Router = require('next/router').default
@@ -55,7 +58,7 @@ export default function App({ Component, pageProps }: AppProps & { pageProps: { 
                 </div>
               </div>
             )}
-            {isDashboard ? (
+            {!useContentWrapper ? (
               <Component {...pageProps} />
             ) : (
               <main className="container-xl px-4 py-6 relative z-10">
