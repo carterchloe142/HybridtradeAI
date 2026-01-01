@@ -83,21 +83,24 @@ export async function GET(req: NextRequest) {
           })
       } else {
           // Try 'replies'
-          const { data: r2 } = await supabaseServer
+          const response = await supabaseServer
             .from('replies')
             .select('id,ticket_id,body,is_admin,created_at')
             .in('ticket_id', ticketIds)
             .order('created_at', { ascending: true })
             
-          (r2 || []).forEach((r: any) => {
-              if (!repliesMap[r.ticket_id]) repliesMap[r.ticket_id] = []
-              repliesMap[r.ticket_id].push({
-                  id: r.id,
-                  body: r.body,
-                  is_admin: r.is_admin,
-                  created_at: r.created_at
+          const r2 = response.data
+          if (r2) {
+              (r2 as any[]).forEach((r: any) => {
+                  if (!repliesMap[r.ticket_id]) repliesMap[r.ticket_id] = []
+                  repliesMap[r.ticket_id].push({
+                      id: r.id,
+                      body: r.body,
+                      is_admin: r.is_admin,
+                      created_at: r.created_at
+                  })
               })
-          })
+          }
       }
   }
 

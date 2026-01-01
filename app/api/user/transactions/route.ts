@@ -2,6 +2,7 @@ import { NextRequest } from 'next/server'
 import { requireRole } from '@lib/requireRole'
 import { publish } from '@lib/sse'
 import { supabaseServer } from '@lib/supabaseServer'
+import { sendEmail } from '@lib/email'
 import crypto from 'crypto'
 
 export async function GET(req: NextRequest) {

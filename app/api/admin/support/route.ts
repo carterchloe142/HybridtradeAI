@@ -99,8 +99,11 @@ export async function GET(req: NextRequest) {
           (u1 || []).forEach((u: any) => usersMap[u.id] = u)
       } else {
           // Try 'users'
-          const { data: u2 } = await supabaseServer.from('users').select('id,email').in('id', userIds)
-          (u2 || []).forEach((u: any) => usersMap[u.id] = u)
+          const response = await supabaseServer.from('users').select('id,email').in('id', userIds)
+          const u2 = response.data
+          if (u2) {
+              (u2 as any[]).forEach((u: any) => usersMap[u.id] = u)
+          }
       }
   }
 
@@ -128,21 +131,24 @@ export async function GET(req: NextRequest) {
           })
       } else {
           // Try 'replies'
-          const { data: r2 } = await supabaseServer
+          const response = await supabaseServer
             .from('replies')
             .select('id,ticket_id,body,is_admin,created_at')
             .in('ticket_id', ticketIds)
             .order('created_at', { ascending: true })
             
-          (r2 || []).forEach((r: any) => {
-              if (!repliesMap[r.ticket_id]) repliesMap[r.ticket_id] = []
-              repliesMap[r.ticket_id].push({
-                  id: r.id,
-                  body: r.body,
-                  is_admin: r.is_admin,
-                  created_at: r.created_at
+          const r2 = response.data
+          if (r2) {
+              (r2 as any[]).forEach((r: any) => {
+                  if (!repliesMap[r.ticket_id]) repliesMap[r.ticket_id] = []
+                  repliesMap[r.ticket_id].push({
+                      id: r.id,
+                      body: r.body,
+                      is_admin: r.is_admin,
+                      created_at: r.created_at
+                  })
               })
-          })
+          }
       }
   }
 

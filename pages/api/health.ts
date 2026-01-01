@@ -27,11 +27,11 @@ export default async function handler(req: NextRequest) {
     const supabase = createClient(supabaseUrl, supabaseKey)
     
     // Simple query
-    const { data, error } = await supabase.from('User').select('count', { count: 'exact', head: true }).timeout(5000)
+    const { data, error } = await supabase.from('User').select('count', { count: 'exact', head: true })
     
     if (error && error.code !== 'PGRST116') { // PGRST116 is no rows, which is fine for count? No, count returns data.
         // Try 'users' fallback
-        const { error: error2 } = await supabase.from('users').select('count', { count: 'exact', head: true }).timeout(5000)
+        const { error: error2 } = await supabase.from('users').select('count', { count: 'exact', head: true })
         if (error2) throw error
     }
 
