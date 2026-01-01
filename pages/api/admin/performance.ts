@@ -2,6 +2,7 @@ import type { NextApiRequest, NextApiResponse } from 'next';
 import { supabaseServer } from '../../../lib/supabaseServer';
 import { z } from 'zod';
 import { requireAdmin } from '../../../lib/adminAuth';
+import crypto from 'crypto';
 
 const RoiSchema = z.record(z.number().nonnegative());
 const BodySchema = z.object({
@@ -18,25 +19,106 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
   const { weekEnding, streamRois } = parse.data;
 
   try {
-    const payload = { week_ending: weekEnding, stream_rois: streamRois };
-    // Try upsert by week_ending if unique constraint exists; otherwise fallback to insert
+    // Use camelCase column names matching Prisma schema
+    const payload = { 
+        weekEnding: weekEnding, 
+        streamRois: streamRois,
+        // Manual ID and timestamps are needed if DB defaults are missing
+    };
+    
+    // Try upsert by weekEnding if unique constraint exists; otherwise fallback to insert
     let result: any = null;
     try {
-      const { data, error } = await supabaseServer
-        .from('performance')
-        .upsert(payload, { onConflict: 'week_ending' })
-        .select()
+      // First check if it exists in PascalCase
+      const { data: existing, error: errExist } = await supabaseServer
+        .from('Performance')
+        .select('*')
+        .eq('weekEnding', weekEnding)
         .maybeSingle();
-      if (error) throw error;
-      result = data;
+
+      let useLowercase = false;
+      if (errExist && (errExist.message.includes('relation "public.Performance" does not exist') || errExist.code === '42P01')) {
+          useLowercase = true;
+      } else if (errExist) {
+          throw errExist;
+      }
+
+      if (!useLowercase) {
+          if (existing) {
+            const { data, error } = await supabaseServer
+                .from('Performance')
+                .update({ streamRois: streamRois })
+                .eq('id', existing.id)
+                .select()
+                .single();
+            if (error) throw error;
+            result = data;
+          } else {
+             const { data, error } = await supabaseServer
+                .from('Performance')
+                .insert({
+                    id: crypto.randomUUID(),
+                    weekEnding: weekEnding,
+                    streamRois: streamRois,
+                    createdAt: new Date().toISOString(),
+                    updatedAt: new Date().toISOString()
+                 })
+                 .select()
+                 .single();
+            if (error) throw error;
+            result = data;
+          }
+      } else {
+          // Fallback to lowercase
+          const { data: existingLower, error: errLower } = await supabaseServer
+            .from('performance')
+            .select('*')
+            .eq('week_ending', weekEnding)
+            .maybeSingle();
+          
+          if (errLower && errLower.code !== 'PGRST116') throw errLower;
+
+          if (existingLower) {
+            const { data, error } = await supabaseServer
+                .from('performance')
+                .update({ stream_rois: streamRois })
+                .eq('id', existingLower.id)
+                .select()
+                .single();
+            if (error) throw error;
+            // Map back to camelCase
+            result = { 
+                ...data, 
+                weekEnding: data.week_ending, 
+                streamRois: data.stream_rois,
+                createdAt: data.created_at,
+                updatedAt: data.updated_at
+            };
+          } else {
+             const { data, error } = await supabaseServer
+                .from('performance')
+                .insert({
+                    id: crypto.randomUUID(),
+                    week_ending: weekEnding,
+                    stream_rois: streamRois,
+                    created_at: new Date().toISOString(),
+                    updated_at: new Date().toISOString()
+                 })
+                 .select()
+                 .single();
+            if (error) throw error;
+            // Map back to camelCase
+             result = { 
+                ...data, 
+                weekEnding: data.week_ending, 
+                streamRois: data.stream_rois,
+                createdAt: data.created_at,
+                updatedAt: data.updated_at
+            };
+          }
+      }
     } catch (e: any) {
-      const { data, error } = await supabaseServer
-        .from('performance')
-        .insert(payload)
-        .select()
-        .maybeSingle();
-      if (error) return res.status(500).json({ error: 'Failed to insert performance', details: error.message });
-      result = data;
+       throw e;
     }
 
     return res.status(200).json({ ok: true, performance: result });

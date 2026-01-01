@@ -3,24 +3,23 @@ import { Bell } from 'lucide-react'
 import { useState } from 'react'
 import { useUserNotifications, useUnreadCount } from '../../src/hooks/useUserNotifications'
 import NotificationCenter from './NotificationCenter'
+import { useI18n } from '../../hooks/useI18n'
 
 type Props = { variant?: 'user' | 'admin' }
 
 export default function NotificationBell({ variant = 'user' }: Props) {
+  const { t } = useI18n()
   const unread = useUnreadCount()
   const { connected } = useUserNotifications()
   const [open, setOpen] = useState(false)
 
   return (
     <div className="relative">
-      <button className="relative inline-flex items-center justify-center w-10 h-10 rounded-full bg-white/10 hover:bg-white/20 transition-colors" onClick={() => setOpen((v) => !v)}>
+      <button title={t('notifications_bell')} className="relative inline-flex items-center justify-center w-10 h-10 rounded-full bg-white/10 hover:bg-white/20 transition-colors" onClick={() => setOpen((v) => !v)}>
         <Bell className="w-5 h-5 text-neon-blue" />
-        {connected && (
-          <span className="absolute -bottom-1 -right-1 text-[10px] px-1.5 py-0.5 rounded bg-green-500 text-white">live</span>
-        )}
       </button>
       {unread > 0 && (
-        <span className="absolute -top-1 -right-1 min-w-[20px] h-5 px-1.5 rounded-full bg-neon-pink text-white text-xs flex items-center justify-center animate-pulse">
+        <span aria-label={t('notifications_unread_count')} className="absolute -top-1 -right-1 min-w-[20px] h-5 px-1.5 rounded-full bg-neon-pink text-white text-xs flex items-center justify-center animate-pulse">
           {unread}
         </span>
       )}

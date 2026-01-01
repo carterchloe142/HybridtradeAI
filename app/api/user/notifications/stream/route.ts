@@ -1,7 +1,6 @@
 import { NextRequest } from 'next/server'
-import prisma from '@lib/prisma'
 import { requireRole } from '@lib/requireRole'
-import { supabaseServer } from '@lib/supabaseServer'
+import { supabaseServer, supabaseServiceReady } from '@lib/supabaseServer'
 import { subscribe } from '@lib/sse'
 
 function sse(data: any, id?: string, event?: string) {
@@ -20,7 +19,7 @@ export async function GET(req: NextRequest) {
     if (!error && data?.user?.id) userId = String(data.user.id)
   }
   if (!userId) {
-    const { user, error } = await requireRole('USER')
+    const { user, error } = await requireRole('USER', req)
     if (error) return new Response(JSON.stringify({ error }), { status: error === 'unauthenticated' ? 401 : 403 })
     userId = String(user.id)
   }
@@ -31,13 +30,18 @@ export async function GET(req: NextRequest) {
     async start(controller) {
       const heartbeat = setInterval(() => controller.enqueue(new TextEncoder().encode(`:hb\n\n`)), 25000)
 
-      if (lastDate && !isNaN(lastDate.getTime())) {
-        const personals = await prisma.notification.findMany({
-          where: { userId, createdAt: { gt: lastDate } },
-          orderBy: { createdAt: 'asc' },
-          take: 100,
-        })
-        for (const n of personals) controller.enqueue(sse(n, n.id, 'personal'))
+      if (supabaseServiceReady && lastDate && !isNaN(lastDate.getTime())) {
+        const { data: personals, error } = await supabaseServer
+          .from('Notification')
+          .select('*')
+          .eq('userId', userId)
+          .gt('createdAt', lastDate.toISOString())
+          .order('createdAt', { ascending: true })
+          .limit(100)
+        
+        if (!error && personals) {
+          for (const n of personals) controller.enqueue(sse(n, n.id, 'personal'))
+        }
       }
 
       const channel = `user:${userId}`

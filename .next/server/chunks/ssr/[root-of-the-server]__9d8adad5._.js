@@ -1,3 +1,0 @@
-module.exports=[6461,(a,b,c)=>{b.exports=a.x("zlib",()=>require("zlib"))},22734,(a,b,c)=>{b.exports=a.x("fs",()=>require("fs"))},88947,(a,b,c)=>{b.exports=a.x("stream",()=>require("stream"))},94131,(a,b,c)=>{b.exports=a.x("@supabase/supabase-js",()=>require("@supabase/supabase-js"))},82150,(a,b,c)=>{b.exports=a.x("@sentry/nextjs",()=>require("@sentry/nextjs"))}];
-
-//# sourceMappingURL=%5Broot-of-the-server%5D__9d8adad5._.js.map

@@ -21,14 +21,36 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
     if (!userId) return res.status(500).json({ ok: false, error: 'Invite did not return a user ID' });
 
     // Upsert admin profile
-    const { data, error } = await supabaseServer
+    // Try lowercase profiles first (standard Supabase)
+    let profileData: any = null
+    const upsertData = { user_id: userId, role: 'admin', is_admin: true }
+    
+    let { data, error } = await supabaseServer
       .from('profiles')
-      .upsert({ user_id: userId, role: 'admin', is_admin: true }, { onConflict: 'user_id' })
+      .upsert(upsertData, { onConflict: 'user_id' })
       .select()
       .maybeSingle();
+
+    if (error && (error.message.includes('relation "public.profiles" does not exist') || error.code === '42P01')) {
+         // Fallback to PascalCase Profile
+         // Note: PascalCase usually uses camelCase columns in our mapping, but Supabase columns are what they are.
+         // If table is Profile, columns might be userId, isAdmin.
+         const upsertDataPascal = { userId: userId, role: 'admin', isAdmin: true }
+         const { data: data2, error: error2 } = await supabaseServer
+            .from('Profile')
+            .upsert(upsertDataPascal, { onConflict: 'userId' })
+            .select()
+            .maybeSingle();
+         
+         if (data2) profileData = data2
+         error = error2
+    } else {
+         profileData = data
+    }
+
     if (error) return res.status(500).json({ ok: false, error: 'Failed to upsert profile', details: error.message });
 
-    return res.status(200).json({ ok: true, invited: invite.user, profile: data });
+    return res.status(200).json({ ok: true, invited: invite.user, profile: profileData });
   } catch (e: any) {
     return res.status(500).json({ ok: false, error: e?.message || 'Invite-admin failed' });
   }

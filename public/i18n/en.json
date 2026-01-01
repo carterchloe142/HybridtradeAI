@@ -1,0 +1,11 @@
+{
+  "dashboard_title": "HybridTradeAI Dashboard",
+  "dashboard_intro": "Portfolio overview, actions, deposits and withdrawals.",
+  "nav_dashboard": "Dashboard",
+  "nav_plans": "Plans",
+  "nav_profile": "Profile",
+  "nav_support": "Support",
+  "admin_rl_tokens": "Tokens",
+  "admin_rl_timestamp": "Timestamp",
+  "admin_rl_empty": "No rate-limit data"
+}

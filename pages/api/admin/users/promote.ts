@@ -15,13 +15,31 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
 
   try {
     const payload = { user_id: userId, role: 'admin', is_admin: true };
-    const { data, error } = await supabaseServer
+    let profileData: any = null
+    
+    let { data, error } = await supabaseServer
       .from('profiles')
       .upsert(payload, { onConflict: 'user_id' })
       .select()
       .maybeSingle();
+      
+    if (error && (error.message.includes('relation "public.profiles" does not exist') || error.code === '42P01')) {
+         // Fallback to PascalCase Profile
+         const payloadPascal = { userId: userId, role: 'admin', isAdmin: true }
+         const { data: data2, error: error2 } = await supabaseServer
+            .from('Profile')
+            .upsert(payloadPascal, { onConflict: 'userId' })
+            .select()
+            .maybeSingle();
+         
+         if (data2) profileData = data2
+         error = error2
+    } else {
+         profileData = data
+    }
+
     if (error) return res.status(500).json({ ok: false, error: 'Failed to promote user', details: error.message });
-    return res.status(200).json({ ok: true, profile: data });
+    return res.status(200).json({ ok: true, profile: profileData });
   } catch (e: any) {
     return res.status(500).json({ ok: false, error: e?.message || 'Promotion failed' });
   }

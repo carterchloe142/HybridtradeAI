@@ -1,5 +1,5 @@
 import { NextRequest } from 'next/server'
-import prisma from '@lib/prisma'
+import { supabaseServer } from '@lib/supabaseServer'
 import { requireRole } from '@lib/requireRole'
 
 export async function POST(req: NextRequest) {
@@ -8,7 +8,14 @@ export async function POST(req: NextRequest) {
   const body = await req.json()
   const ids: string[] = Array.isArray(body?.ids) ? body.ids : body?.id ? [body.id] : []
   if (!ids.length) return new Response(JSON.stringify({ error: 'invalid' }), { status: 400 })
-  await prisma.notification.updateMany({ where: { id: { in: ids }, userId: String(user.id) }, data: { read: true } })
+
+  // Try PascalCase
+  const { error: err1 } = await supabaseServer.from('Notification').update({ read: true }).in('id', ids).eq('userId', String(user.id))
+  
+  if (err1 && (err1.message.includes('relation') || err1.code === '42P01')) {
+      // Fallback
+      await supabaseServer.from('notifications').update({ read: true }).in('id', ids).eq('user_id', String(user.id))
+  }
+  
   return new Response(JSON.stringify({ ok: true }), { status: 200 })
 }
-

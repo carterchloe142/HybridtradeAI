@@ -11,3 +11,15 @@ export function getBroadcastQueue() {
 
 export const broadcastQueue = getBroadcastQueue()
 
+export async function enqueueBroadcast(globalNotificationId: string, opts?: { delay?: number; attempts?: number; backoff?: number }) {
+  const attempts = Math.max(1, Number(opts?.attempts ?? 3))
+  const backoff = Math.max(0, Number(opts?.backoff ?? 5000))
+  const delay = Math.max(0, Number(opts?.delay ?? 0))
+  return broadcastQueue.add('broadcast', { globalNotificationId }, {
+    attempts,
+    backoff: { type: 'fixed', delay: backoff },
+    delay,
+    removeOnComplete: true,
+    removeOnFail: false,
+  })
+}

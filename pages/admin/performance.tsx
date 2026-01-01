@@ -40,26 +40,26 @@ export default function AdminPerformance() {
   return (
     <AdminGuard>
     <div className="max-w-2xl mx-auto p-6">
-      <h1 className="text-2xl font-semibold mb-4">Admin: Weekly Performance Streams</h1>
+      <h1 className="text-2xl font-semibold mb-4 text-foreground">Admin: Weekly Performance Streams</h1>
       <div className="mb-4">
-        <label className="block text-sm font-medium mb-1">Week Ending</label>
-        <input type="date" className="w-full border rounded p-2" value={weekEnding} onChange={e => setWeekEnding(e.target.value)} />
+        <label className="block text-sm font-medium mb-1 text-foreground">Week Ending</label>
+        <input type="date" className="w-full border border-border rounded p-2 bg-background text-foreground" value={weekEnding} onChange={e => setWeekEnding(e.target.value)} />
       </div>
       <div className="grid grid-cols-1 gap-4">
         {Object.keys(streams).map(key => (
           <div key={key}>
-            <label className="block text-sm font-medium mb-1">{(key.replace('_', ' ').toUpperCase())} ROI %</label>
-            <input type="number" step="0.01" className="w-full border rounded p-2 text-black" value={streams[key]}
+            <label className="block text-sm font-medium mb-1 text-foreground">{(key.replace('_', ' ').toUpperCase())} ROI %</label>
+            <input type="number" step="0.01" className="w-full border border-border rounded p-2 bg-background text-foreground" value={streams[key]}
               onChange={e => updateStream(key, e.target.value)} />
           </div>
         ))}
       </div>
-      <button className="mt-6 bg-blue-600 text-white px-4 py-2 rounded" disabled={loading || !weekEnding} onClick={submit}>
+      <button className="mt-6 bg-primary text-primary-foreground px-4 py-2 rounded hover:opacity-90 transition-opacity" disabled={loading || !weekEnding} onClick={submit}>
         {loading ? 'Saving...' : 'Save Performance'}
       </button>
-      {message && <p className="mt-3 text-sm">{message}</p>}
+      {message && <p className="mt-3 text-sm text-blue-500">{message}</p>}
       <div className="mt-8">
-        <p className="text-xs text-gray-500">Streams: Trading, Copy-Trading, Staking/Yield, Ads & Tasks, AI. Enter weekly ROI percentages per stream. Then trigger profit distribution via POST /api/admin/distribute-profits.</p>
+        <p className="text-xs text-muted-foreground">Streams: Trading, Copy-Trading, Staking/Yield, Ads & Tasks, AI. Enter weekly ROI percentages per stream. Then trigger profit distribution via POST /api/admin/distribute-profits.</p>
       </div>
     </div>
     </AdminGuard>

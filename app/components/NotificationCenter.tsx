@@ -1,8 +1,10 @@
 "use client"
 import { useMemo, useState } from 'react'
 import { useUserNotifications } from '../../src/hooks/useUserNotifications'
+import { useI18n } from '../../hooks/useI18n'
 
 export default function NotificationCenter() {
+  const { t } = useI18n()
   const { items, markRead } = useUserNotifications()
   const [page, setPage] = useState(0)
   const pageSize = 20
@@ -14,9 +16,9 @@ export default function NotificationCenter() {
   return (
     <div className="rounded-xl bg-white/10 dark:bg-black/20 backdrop-blur-lg p-4 shadow-lg">
       <div className="flex items-center justify-between mb-3">
-        <h2 className="text-lg font-semibold neon-text">Notifications</h2>
+        <h2 className="text-lg font-semibold neon-text">{t('notifications_title')}</h2>
         <div className="flex items-center gap-2">
-          <button className="btn-neon" onClick={() => markRead(unreadIds)}>Mark all as read</button>
+          <button className="btn-neon" onClick={() => markRead(unreadIds)}>{t('notifications_mark_all')}</button>
         </div>
       </div>
       <div className="space-y-2">
@@ -28,23 +30,23 @@ export default function NotificationCenter() {
             </div>
             <div className="flex items-center gap-2">
               {String((n as any).event || '') === 'global' && (
-                <span className="inline-flex text-[10px] px-2 py-0.5 rounded bg-purple-600 text-white">global</span>
+                <span className="inline-flex text-[10px] px-2 py-0.5 rounded bg-purple-600 text-white">{t('notifications_global_tag')}</span>
               )}
               {!n.read && (
-                <span className="inline-flex text-[10px] px-2 py-0.5 rounded bg-neon-blue text-white">new</span>
+                <span className="inline-flex text-[10px] px-2 py-0.5 rounded bg-neon-blue text-white">{t('notifications_new_tag')}</span>
               )}
-              <button className="text-xs hover:text-neon-blue" onClick={() => markRead([String(n.id)])}>Mark read</button>
+              <button className="text-xs hover:text-neon-blue" onClick={() => markRead([String(n.id)])}>{t('notifications_mark_one')}</button>
             </div>
           </div>
         ))}
         {view.length === 0 && (
-          <div className="text-sm text-white/70">No notifications.</div>
+          <div className="text-sm text-white/70">{t('notifications_empty')}</div>
         )}
       </div>
       <div className="mt-4 flex items-center justify-between">
-        <button className="btn-neon" disabled={page <= 0} onClick={() => setPage((p) => Math.max(0, p - 1))}>Prev</button>
-        <div className="text-xs">Page {page + 1} / {pages}</div>
-        <button className="btn-neon" disabled={page + 1 >= pages} onClick={() => setPage((p) => Math.min(p + 1, pages - 1))}>Next</button>
+        <button className="btn-neon" disabled={page <= 0} onClick={() => setPage((p) => Math.max(0, p - 1))}>{t('prev')}</button>
+        <div className="text-xs">{t('page_of', { page: page + 1, pages })}</div>
+        <button className="btn-neon" disabled={page + 1 >= pages} onClick={() => setPage((p) => Math.min(p + 1, pages - 1))}>{t('next')}</button>
       </div>
     </div>
   )

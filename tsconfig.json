@@ -16,14 +16,19 @@
     "moduleResolution": "bundler",
     "resolveJsonModule": true,
     "isolatedModules": true,
-    "jsx": "react-jsx",
+    "jsx": "preserve",
     "incremental": true,
     "types": [
       "node"
     ],
     "baseUrl": ".",
     "paths": {
-      "@lib/*": ["src/lib/*"]
+      "@/*": [
+        "./*"
+      ],
+      "@lib/*": [
+        "src/lib/*"
+      ]
     },
     "plugins": [
       {
@@ -40,6 +45,7 @@
   ],
   "exclude": [
     "node_modules",
-    "tests/**"
+    "tests/**",
+    "__tests__/**"
   ]
 }

@@ -1,9 +1,11 @@
 import { NextRequest } from 'next/server'
-import prisma from '@lib/prisma'
 import { requireRole } from '@lib/requireRole'
-import { supabaseServer } from '@lib/supabaseServer'
+import { supabaseServer, supabaseServiceReady } from '@lib/supabaseServer'
 
 export async function GET(req: NextRequest) {
+  if (!supabaseServiceReady) {
+    return new Response(JSON.stringify({ items: [] }), { status: 200 })
+  }
   const url = new URL(req.url)
   let userId = ''
   const token = url.searchParams.get('token') || req.headers.get('authorization')?.replace(/^Bearer\s+/i, '') || ''
@@ -12,7 +14,7 @@ export async function GET(req: NextRequest) {
     if (!error && data?.user?.id) userId = String(data.user.id)
   }
   if (!userId) {
-    const { user, error } = await requireRole('USER')
+    const { user, error } = await requireRole('USER', req)
     if (error) return new Response(JSON.stringify({ error }), { status: error === 'unauthenticated' ? 401 : 403 })
     userId = String(user.id)
   }
@@ -20,17 +22,24 @@ export async function GET(req: NextRequest) {
   const sinceParam = url.searchParams.get('since')
   const unreadOnly = url.searchParams.get('unreadOnly') === 'true'
   const type = url.searchParams.get('type')
-  const where: any = { userId }
-  if (unreadOnly) where.read = false
-  if (type) where.type = type
+  let query = supabaseServer
+    .from('Notification')
+    .select('*')
+    .eq('userId', userId)
+  
+  if (unreadOnly) query = query.eq('read', false)
+  if (type) query = query.eq('type', type)
   if (sinceParam) {
     const since = new Date(sinceParam)
-    if (!isNaN(since.getTime())) where.createdAt = { gt: since }
+    if (!isNaN(since.getTime())) query = query.gt('createdAt', since.toISOString())
   }
-  const items = await prisma.notification.findMany({
-    where,
-    orderBy: { createdAt: 'desc' },
-    take: Math.max(1, Math.min(100, limit)),
-  })
+  
+  const { data: items, error: dbError } = await query
+    .order('createdAt', { ascending: false })
+    .limit(Math.max(1, Math.min(100, limit)))
+  
+  if (dbError) {
+    return new Response(JSON.stringify({ error: dbError.message }), { status: 500 })
+  }
   return new Response(JSON.stringify({ items }), { status: 200 })
 }

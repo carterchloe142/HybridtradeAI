@@ -22,18 +22,30 @@ export default function AdminDashboard() {
     (async () => {
       try {
         // Pull latest performance week and active investment count if tables exist
-        const { data: perf } = await supabase
-          .from('performance')
-          .select('week_ending')
-          .order('week_ending', { ascending: false })
+        const { data: perf, error: errPerf } = await supabase
+          .from('Performance')
+          .select('weekEnding')
+          .order('weekEnding', { ascending: false })
           .limit(1);
-        const latestWeek = perf?.[0]?.week_ending ?? null;
+        
+        let latestWeek = perf?.[0]?.weekEnding ?? null;
+        if (errPerf && (errPerf.message.includes('relation "public.Performance" does not exist') || errPerf.code === '42P01')) {
+            // Fallback to lowercase
+             const { data: perf2 } = await supabase.from('performance').select('week_ending').order('week_ending', { ascending: false }).limit(1);
+             latestWeek = perf2?.[0]?.week_ending ?? null;
+        }
 
-        const { data: invs } = await supabase
-          .from('investments')
+        const { data: invs, error: errInv } = await supabase
+          .from('Investment')
           .select('id,status')
-          .eq('status', 'active');
-        const activeInvestments = (invs || []).length;
+          .eq('status', 'ACTIVE');
+        
+        let activeInvestments = (invs || []).length;
+        if (errInv && (errInv.message.includes('relation "public.Investment" does not exist') || errInv.code === '42P01')) {
+             // Fallback to lowercase/plural
+             const { data: invs2 } = await supabase.from('investments').select('id,status').eq('status', 'active');
+             activeInvestments = (invs2 || []).length;
+        }
 
         setMetrics({ latestWeek, activeInvestments });
       } catch (e) {
@@ -106,9 +118,9 @@ export default function AdminDashboard() {
 
           <div className="grid md:grid-cols-2 gap-6">
             <div className="card-neon">
-              <h3 className="font-semibold">Distribute Weekly Profits</h3>
-              <p className="mt-2 text-sm text-white/80">Requires performance data for the latest week.</p>
-              <label className="mt-3 inline-flex items-center gap-2 text-sm">
+              <h3 className="font-semibold text-foreground">Distribute Weekly Profits</h3>
+              <p className="mt-2 text-sm text-muted-foreground">Requires performance data for the latest week.</p>
+              <label className="mt-3 inline-flex items-center gap-2 text-sm text-foreground">
                 <input type="checkbox" checked={dryRun} onChange={e => setDryRun(e.target.checked)} /> Dry run
               </label>
               <button className="btn-neon mt-4" onClick={distributeProfits} disabled={loadingDistribute}>
@@ -116,15 +128,15 @@ export default function AdminDashboard() {
               </button>
             </div>
             <div className="card-neon">
-              <h3 className="font-semibold">Run Cycle</h3>
-              <p className="mt-2 text-sm text-white/80">Handles day 7 ROI crediting and day 14 principal release.</p>
+              <h3 className="font-semibold text-foreground">Run Cycle</h3>
+              <p className="mt-2 text-sm text-muted-foreground">Handles day 7 ROI crediting and day 14 principal release.</p>
               <button className="btn-neon mt-4" onClick={runCycle} disabled={loadingRunCycle}>
                 {loadingRunCycle ? 'Running...' : 'Run Cycle Now'}
               </button>
             </div>
           </div>
 
-          {message && <p className="text-sm mt-2">{message}</p>}
+          {message && <p className="text-sm mt-2 text-muted-foreground">{message}</p>}
         </div>
       </div>
     </AdminGuard>

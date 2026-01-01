@@ -45,13 +45,47 @@ export async function getUserWallets(userId: string): Promise<WalletRow[]> {
   }
 }
 
-export async function getUserInvestments(userId: string): Promise<InvestmentRow[]> {
+export async function getUserInvestments(userId: string): Promise<any[]> {
+  // Try API first for rich data (Plan relations)
+  try {
+    const { data: session } = await supabase.auth.getSession();
+    const token = session.session?.access_token;
+    if (token) {
+      const res = await fetch(`/api/user/investments?limit=100`, {
+        headers: { Authorization: `Bearer ${token}` },
+        cache: 'no-store',
+      });
+      if (res.ok) {
+        const json = await res.json();
+        // Map Prisma "plan" (camelCase) to what UI might expect if needed, 
+        // but dashboard.tsx now uses plan?.slug so we are good.
+        // We map to snake_case to match existing "InvestmentRow" if we want compatibility,
+        // but dashboard checks `i.amount_usd` (snake_case in types) vs `i.amount` (Prisma).
+        // Let's normalize.
+        return (json.items || []).map((i: any) => ({
+          ...i,
+          id: i.id,
+          user_id: i.userId,
+          plan_id: i.planId,
+          amount_usd: Number(i.principal),
+          status: i.status.toLowerCase(),
+          plan: i.plan // Include the plan object
+        }));
+      }
+    }
+  } catch {}
+
+  // Fallback to Supabase direct (might lack Plan details if not joined)
   const { data, error } = await supabase
     .from('investments')
-    .select('id,user_id,plan_id,amount_usd,status')
+    .select('*, plan:plan_id(*)') // Try to join if relation exists
     .eq('user_id', userId);
   if (error) return [];
-  return (data ?? []) as InvestmentRow[];
+  
+  return (data ?? []).map((i: any) => ({
+    ...i,
+    plan: i.plan // Supabase might return it if relation is set
+  }));
 }
 
 export async function upsertReferral(userId: string, code: string) {

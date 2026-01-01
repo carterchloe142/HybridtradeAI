@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react';
-import { supabase } from '../lib/supabase';
+import { supabase, supabaseReady } from '../lib/supabase';
 import { useRouter } from 'next/router';
 
 type Props = { children: React.ReactNode };
@@ -10,6 +10,10 @@ export default function RequireAuth({ children }: Props) {
 
   useEffect(() => {
     let mounted = true;
+    if (!supabaseReady && process.env.NODE_ENV !== 'production') {
+      setReady(true);
+      return;
+    }
     supabase.auth.getSession().then((res: { data: { session: any } }) => {
       const isAuthed = !!res.data?.session;
       if (!isAuthed) {

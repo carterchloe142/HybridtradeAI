@@ -1,13 +1,18 @@
 import type Redis from 'ioredis'
-import { pub, sub } from './redis'
+import { pub, sub, redisEnabled } from './redis'
 
 export async function publish(channel: string, payload: unknown) {
   const data = JSON.stringify(payload)
-  await pub.publish(channel, data)
+  if (!redisEnabled) return
+  try { await pub.publish(channel, data) } catch {}
 }
 
 export function subscribe(channel: string, handler: (payload: any) => void, client: Redis = sub) {
-  client.subscribe(channel)
+  if (!redisEnabled) return () => {}
+  try { 
+    const p: any = (client as any).subscribe(channel)
+    if (p && typeof p.then === 'function') { p.catch(() => {}) }
+  } catch {}
   const onMessage = (ch: string, message: string) => {
     if (ch !== channel) return
     try {
@@ -19,7 +24,10 @@ export function subscribe(channel: string, handler: (payload: any) => void, clie
   client.on('message', onMessage)
   return () => {
     client.off('message', onMessage)
-    client.unsubscribe(channel)
+    try { 
+      const u: any = (client as any).unsubscribe(channel)
+      if (u && typeof u.then === 'function') { u.catch(() => {}) }
+    } catch {}
   }
 }
 

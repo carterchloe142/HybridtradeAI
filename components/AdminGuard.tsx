@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react';
-import { supabase } from '../lib/supabase';
+import { supabase, supabaseReady } from '../lib/supabase';
 
 type Profile = { role?: string | null; is_admin?: boolean | null };
 
@@ -9,6 +9,10 @@ export default function AdminGuard({ children }: { children: React.ReactNode }) 
   useEffect(() => {
     let mounted = true;
     async function check() {
+      if (!supabaseReady && process.env.NODE_ENV !== 'production') {
+        if (mounted) setStatus('ok');
+        return;
+      }
       const { data } = await supabase.auth.getSession();
       const user = data.session?.user;
       if (!user) {
@@ -33,4 +37,3 @@ export default function AdminGuard({ children }: { children: React.ReactNode }) 
   if (status === 'forbidden') return <div className="p-6">Not authorized.</div>;
   return <>{children}</>;
 }
-

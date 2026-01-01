@@ -35,7 +35,7 @@ Production-ready fintech web app scaffolding built with Next.js, TypeScript, Tai
 ## Structure
 - `pages/` – Next.js routes (Landing, Auth, Dashboard, Plans, API)
 - `components/` – UI components (Navbar, Sidebar, Cards, ChatWidget)
-- `backend/` – Profit engine logic (ROI, referral, cron stub)
+- `src/lib/profit/` – Profit engine logic (ROI, referral, cron stub)
 - `hooks/` – i18n and currency helpers
 - `lib/` – Supabase client
 - `styles/` – Tailwind global styles

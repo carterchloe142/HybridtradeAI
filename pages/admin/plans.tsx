@@ -5,10 +5,12 @@ import { supabase } from '../../lib/supabase';
 type Plan = {
   id: string;
   name: string;
-  weekly_roi: number;
-  min_amount: number;
-  max_amount: number;
-  features: string[];
+  returnPercentage: number;
+  minAmount: number;
+  maxAmount: number;
+  duration: number;
+  payoutFrequency: string;
+  active: boolean;
 };
 
 export default function AdminPlans() {
@@ -19,9 +21,29 @@ export default function AdminPlans() {
 
   async function fetchPlans() {
     setLoading(true);
-    const { data, error } = await supabase.from('plans').select('*').order('min_amount', { ascending: true });
-    if (error) console.error(error);
-    else setPlans((data as any) || []);
+    // Use InvestmentPlan table (PascalCase)
+    const { data, error } = await supabase.from('InvestmentPlan').select('*').order('minAmount', { ascending: true });
+    if (error) {
+        // Fallback to lowercase if PascalCase fails (though check-plan.js confirmed PascalCase)
+        console.error('Error fetching InvestmentPlan:', error);
+        const { data: data2, error: error2 } = await supabase.from('investment_plans').select('*').order('min_amount', { ascending: true });
+        if (error2) console.error('Error fetching investment_plans:', error2);
+        else {
+             // Map snake_case to camelCase
+             setPlans((data2 || []).map((p: any) => ({
+                 id: p.id,
+                 name: p.name,
+                 returnPercentage: p.return_percentage || p.weekly_roi || 0,
+                 minAmount: p.min_amount || 0,
+                 maxAmount: p.max_amount || 0,
+                 duration: p.duration || 0,
+                 payoutFrequency: p.payout_frequency || 'WEEKLY',
+                 active: p.active
+             })));
+        }
+    } else {
+        setPlans((data as any) || []);
+    }
     setLoading(false);
   }
 
@@ -52,33 +74,36 @@ export default function AdminPlans() {
   return (
     <AdminGuard>
       <div className="max-w-5xl mx-auto p-6">
-        <h1 className="text-2xl font-semibold mb-4">Investment Plans</h1>
-        {msg && <p className="mb-2 text-sm text-blue-600">{msg}</p>}
-        {loading && <p className="text-sm">Loading…</p>}
-        <div className="overflow-auto">
-          <table className="min-w-full table-auto text-sm">
+        <h1 className="text-2xl font-semibold mb-4 text-foreground">Investment Plans</h1>
+        {msg && <p className="mb-2 text-sm text-blue-500">{msg}</p>}
+        {loading && <p className="text-sm text-muted-foreground">Loading…</p>}
+        <div className="overflow-auto border border-border rounded-lg">
+          <table className="min-w-full table-auto text-sm text-foreground">
             <thead>
-              <tr className="bg-gray-100 text-black">
-                <th className="px-2 py-1 text-left">Name</th>
-                <th className="px-2 py-1 text-left">Weekly ROI %</th>
-                <th className="px-2 py-1 text-left">Min</th>
-                <th className="px-2 py-1 text-left">Max</th>
-                <th className="px-2 py-1 text-left">Features</th>
-                <th className="px-2 py-1">Actions</th>
+              <tr className="bg-muted text-muted-foreground">
+                <th className="px-2 py-1 text-left font-medium">Name</th>
+                <th className="px-2 py-1 text-left font-medium">ROI %</th>
+                <th className="px-2 py-1 text-left font-medium">Min</th>
+                <th className="px-2 py-1 text-left font-medium">Max</th>
+                <th className="px-2 py-1 text-left font-medium">Duration</th>
+                <th className="px-2 py-1 text-left font-medium">Freq</th>
+                <th className="px-2 py-1 font-medium">Actions</th>
               </tr>
             </thead>
             <tbody>
               {plans.map((p) => (
-                <tr key={p.id} className="border-t">
+                <tr key={p.id} className="border-t border-border hover:bg-muted/50 transition-colors">
                   <td className="px-2 py-1">{p.name}</td>
-                  <td className="px-2 py-1">{p.weekly_roi}</td>
-                  <td className="px-2 py-1">{p.min_amount}</td>
-                  <td className="px-2 py-1">{p.max_amount}</td>
-                  <td className="px-2 py-1">{p.features.join(', ')}</td>
+                  <td className="px-2 py-1">{p.returnPercentage}%</td>
+                  <td className="px-2 py-1">{p.minAmount}</td>
+                  <td className="px-2 py-1">{p.maxAmount}</td>
+                  <td className="px-2 py-1">{p.duration} days</td>
+                  <td className="px-2 py-1">{p.payoutFrequency}</td>
                   <td className="px-2 py-1">
                     <button
+                      type="button"
                       onClick={() => setEdit(p)}
-                      className="text-xs bg-blue-600 text-white px-2 py-1 rounded"
+                      className="text-xs bg-primary text-primary-foreground px-2 py-1 rounded hover:opacity-90 transition-opacity"
                     >
                       Edit
                     </button>
@@ -90,47 +115,49 @@ export default function AdminPlans() {
         </div>
 
         {edit && (
-          <div className="mt-6 p-4 border rounded bg-gray-50">
-            <h2 className="text-lg font-medium mb-2">Edit {edit.name}</h2>
-            <label className="block text-sm mb-1">Weekly ROI %</label>
+          <div className="mt-6 p-4 border border-border rounded bg-muted/30">
+            <h2 className="text-lg font-medium mb-2 text-foreground">Edit {edit.name}</h2>
+            <label className="block text-sm mb-1 text-foreground">ROI %</label>
             <input
               type="number"
               step="0.01"
-              className="w-full border rounded p-2 mb-2"
-              value={edit.weekly_roi}
-              onChange={(e) => setEdit({ ...edit, weekly_roi: parseFloat(e.target.value) })}
+              className="w-full border border-border rounded p-2 mb-2 bg-background text-foreground"
+              value={edit.returnPercentage}
+              onChange={(e) => setEdit({ ...edit, returnPercentage: parseFloat(e.target.value) })}
             />
-            <label className="block text-sm mb-1">Min Amount</label>
+            <label className="block text-sm mb-1 text-foreground">Min Amount</label>
             <input
               type="number"
-              className="w-full border rounded p-2 mb-2"
-              value={edit.min_amount}
-              onChange={(e) => setEdit({ ...edit, min_amount: parseFloat(e.target.value) })}
+              className="w-full border border-border rounded p-2 mb-2 bg-background text-foreground"
+              value={edit.minAmount}
+              onChange={(e) => setEdit({ ...edit, minAmount: parseFloat(e.target.value) })}
             />
-            <label className="block text-sm mb-1">Max Amount</label>
+            <label className="block text-sm mb-1 text-foreground">Max Amount</label>
             <input
               type="number"
-              className="w-full border rounded p-2 mb-2"
-              value={edit.max_amount}
-              onChange={(e) => setEdit({ ...edit, max_amount: parseFloat(e.target.value) })}
+              className="w-full border border-border rounded p-2 mb-2 bg-background text-foreground"
+              value={edit.maxAmount}
+              onChange={(e) => setEdit({ ...edit, maxAmount: parseFloat(e.target.value) })}
             />
-            <label className="block text-sm mb-1">Features (comma separated)</label>
+            <label className="block text-sm mb-1 text-foreground">Duration (days)</label>
             <input
-              type="text"
-              className="w-full border rounded p-2 mb-3"
-              value={edit.features.join(', ')}
-              onChange={(e) => setEdit({ ...edit, features: e.target.value.split(',').map((s) => s.trim()) })}
+              type="number"
+              className="w-full border border-border rounded p-2 mb-2 bg-background text-foreground"
+              value={edit.duration}
+              onChange={(e) => setEdit({ ...edit, duration: parseInt(e.target.value) })}
             />
-            <div className="flex gap-2">
+             <div className="flex gap-2 mt-2">
               <button
+                type="button"
                 onClick={() => savePlan(edit)}
-                className="bg-green-600 text-white px-3 py-1 rounded text-sm"
+                className="px-4 py-2 bg-primary text-primary-foreground rounded hover:opacity-90 transition-opacity"
               >
                 Save
               </button>
               <button
+                type="button"
                 onClick={() => setEdit(null)}
-                className="bg-gray-400 text-white px-3 py-1 rounded text-sm"
+                className="px-4 py-2 border border-border rounded hover:bg-muted transition-colors text-foreground"
               >
                 Cancel
               </button>

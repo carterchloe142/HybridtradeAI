@@ -10,9 +10,14 @@ export const ADMIN_MENU: AdminNavItem[] = [
   { path: '/admin/performance', label: 'Performance', icon: 'chart' },
   { path: '/admin/plans', label: 'Plans', icon: 'plans' },
   { path: '/admin/transactions', label: 'Transactions', icon: 'ledger' },
+  { path: '/admin/manual-credit', label: 'Manual Credit', icon: 'credit' },
+  { path: '/admin/notifications', label: 'Notifications', icon: 'bell' },
+  { path: '/admin/ops/status', label: 'Ops Status', icon: 'status' },
+  { path: '/admin/ops/queue', label: 'Ops Queue', icon: 'queue' },
+  { path: '/admin/transparency', label: 'Transparency', icon: 'shield-check' },
+  { path: '/admin/simulation', label: 'Simulation', icon: 'simulation' },
   { path: '/admin/proof', label: 'Proof', icon: 'proof' },
   { path: '/admin/support', label: 'Support', icon: 'support' },
   { path: '/admin/settings', label: 'Settings', icon: 'settings' },
   { path: '/admin/logs', label: 'Logs', icon: 'logs' }
 ];
-

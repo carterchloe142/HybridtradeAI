@@ -1,5 +1,5 @@
 import { NextRequest } from 'next/server'
-import prisma from '@lib/prisma'
+import { supabaseServer } from '@lib/supabaseServer'
 import { requireRole } from '@lib/requireRole'
 import { subscribe } from '@lib/sse'
 
@@ -22,19 +22,61 @@ export async function GET(req: NextRequest) {
       const heartbeat = setInterval(() => controller.enqueue(new TextEncoder().encode(`:hb\n\n`)), 25000)
 
       if (lastDate && !isNaN(lastDate.getTime())) {
-        const globals = await prisma.globalNotification.findMany({
-          where: { createdAt: { gt: lastDate } },
-          orderBy: { createdAt: 'asc' },
-          take: 100,
-        })
-        for (const g of globals) controller.enqueue(sse({ type: g.type, title: g.title, message: g.message, createdAt: g.createdAt }, g.id, 'global'))
+        const isoDate = lastDate.toISOString()
+        
+        // Fetch globals
+        // Try PascalCase
+        let { data: globals, error: gErr } = await supabaseServer
+            .from('GlobalNotification')
+            .select('*')
+            .gt('createdAt', isoDate)
+            .order('createdAt', { ascending: true })
+            .limit(100)
+            
+        if (gErr && (gErr.message.includes('relation') || gErr.code === '42P01')) {
+            const { data: g2 } = await supabaseServer
+                .from('global_notifications')
+                .select('*')
+                .gt('created_at', isoDate)
+                .order('created_at', { ascending: true })
+                .limit(100)
+            
+            if (g2) {
+                globals = g2.map((d: any) => ({ ...d, createdAt: d.created_at }))
+            }
+        }
+        
+        for (const g of (globals || [])) {
+            controller.enqueue(sse({ type: g.type, title: g.title, message: g.message, createdAt: g.createdAt }, g.id, 'global'))
+        }
 
-        const personals = await prisma.notification.findMany({
-          where: { userId: adminId, createdAt: { gt: lastDate } },
-          orderBy: { createdAt: 'asc' },
-          take: 100,
-        })
-        for (const n of personals) controller.enqueue(sse(n, n.id, 'personal'))
+        // Fetch personals
+        // Try PascalCase
+        let { data: personals, error: pErr } = await supabaseServer
+            .from('Notification')
+            .select('*')
+            .eq('userId', adminId)
+            .gt('createdAt', isoDate)
+            .order('createdAt', { ascending: true })
+            .limit(100)
+            
+        if (pErr && (pErr.message.includes('relation') || pErr.code === '42P01')) {
+            const { data: p2 } = await supabaseServer
+                .from('notifications')
+                .select('*')
+                .eq('user_id', adminId)
+                .gt('created_at', isoDate)
+                .order('created_at', { ascending: true })
+                .limit(100)
+                
+            if (p2) {
+                personals = p2.map((d: any) => ({ ...d, userId: d.user_id, createdAt: d.created_at }))
+            }
+        }
+
+        for (const n of (personals || [])) {
+            controller.enqueue(sse(n, n.id, 'personal'))
+        }
       }
 
       const unsubBroadcast = subscribe('broadcast', (payload) => {

@@ -1,30 +1,61 @@
 import type { NextApiRequest, NextApiResponse } from 'next';
 import crypto from 'crypto';
-import { createClient } from '@supabase/supabase-js';
+import { supabaseServer } from '@lib/supabaseServer';
 
 export default async function handler(req: NextApiRequest, res: NextApiResponse) {
   if (req.method !== 'POST') return res.status(405).json({ error: 'Method not allowed' });
+  
+  // Authentication check
+  const auth = String(req.headers.authorization || '');
+  const token = auth.startsWith('Bearer ') ? auth.slice(7) : '';
+  if (!token) return res.status(401).json({ error: 'UNAUTHENTICATED' });
+  
   const { userId, amountUSD = 0 } = req.body || {};
   if (!userId) return res.status(400).json({ error: 'Missing userId' });
+  
+  try {
+    // Generate referral code
+    const referralCode = crypto.createHash('sha256').update(`${userId}:${Date.now()}`).digest('hex').slice(0, 8);
+    const now = new Date().toISOString();
 
-  // Generate referral code
-  const referralCode = crypto.createHash('sha256').update(`${userId}:${Date.now()}`).digest('hex').slice(0, 8);
-  // Placeholder: Track commission and auto-credit to downline wallets
-  const creditedUSD = Number((amountUSD * 0.05).toFixed(2)); // 5% placeholder
-
-  // Try persisting to Supabase if environment is configured
-  const url = process.env.SUPABASE_URL || process.env.NEXT_PUBLIC_SUPABASE_URL;
-  const key = process.env.SUPABASE_SERVICE_ROLE_KEY || process.env.SUPABASE_ANON_KEY || process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY;
-  if (url && key) {
-    const supabase = createClient(url, key);
-    try {
-      await supabase
-        .from('referrals')
-        .upsert({ user_id: userId, code: referralCode }, { onConflict: 'user_id' });
-    } catch (e) {
-      // swallow insert errors to keep API responsive
+    // Upsert equivalent: Try to find existing first
+    let existing: any = null;
+    const { data: r1, error: e1 } = await supabaseServer.from('Referral').select('*').eq('userId', userId).maybeSingle();
+    
+    if (e1 && (e1.message.includes('relation') || e1.code === '42P01')) {
+      const { data: r2 } = await supabaseServer.from('referrals').select('*').eq('user_id', userId).maybeSingle();
+      if (r2) existing = { ...r2, id: r2.id, userId: r2.user_id, code: r2.code };
+    } else {
+      existing = r1;
     }
-  }
 
-  return res.status(200).json({ ok: true, referralCode, creditedUSD });
+    let finalCode = referralCode;
+    
+    if (existing) {
+      // Update
+      const { error: u1 } = await supabaseServer.from('Referral').update({ code: referralCode, updatedAt: now }).eq('id', existing.id);
+      if (u1 && (u1.message.includes('relation') || u1.code === '42P01')) {
+         await supabaseServer.from('referrals').update({ code: referralCode, updated_at: now }).eq('id', existing.id);
+      }
+    } else {
+      // Create
+      const id = crypto.randomUUID();
+      const { error: c1 } = await supabaseServer.from('Referral').insert({ id, userId, code: referralCode, createdAt: now, updatedAt: now });
+      if (c1 && (c1.message.includes('relation') || c1.code === '42P01')) {
+         await supabaseServer.from('referrals').insert({ id, user_id: userId, code: referralCode, created_at: now, updated_at: now });
+      }
+    }
+    
+    return res.status(200).json({ 
+      ok: true, 
+      referralCode: finalCode, 
+      message: 'Referral code generated successfully'
+    });
+  } catch (error) {
+    console.error('Referral error:', error);
+    return res.status(500).json({ 
+      error: 'Failed to generate referral code', 
+      details: error instanceof Error ? error.message : 'Unknown error' 
+    });
+  }
 }

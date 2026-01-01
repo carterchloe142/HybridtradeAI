@@ -85,8 +85,8 @@ export default function AdminUsersPage() {
 
           <div className="grid md:grid-cols-2 gap-6">
             <div className="card-neon">
-              <h3 className="font-semibold">Invite Admin by Email</h3>
-              <p className="mt-2 text-sm text-white/80">Sends an invite email and auto-promotes the user.</p>
+              <h3 className="font-semibold text-foreground">Invite Admin by Email</h3>
+              <p className="mt-2 text-sm text-muted-foreground">Sends an invite email and auto-promotes the user.</p>
               <div className="mt-3 flex gap-2">
                 <input className="input-neon flex-1" placeholder="admin@example.com" value={inviteEmail} onChange={e => setInviteEmail(e.target.value)} />
                 <button className="btn-neon" disabled={loadingInvite || !inviteEmail} onClick={inviteAdmin}>{loadingInvite ? 'Inviting...' : 'Invite'}</button>
@@ -94,8 +94,8 @@ export default function AdminUsersPage() {
             </div>
 
             <div className="card-neon">
-              <h3 className="font-semibold">Promote Existing User</h3>
-              <p className="mt-2 text-sm text-white/80">Enter a user ID from Supabase Auth → Users.</p>
+              <h3 className="font-semibold text-foreground">Promote Existing User</h3>
+              <p className="mt-2 text-sm text-muted-foreground">Enter a user ID from Supabase Auth → Users.</p>
               <div className="mt-3 flex gap-2">
                 <input className="input-neon flex-1" placeholder="UUID user ID" value={promoteUserId} onChange={e => setPromoteUserId(e.target.value)} />
                 <button className="btn-neon" disabled={loadingPromote || !promoteUserId} onClick={promoteAdmin}>{loadingPromote ? 'Promoting...' : 'Promote'}</button>
@@ -104,12 +104,12 @@ export default function AdminUsersPage() {
           </div>
 
           <div className="card-neon">
-            <h3 className="font-semibold">Current Admins</h3>
-            <p className="text-sm text-white/70">Total: {admins.length}</p>
+            <h3 className="font-semibold text-foreground">Current Admins</h3>
+            <p className="text-sm text-muted-foreground">Total: {admins.length}</p>
             <div className="mt-3 overflow-x-auto">
               <table className="w-full text-sm">
                 <thead>
-                  <tr className="text-left text-white/70">
+                  <tr className="text-left text-muted-foreground">
                     <th className="py-2 pr-4">User ID</th>
                     <th className="py-2 pr-4">Role</th>
                     <th className="py-2">is_admin</th>
@@ -117,15 +117,15 @@ export default function AdminUsersPage() {
                 </thead>
                 <tbody>
                   {admins.map(a => (
-                    <tr key={a.user_id} className="border-t border-white/10">
-                      <td className="py-2 pr-4 font-mono text-xs">{a.user_id}</td>
-                      <td className="py-2 pr-4">{a.role || '—'}</td>
-                      <td className="py-2">{a.is_admin ? 'true' : 'false'}</td>
+                    <tr key={a.user_id} className="border-t border-border">
+                      <td className="py-2 pr-4 font-mono text-xs text-foreground">{a.user_id}</td>
+                      <td className="py-2 pr-4 text-foreground">{a.role || '—'}</td>
+                      <td className="py-2 text-foreground">{a.is_admin ? 'true' : 'false'}</td>
                     </tr>
                   ))}
                   {admins.length === 0 && (
                     <tr>
-                      <td className="py-3" colSpan={3}>No admins found.</td>
+                      <td className="py-3 text-muted-foreground" colSpan={3}>No admins found.</td>
                     </tr>
                   )}
                 </tbody>

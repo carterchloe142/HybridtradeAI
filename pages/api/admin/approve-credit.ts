@@ -1,8 +1,8 @@
 import type { NextApiRequest, NextApiResponse } from 'next'
-import prisma from '../../../src/lib/prisma'
 import { createRateLimiter } from '../../../lib/rateLimit'
 import { requireAdmin } from '../../../lib/adminAuth'
 import { supabaseServer } from '../../../lib/supabaseServer'
+import crypto from 'crypto'
 
 const limiter = createRateLimiter({ windowMs: 60_000, max: 5 })
 
@@ -20,8 +20,18 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
   if (!actionId) return res.status(400).json({ error: 'missing_action_id' })
 
   try {
-    // Fetch action from Prisma
-    const action = await prisma.adminAction.findUnique({ where: { id: actionId } })
+    // Fetch action from Supabase (replacing Prisma)
+    // Try PascalCase
+    let action: any = null
+    const { data: act1, error: err1 } = await supabaseServer.from('AdminAction').select('*').eq('id', actionId).maybeSingle()
+    
+    if (err1 && (err1.message.includes('relation') || err1.code === '42P01')) {
+        const { data: act2 } = await supabaseServer.from('admin_actions').select('*').eq('id', actionId).maybeSingle()
+        if (act2) action = { ...act2, userId: act2.user_id, approvedBy: act2.approved_by, approvedAt: act2.approved_at }
+    } else if (act1) {
+        action = act1
+    }
+    
     if (!action) throw new Error('action_not_found')
     if (action.status !== 'PENDING') throw new Error('action_not_pending')
     const userId = action.userId
@@ -30,50 +40,140 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
     const currency = 'USD'
 
     // Fetch or create wallet in Supabase
-    const { data: existing } = await supabaseServer
-      .from('wallets')
-      .select('id,amount')
-      .eq('user_id', userId)
+    // Try PascalCase
+    let walletId: string | undefined
+    let currentAmount = 0
+    
+    const { data: existing, error: wErr1 } = await supabaseServer
+      .from('Wallet')
+      .select('id,balance')
+      .eq('userId', userId)
       .eq('currency', currency)
       .maybeSingle()
 
-    let walletId = existing?.id as string | undefined
-    let currentAmount = Number(existing?.amount ?? 0)
+    let useLowerWallet = false
+    if (wErr1 && (wErr1.message.includes('relation') || wErr1.code === '42P01')) {
+        useLowerWallet = true
+        const { data: ex2 } = await supabaseServer
+            .from('wallets')
+            .select('id,balance')
+            .eq('user_id', userId)
+            .eq('currency', currency)
+            .maybeSingle()
+        if (ex2) {
+            walletId = ex2.id
+            currentAmount = Number(ex2.balance ?? 0)
+        }
+    } else {
+        walletId = existing?.id
+        currentAmount = Number(existing?.balance ?? 0)
+    }
+
     if (!walletId) {
-      const { data: inserted, error: insertErr } = await supabaseServer
-        .from('wallets')
-        .insert({ user_id: userId, currency, amount: 0 })
-        .select()
-        .maybeSingle()
-      if (insertErr) throw new Error('wallet_create_failed')
-      walletId = inserted?.id as string
+      if (useLowerWallet) {
+          const { data: inserted, error: insertErr } = await supabaseServer
+            .from('wallets')
+            .insert({ user_id: userId, currency, balance: 0, created_at: new Date().toISOString(), updated_at: new Date().toISOString() })
+            .select()
+            .maybeSingle()
+          if (insertErr) throw new Error('wallet_create_failed')
+          walletId = inserted?.id
+      } else {
+          const { data: inserted, error: insertErr } = await supabaseServer
+            .from('Wallet')
+            .insert({ userId: userId, currency, balance: 0, createdAt: new Date().toISOString(), updatedAt: new Date().toISOString() })
+            .select()
+            .maybeSingle()
+          
+          if (insertErr && (insertErr.message.includes('relation') || insertErr.code === '42P01')) {
+              // Retry lower
+               const { data: ins2, error: insErr2 } = await supabaseServer
+                .from('wallets')
+                .insert({ user_id: userId, currency, balance: 0, created_at: new Date().toISOString(), updated_at: new Date().toISOString() })
+                .select()
+                .maybeSingle()
+               if (insErr2) throw new Error('wallet_create_failed')
+               walletId = ins2?.id
+               useLowerWallet = true
+          } else if (insertErr) {
+               throw new Error('wallet_create_failed')
+          } else {
+               walletId = inserted?.id
+          }
+      }
       currentAmount = 0
     }
 
     const amountNum = Number(action.amount)
     const newAmount = Number((currentAmount + amountNum).toFixed(8))
-    const { error: updateErr } = await supabaseServer
-      .from('wallets')
-      .update({ amount: newAmount })
-      .eq('id', walletId!)
-    if (updateErr) throw new Error('wallet_update_failed')
+    
+    if (useLowerWallet) {
+        const { error: updateErr } = await supabaseServer
+          .from('wallets')
+          .update({ balance: newAmount, updated_at: new Date().toISOString() })
+          .eq('id', walletId!)
+        if (updateErr) throw new Error('wallet_update_failed')
+    } else {
+        const { error: updateErr } = await supabaseServer
+          .from('Wallet')
+          .update({ balance: newAmount, updatedAt: new Date().toISOString() })
+          .eq('id', walletId!)
+        if (updateErr) throw new Error('wallet_update_failed')
+    }
 
-    const txn = await prisma.walletTransaction.create({
-      data: {
+    const txnId = crypto.randomUUID()
+    const noteStr = JSON.stringify({ note: action.note || null })
+    const now = new Date().toISOString()
+    
+    // WalletTransaction
+    // Try PascalCase
+    let txn: any = null
+    const { data: wtx, error: wtErr } = await supabaseServer.from('WalletTransaction').insert({
+        id: txnId,
         walletId: walletId!,
-        amount: amountNum.toString(),
+        amount: amountNum,
         type: 'CREDIT',
         source: 'admin_credit_approval',
         reference: action.id,
-        note: action.note || null,
+        note: noteStr,
         performedBy: approverId,
-      },
-    })
+        createdAt: now
+    }).select().single()
+    
+    if (wtErr && (wtErr.message.includes('relation') || wtErr.code === '42P01')) {
+        const { data: wtx2 } = await supabaseServer.from('wallet_transactions').insert({
+            id: txnId,
+            wallet_id: walletId!,
+            amount: amountNum,
+            type: 'CREDIT',
+            source: 'admin_credit_approval',
+            reference: action.id,
+            note: noteStr,
+            performed_by: approverId,
+            created_at: now
+        }).select().single()
+        txn = wtx2
+    } else {
+        txn = wtx
+    }
+    
+    // Update AdminAction status
+    if (err1 && (err1.message.includes('relation') || err1.code === '42P01')) {
+         await supabaseServer.from('admin_actions').update({
+             status: 'COMPLETED',
+             approved_by: approverId,
+             approved_at: new Date().toISOString()
+         }).eq('id', action.id)
+    } else {
+         await supabaseServer.from('AdminAction').update({
+             status: 'COMPLETED',
+             approvedBy: approverId,
+             approvedAt: new Date().toISOString()
+         }).eq('id', action.id)
+    }
 
-    const completed = await prisma.adminAction.update({
-      where: { id: action.id },
-      data: { status: 'COMPLETED', approvedBy: approverId, approvedAt: new Date() },
-    })
+    // Return updated action (mocked since we just updated it)
+    const completed = { ...action, status: 'COMPLETED', approvedBy: approverId, approvedAt: new Date() }
 
     return res.json({ balance: newAmount, transaction: txn, action: completed })
   } catch (e: any) {

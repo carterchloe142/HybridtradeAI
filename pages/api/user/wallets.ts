@@ -13,9 +13,9 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
     const userId = userData.user.id
 
     const { data, error } = await supabaseServer
-      .from('wallets')
-      .select('id,user_id,currency,balance')
-      .eq('user_id', userId)
+      .from('Wallet')
+      .select('id,userId,currency,balance')
+      .eq('userId', userId)
 
     if (error) {
       console.error('wallets api error', error)

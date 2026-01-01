@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useRef, useState } from 'react'
-import { supabase } from '../../lib/supabase'
+import { supabase, supabaseReady } from '../../lib/supabase'
 
 type NotificationItem = {
   id: string
@@ -23,9 +23,12 @@ export function useUserNotifications(userId?: string) {
   // Track Supabase auth state; only start polling/stream when authenticated
   useEffect(() => {
     let mounted = true
-    supabase.auth.getSession().then((res: any) => { if (mounted) setAuthed(!!res?.data?.session) }).catch(() => {})
-    const { data: sub } = supabase.auth.onAuthStateChange((_event: any, session: any) => { if (mounted) setAuthed(!!session) })
-    return () => { try { sub?.subscription?.unsubscribe() } catch {}; mounted = false }
+    if (typeof navigator !== 'undefined' && navigator.onLine) {
+      supabase.auth.getSession().then((res: any) => { if (mounted) setAuthed(!!res?.data?.session) }).catch(() => {})
+      const { data: sub } = supabase.auth.onAuthStateChange((_event: any, session: any) => { if (mounted) setAuthed(!!session) })
+      return () => { try { sub?.subscription?.unsubscribe() } catch {}; mounted = false }
+    }
+    return () => { mounted = false }
   }, [])
 
   useEffect(() => {
@@ -53,8 +56,8 @@ export function useUserNotifications(userId?: string) {
       bcRef.current = channel
       try { channel.postMessage({ t: 'leader' }) } catch {}
       const lastEventId = (() => { try { return localStorage.getItem(lastIdKey) || '' } catch { return '' } })()
-      const { data: sessionRes } = await supabase.auth.getSession()
-      const token = sessionRes?.session?.access_token || ''
+      const { data: sessionRes } = typeof navigator !== 'undefined' && navigator.onLine ? await supabase.auth.getSession() : { session: null } as any
+      const token = (sessionRes as any)?.session?.access_token || ''
       const qp = new URLSearchParams()
       if (lastEventId) qp.set('lastEventId', lastEventId)
       if (token) qp.set('token', token)
@@ -80,8 +83,8 @@ export function useUserNotifications(userId?: string) {
 
     async function maybeSynthKyc() {
       try {
-        const { data: sessionRes } = await supabase.auth.getSession()
-        const uid = String(sessionRes?.session?.user?.id || '')
+        const { data: sessionRes } = typeof navigator !== 'undefined' && navigator.onLine ? await supabase.auth.getSession() : { session: null } as any
+        const uid = String((sessionRes as any)?.session?.user?.id || '')
         if (!uid) return
         const { data: prof } = await supabase
           .from('profiles')
@@ -107,8 +110,8 @@ export function useUserNotifications(userId?: string) {
 
     ;(async () => {
       try {
-        const { data: sessionRes } = await supabase.auth.getSession()
-        const token = sessionRes?.session?.access_token || ''
+        const { data: sessionRes } = typeof navigator !== 'undefined' && navigator.onLine ? await supabase.auth.getSession() : { session: null } as any
+        const token = (sessionRes as any)?.session?.access_token || ''
         const res = await fetch('/api/user/notifications?limit=50&unreadOnly=false', { headers: token ? { Authorization: `Bearer ${token}` } : undefined })
         const json = await res.json()
         if (!mounted) return
@@ -120,16 +123,21 @@ export function useUserNotifications(userId?: string) {
 
     const poll = setInterval(async () => {
       try {
-        const { data: sessionRes } = await supabase.auth.getSession()
-        const token = sessionRes?.session?.access_token || ''
-        const res = await fetch('/api/user/notifications?limit=50&unreadOnly=false', { headers: token ? { Authorization: `Bearer ${token}` } : undefined })
+        const ref = (process.env.NEXT_PUBLIC_SUPABASE_URL || '').split('//')[1]?.split('.')[0] || ''
+        const key = ref ? `sb-${ref}-auth-token` : ''
+        const token = (() => {
+          if (!key) return ''
+          try { return JSON.parse(localStorage.getItem(key) || '{}')?.access_token || '' } catch { return '' }
+        })()
+        if (!token) return
+        const res = await fetch('/api/user/notifications?limit=50&unreadOnly=false', { headers: { Authorization: `Bearer ${token}` } })
         const json = await res.json()
         if (!mounted) return
         const list: NotificationItem[] = Array.isArray(json?.items) ? json.items : []
         setItems(list)
         await maybeSynthKyc()
       } catch {}
-    }, 10000)
+    }, 20000)
 
     return () => {
       mounted = false

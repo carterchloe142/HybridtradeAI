@@ -16,7 +16,7 @@ export async function GET(req: NextRequest, ctx: { params: Promise<{ id: string 
   let logs: any[] = []
   try {
     const entries = await redis.lrange(logsKey, 0, 100)
-    logs = entries.map((e) => {
+    logs = entries.map((e: string) => {
       try { return JSON.parse(e) } catch { return { raw: e } }
     })
   } catch {}

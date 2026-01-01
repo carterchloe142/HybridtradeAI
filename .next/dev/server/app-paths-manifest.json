@@ -1,6 +1,0 @@
-{
-  "/_not-found/page": "app/_not-found/page.js",
-  "/api/admin/distribute-profits/route": "app/api/admin/distribute-profits/route.js",
-  "/api/user/notifications/route": "app/api/user/notifications/route.js",
-  "/api/user/notifications/stream/route": "app/api/user/notifications/stream/route.js"
-}

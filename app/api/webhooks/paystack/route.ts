@@ -1,77 +1,224 @@
 import { NextRequest } from 'next/server'
-import prisma from '@lib/prisma'
+import { supabaseServer } from '../../../../lib/supabaseServer'
 import crypto from 'crypto'
 
-function hmacValid(raw: string, signature: string | null) {
-  const secret = process.env.PAYSTACK_WEBHOOK_SECRET || process.env.PAYSTACK_SECRET_KEY || ''
-  if (!secret || !signature) return false
-  const hash = crypto.createHmac('sha512', secret).update(raw).digest('hex')
-  return hash === signature
-}
-
 export async function POST(req: NextRequest) {
-  const raw = await req.text()
-  const sig = req.headers.get('x-paystack-signature')
-  if (!hmacValid(raw, sig)) return new Response(JSON.stringify({ error: 'invalid_signature' }), { status: 401 })
+  try {
+    const secret = process.env.PAYSTACK_WEBHOOK_SECRET || process.env.PAYSTACK_SECRET_KEY || ''
+    const sig = req.headers.get('x-paystack-signature') || ''
+    const raw = await req.text()
+    if (!secret || !sig) return new Response(JSON.stringify({ error: 'unauthorized' }), { status: 401 })
+    const h = crypto.createHmac('sha512', secret).update(raw).digest('hex')
+    if (h !== sig) return new Response(JSON.stringify({ error: 'invalid_signature' }), { status: 401 })
 
-  let payload: any
-  try { payload = JSON.parse(raw) } catch { return new Response(JSON.stringify({ error: 'invalid_json' }), { status: 400 }) }
+    const body = JSON.parse(raw)
+    const event = String(body?.event || '')
+    const data = body?.data || {}
+    const reference = String(data?.reference || '')
+    const amountKobo = Number(data?.amount || 0)
+    const amount = Number((amountKobo / 100).toFixed(2))
+    const currency = String(data?.currency || 'NGN')
+    const email = String(data?.customer?.email || '')
+    
+    if (!reference) return new Response(JSON.stringify({ error: 'invalid_reference' }), { status: 400 })
 
-  const event = String(payload?.event || '')
-  const data = payload?.data || {}
-  const reference = String(data?.reference || '')
-  const status = String(data?.status || '')
-  const amountKobo = Number(data?.amount || 0)
-  const currency = String(data?.currency || 'NGN')
-  const meta = data?.metadata || {}
-  const userId = String(meta?.userId || '')
-  const planId = String(meta?.planId || '')
-  const autoActivate = Boolean(meta?.autoActivate)
+    // Search for transaction by reference in the JSON string or exact match
+    // Since we can't easily do a "JSON contains" query with this client setup efficiently without filters,
+    // we'll try to find by ID if reference is an ID, or search 'reference' column.
+    // In our deposit route, we store: reference: JSON.stringify({ provider: 'paystack', reference, ... })
+    // So we can't search exact match on 'reference' column.
+    // However, we might have stored the Paystack reference as the ID? No, we use UUID.
+    // We should have stored the Paystack reference in the 'reference' column? 
+    // No, we stored a JSON.
+    // So we need to use the `ilike` operator to find the reference string inside the JSON string.
+    
+    const { data: txs, error: txError } = await supabaseServer
+      .from('Transaction')
+      .select('*')
+      .ilike('reference', `%${reference}%`)
+      .limit(1)
 
-  if (!reference || !userId) {
-    return new Response(JSON.stringify({ error: 'missing_reference_or_user' }), { status: 400 })
-  }
+    const tx = txs?.[0]
 
-  let verified = status === 'success'
-  if (!verified) {
-    try {
-      const res = await fetch(`https://api.paystack.co/transaction/verify/${reference}`, {
-        headers: { Authorization: `Bearer ${process.env.PAYSTACK_SECRET_KEY}` },
-      })
-      const v = await res.json()
-      verified = v?.data?.status === 'success'
-    } catch {}
-  }
-  if (!verified) return new Response(JSON.stringify({ error: 'not_success' }), { status: 200 })
-
-  const amount = Number((amountKobo || 0) / 100)
-
-  const existing = await prisma.transaction.findFirst({ where: { type: 'DEPOSIT', userId, status: 'PENDING', metadata: { equals: { provider: 'paystack', reference } } } as any })
-
-  if (existing) {
-    await prisma.transaction.update({ where: { id: existing.id }, data: { status: 'COMPLETED' } })
-  } else {
-    await prisma.transaction.create({
-      data: { userId, type: 'DEPOSIT', amount, status: 'COMPLETED', metadata: { provider: 'paystack', reference, currency, planId, autoActivate } },
-    })
-  }
-
-  const wallet = await prisma.wallet.findUnique({ where: { userId_currency: { userId, currency } } })
-  if (wallet) {
-    await prisma.wallet.update({ where: { id: wallet.id }, data: { balance: Number(wallet.balance) + amount } })
-  } else {
-    await prisma.wallet.create({ data: { userId, currency, balance: amount } })
-  }
-
-  if (autoActivate && planId) {
-    const inv = await prisma.investment.create({ data: { userId, planId, amount, status: 'ACTIVE' } })
-    const w = await prisma.wallet.findUnique({ where: { userId_currency: { userId, currency } } })
-    if (w && Number(w.balance) >= amount) {
-      await prisma.wallet.update({ where: { id: w.id }, data: { balance: Number(w.balance) - amount } })
+    if (txError || !tx) {
+        console.error('Transaction not found for reference:', reference)
+        return new Response(JSON.stringify({ error: 'transaction_not_found' }), { status: 404 })
     }
-    await prisma.transaction.create({ data: { userId, investmentId: inv.id, type: 'DEPOSIT', amount, status: 'COMPLETED', metadata: { autoActivate: true, reference, currency, planId } } })
+
+    // Prevent double processing
+    if (tx.status === 'COMPLETED') {
+      return new Response(JSON.stringify({ ok: true, message: 'already_processed' }), { status: 200 })
+    }
+
+    const uid = String(tx.userId)
+    // Parse reference to get metadata-like info
+    const meta = tx.reference && (tx.reference.startsWith('{') || tx.reference.startsWith('[')) 
+      ? (() => { try { return JSON.parse(tx.reference) } catch { return {} } })()
+      : {}
+    const curr = String(meta.currency || currency)
+
+    if (event === 'charge.success') {
+      // Update transaction status
+      await supabaseServer
+        .from('Transaction')
+        .update({ status: 'COMPLETED', updatedAt: new Date().toISOString() })
+        .eq('id', tx.id)
+
+      // Find or create wallet
+      let { data: wallet } = await supabaseServer
+        .from('Wallet')
+        .select('*')
+        .eq('userId', uid)
+        .eq('currency', curr)
+        .maybeSingle()
+
+      if (!wallet) {
+        // Create wallet
+        const { data: newWallet, error: wErr } = await supabaseServer
+          .from('Wallet')
+          .insert({
+            id: crypto.randomUUID(),
+            userId: uid,
+            currency: curr,
+            balance: 0,
+            createdAt: new Date().toISOString(),
+            updatedAt: new Date().toISOString()
+          })
+          .select()
+          .single()
+        
+        if (wErr) {
+            console.error('Failed to create wallet:', wErr)
+            // Try fetching again in case of race condition
+             const { data: existing } = await supabaseServer.from('Wallet').select('*').eq('userId', uid).eq('currency', curr).maybeSingle()
+             wallet = existing
+        } else {
+            wallet = newWallet
+        }
+      }
+
+      if (!wallet) {
+         console.error('Could not find or create wallet for user:', uid)
+         return new Response(JSON.stringify({ error: 'wallet_error' }), { status: 500 })
+      }
+
+      const walletId = wallet.id
+      const current = Number(wallet.balance || 0)
+      const newBal = Number((current + amount).toFixed(8))
+
+      // Credit the wallet (Deposit)
+      await supabaseServer
+        .from('Wallet')
+        .update({ balance: newBal, updatedAt: new Date().toISOString() })
+        .eq('id', walletId)
+      
+      // Log Wallet Credit
+      await supabaseServer
+        .from('WalletTransaction')
+        .insert({
+            id: crypto.randomUUID(),
+            walletId,
+            amount,
+            type: 'CREDIT',
+            source: 'deposit',
+            reference: reference, // Paystack reference
+            performedBy: uid,
+            createdAt: new Date().toISOString()
+        })
+
+      // Auto-activate investment if requested
+      if (meta.autoActivate && meta.planId) {
+          try {
+              // Find plan
+              const { data: plan } = await supabaseServer
+                  .from('InvestmentPlan')
+                  .select('*')
+                  .or(`id.eq.${meta.planId},name.eq.${meta.planId}`)
+                  .maybeSingle()
+            
+            if (plan) {
+                // Check if balance is sufficient (it should be, we just credited it)
+                if (newBal >= amount) {
+                    // Debit Wallet for Investment
+                    const afterInvestBal = Number((newBal - amount).toFixed(8))
+                    await supabaseServer
+                        .from('Wallet')
+                        .update({ balance: afterInvestBal, updatedAt: new Date().toISOString() })
+                        .eq('id', walletId)
+
+                    // Log Wallet Debit
+                    await supabaseServer
+                        .from('WalletTransaction')
+                        .insert({
+                            id: crypto.randomUUID(),
+                            walletId,
+                            amount,
+                            type: 'DEBIT',
+                            source: 'investment_creation',
+                            reference: JSON.stringify({ slug: plan.slug, note: `Auto-investment in ${plan.name}` }),
+                            performedBy: uid,
+                            createdAt: new Date().toISOString()
+                        })
+
+                    // Create Active Investment
+                    const invId = crypto.randomUUID()
+                    const { data: inv, error: invErr } = await supabaseServer
+                        .from('Investment')
+                        .insert({
+                            id: invId,
+                            userId: uid,
+                            planId: plan.id,
+                            principal: amount,
+                            status: 'ACTIVE',
+                            // payoutFrequency: 'WEEKLY', // Check if exists
+                            startDate: new Date().toISOString(),
+                            createdAt: new Date().toISOString(),
+                            updatedAt: new Date().toISOString()
+                        })
+                        .select()
+                        .single()
+                    
+                    if (invErr) {
+                        console.error('Investment insert failed:', invErr)
+                        throw invErr
+                    }
+
+                    // Create Investment Transaction Record
+                    await supabaseServer
+                        .from('Transaction')
+                        .insert({
+                            id: crypto.randomUUID(),
+                            userId: uid,
+                            investmentId: invId,
+                            type: 'DEPOSIT', // Using DEPOSIT to signify money going into the plan
+                            amount,
+                            currency: curr,
+                            provider: 'paystack',
+                            status: 'COMPLETED',
+                            reference: JSON.stringify({ 
+                                currency: curr, 
+                                planId: plan.id, 
+                                planName: plan.name,
+                                autoActivated: true,
+                                sourceDepositId: tx.id,
+                                provider: 'paystack'
+                            }),
+                            createdAt: new Date().toISOString(),
+                            updatedAt: new Date().toISOString()
+                        })
+                }
+            }
+        } catch (e) {
+            console.error('Auto-activation failed:', e)
+            // Don't fail the webhook response, just log it. 
+        }
+      }
+
+      return new Response(JSON.stringify({ ok: true }), { status: 200 })
+    }
+    return new Response(JSON.stringify({ ok: true }), { status: 200 })
+  } catch (e: any) {
+    console.error('Paystack webhook error:', e)
+    return new Response(JSON.stringify({ error: 'server_error', details: e?.message || 'error' }), { status: 500 })
   }
-
-  return new Response(JSON.stringify({ ok: true }), { status: 200 })
 }
-

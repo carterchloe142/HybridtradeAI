@@ -14,23 +14,25 @@ export default function PlanCard({ plan, onInvest }: Props) {
       initial={{ opacity: 0, y: 12 }}
       animate={{ opacity: 1, y: 0 }}
       whileHover={{ scale: 1.02 }}
+      whileTap={{ scale: 0.99 }}
       transition={{ duration: 0.4, ease: 'easeOut' }}
     >
       <div className="flex items-center justify-between">
-        <h3 className="text-xl font-bold neon-text">{plan.name}</h3>
+        <h3 className="text-xl font-bold tracking-tight text-foreground">{plan.name}</h3>
         <span className="text-neon-blue font-semibold">{plan.weeklyRoi}% weekly</span>
       </div>
-      <p className="mt-2 text-sm text-white/70">{plan.description}</p>
+      <p className="mt-2 text-sm leading-relaxed text-muted-foreground">{plan.description}</p>
 
-      <ul className="mt-4 space-y-1 text-sm text-white/80 list-disc list-inside">
+      <ul className="mt-4 space-y-2 text-sm text-muted-foreground list-disc list-inside">
         {plan.features.map((f) => (
           <li key={f}>{f}</li>
         ))}
       </ul>
 
       <button
-        className="btn-neon mt-6"
+        className="btn-neon mt-6 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-neon-blue rounded-md"
         onClick={() => onInvest?.(plan.id)}
+        aria-label={`Invest in ${plan.name}`}
       >
         Invest in {plan.name}
       </button>

@@ -59,16 +59,20 @@ model User {
   email         String           @unique
   name          String?
   role          Role             @default(USER)
-  currency      String?
-  locale        String?
   kycStatus     KycStatus        @default(PENDING)
+  kycDocument   String?
   wallets       Wallet[]
   investments   Investment[]
   transactions  Transaction[]
   notifications Notification[]
   deliveries    NotificationDelivery[]
+  // referrals     User[]           @relation("UserReferrals")
+  // referrerId    String?
+  // referrer      User?            @relation("UserReferrals", fields: [referrerId], references: [id], onDelete: SetNull)
+  referralCode  Referral?
   createdAt     DateTime         @default(now())
   updatedAt     DateTime         @updatedAt
+  supportTickets SupportTicket[]
 }
 
 model Wallet {
@@ -86,15 +90,15 @@ model Wallet {
 
 model InvestmentPlan {
   id              String  @id @default(cuid())
-  slug            String  @unique
   name            String
   minAmount       Decimal @db.Decimal(24, 8)
   maxAmount       Decimal @db.Decimal(24, 8)
-  minDurationDays Int
-  maxDurationDays Int
-  roiMinPct       Decimal @db.Decimal(10, 4)
-  roiMaxPct       Decimal @db.Decimal(10, 4)
+  duration        Int
+  returnPercentage Decimal @db.Decimal(10, 4)
+  payoutFrequency PayoutFrequency @default(WEEKLY)
+  active          Boolean @default(true)
   createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
   investments     Investment[]
 }
 
@@ -104,11 +108,13 @@ model Investment {
   user            User              @relation(fields: [userId], references: [id], onDelete: Cascade)
   planId          String
   plan            InvestmentPlan    @relation(fields: [planId], references: [id], onDelete: Restrict)
-  amount          Decimal           @db.Decimal(24, 8)
+  principal       Decimal           @db.Decimal(24, 8)
+  startDate       DateTime
   status          InvestmentStatus  @default(PENDING)
   payoutFrequency PayoutFrequency   @default(WEEKLY)
   nextPayoutAt    DateTime?
   createdAt       DateTime          @default(now())
+  updatedAt       DateTime          @updatedAt
   maturedAt       DateTime?
   profitLogs      ProfitLog[]
   transactions    Transaction[]
@@ -125,9 +131,13 @@ model Transaction {
   investment   Investment?       @relation(fields: [investmentId], references: [id], onDelete: SetNull)
   type         TransactionType
   amount       Decimal           @db.Decimal(24, 8)
+  currency     String            @default("USD")
+  provider     String            @default("system")
   status       TransactionStatus @default(PENDING)
-  metadata     Json?
+  reference    String?
+  // metadata     Json?
   createdAt    DateTime          @default(now())
+  updatedAt    DateTime          @updatedAt
 
   @@index([userId])
   @@index([investmentId])
@@ -189,7 +199,29 @@ model ReserveBuffer {
 model Performance {
   id         String   @id @default(cuid())
   weekEnding DateTime @unique
+  streamRois Json
   createdAt  DateTime @default(now())
+  updatedAt  DateTime @updatedAt
+}
+
+model Setting {
+  key   String @id
+  value String
+}
+
+model TradeLog {
+  id          String   @id @default(cuid())
+  streamId    String
+  symbol      String
+  type        String   // BUY, SELL
+  entryPrice  Decimal  @db.Decimal(24, 8)
+  exitPrice   Decimal? @db.Decimal(24, 8)
+  profitPct   Decimal? @db.Decimal(10, 4)
+  status      String   // OPEN, CLOSED
+  simulatedAt DateTime @default(now())
+  
+  @@index([streamId])
+  @@index([simulatedAt])
 }
 
 // Manual Credit System
@@ -217,7 +249,7 @@ model WalletTransaction {
   type         WalletChangeType
   source       String
   reference    String?
-  note         String?
+  // note         String?
   performedBy  String           // admin user id
   createdAt    DateTime         @default(now())
 
@@ -235,4 +267,37 @@ model AdminAction {
   createdAt   DateTime          @default(now())
   approvedBy  String?
   approvedAt  DateTime?
+}
+
+model Referral {
+  id        String   @id @default(cuid())
+  userId    String   @unique
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  code      String   @unique
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([code])
+  @@map("referrals")
+}
+
+model SupportTicket {
+  id        String   @id @default(cuid())
+  userId    String
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  subject   String
+  status    String   @default("open")
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+  replies   Reply[]
+}
+
+model Reply {
+  id        String        @id @default(cuid())
+  ticketId  String
+  ticket    SupportTicket @relation(fields: [ticketId], references: [id], onDelete: Cascade)
+  body      String
+  isAdmin   Boolean       @default(false)
+  createdAt DateTime      @default(now())
+  updatedAt DateTime      @updatedAt
 }

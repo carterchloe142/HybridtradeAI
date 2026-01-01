@@ -9,7 +9,7 @@
 ## Replay Procedures
 
 - Broadcast replay: re-enqueue a job with the same `globalNotificationId`. Deliveries use `skipDuplicates` to avoid double inserts.
-- Profit replay: use dry-run to validate, then run live; duplicate prevention via unique `profit_logs (investment_id, week_ending)`.
+- Profit replay: use dry-run to validate, then run live; duplicate prevention via unique `ProfitLog` (investmentId, weekEnding).
 
 ## Troubleshooting
 
