@@ -41,7 +41,7 @@ export default function App({ Component, pageProps }: AppProps & { pageProps: { 
       <I18nProvider initialLang={pageProps.initialLang}>
         <SWRConfig value={{ fetcher: (url: string) => fetch(url).then((r) => r.json()), errorRetryCount: 3, errorRetryInterval: 3000, shouldRetryOnError: true }}>
           <div className="min-h-screen bg-background font-sans antialiased selection:bg-primary/30 selection:text-primary-foreground">
-            {!isDashboard && <Navbar />}
+            {showNavbar && <Navbar />}
             <GlobalBanner />
             {loading && (
               <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/80 backdrop-blur-md transition-opacity">
