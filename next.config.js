@@ -11,29 +11,6 @@ const nextConfig = {
   env: {
     NEXT_PUBLIC_SITE_URL: process.env.NEXT_PUBLIC_SITE_URL || 'https://hybridtradeai.com',
   },
-  async headers() {
-    const csp = [
-      "default-src 'self'",
-      "img-src 'self' data:",
-      "script-src 'self' 'unsafe-inline' 'unsafe-eval'",
-      "style-src 'self' 'unsafe-inline'",
-      "connect-src 'self' https://*.supabase.co https://*.supabase.co wss://*.supabase.co",
-      "frame-ancestors 'none'",
-      "base-uri 'self'",
-      "form-action 'self'",
-    ].join('; ')
-    return [
-      {
-        source: '/(.*)',
-        headers: [
-          { key: 'Content-Security-Policy', value: csp },
-          { key: 'Referrer-Policy', value: 'strict-origin-when-cross-origin' },
-          { key: 'X-Content-Type-Options', value: 'nosniff' },
-          { key: 'X-Frame-Options', value: 'DENY' },
-        ],
-      },
-    ]
-  },
 };
 
 module.exports = nextConfig;
