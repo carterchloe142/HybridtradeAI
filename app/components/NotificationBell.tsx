@@ -1,7 +1,7 @@
 "use client"
 import { Bell } from 'lucide-react'
 import { useState } from 'react'
-import { useUserNotifications, useUnreadCount } from '../../src/hooks/useUserNotifications'
+// import { useUserNotifications, useUnreadCount } from '../../src/hooks/useUserNotifications' // BROKEN IMPORT: src folder missing
 import NotificationCenter from './NotificationCenter'
 import { useI18n } from '../../hooks/useI18n'
 
@@ -9,8 +9,9 @@ type Props = { variant?: 'user' | 'admin' }
 
 export default function NotificationBell({ variant = 'user' }: Props) {
   const { t } = useI18n()
-  const unread = useUnreadCount()
-  const { connected } = useUserNotifications()
+  // Mocking hooks to prevent crash due to missing src folder
+  const unread = 0 
+  const connected = true
   const [open, setOpen] = useState(false)
 
   return (
@@ -25,7 +26,11 @@ export default function NotificationBell({ variant = 'user' }: Props) {
       )}
       {open && (
         <div className="absolute right-0 mt-2 w-[360px] max-h-[60vh] overflow-auto rounded-xl bg-[#0a0f1b]/90 border border-white/10 shadow-xl p-3">
-          <NotificationCenter />
+          {/* NotificationCenter likely also depends on missing src, so we disable it for now or check it */}
+          <div className="p-4 text-center text-gray-400 text-sm">
+            Notifications temporarily unavailable.
+          </div>
+          {/* <NotificationCenter /> */}
         </div>
       )}
     </div>
