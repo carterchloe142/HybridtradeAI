@@ -1,6 +1,7 @@
 import '../styles/globals.css'
 import Navbar from '../components/Navbar'
 import MainWrapper from '../components/MainWrapper'
+import GlobalBanner from '../components/GlobalBanner'
 import { Providers } from './providers'
 
 export const metadata = {
@@ -15,6 +16,7 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
         <Providers>
           <div className="min-h-screen">
             <Navbar />
+            <GlobalBanner />
             <MainWrapper>
               {children}
             </MainWrapper>
