@@ -6,7 +6,7 @@ import type { Redis as RedisType } from 'ioredis'
 const IS_VERCEL = !!process.env.VERCEL
 const DISABLE_REDIS = IS_VERCEL || process.env.DISABLE_REDIS === 'true'
 
-export const redisEnabled = !DISABLE_REDIS && (Boolean(process.env.REDIS_URL) || process.env.NODE_ENV !== 'production')
+export const redisEnabled = !DISABLE_REDIS && Boolean(process.env.REDIS_URL)
 
 let client: RedisType | null = null
 
@@ -16,7 +16,7 @@ if (!DISABLE_REDIS) {
     const url = process.env.REDIS_URL
     const tlsOpts = url && url.startsWith('rediss://') ? { tls: { rejectUnauthorized: false } } : {}
     
-    // Default to localhost if no URL, but respect disable flag
+    // Only connect when REDIS_URL is provided. Never fallback to localhost.
     if (url) {
       client = new Redis(url, {
         ...tlsOpts,
@@ -26,12 +26,7 @@ if (!DISABLE_REDIS) {
         retryStrategy: () => null,
       })
     } else {
-      client = new Redis({
-        lazyConnect: true,
-        maxRetriesPerRequest: 0,
-        enableOfflineQueue: true,
-        retryStrategy: () => null,
-      })
+      client = null
     }
     
     if (client) {
@@ -53,10 +48,10 @@ export function createClient(url = process.env.REDIS_URL || '') {
     const tlsOpts = url && url.startsWith('rediss://') ? { tls: { rejectUnauthorized: false } } : {}
     const c = url 
       ? new Redis(url, { ...tlsOpts, lazyConnect: true, maxRetriesPerRequest: 0, enableOfflineQueue: true, retryStrategy: () => null })
-      : new Redis({ lazyConnect: true, maxRetriesPerRequest: 0, enableOfflineQueue: true, retryStrategy: () => null })
+      : null
     
-    c.on('error', () => {})
-    return c
+    if (c) c.on('error', () => {})
+    return c as RedisType
   } catch {
     return null as unknown as RedisType
   }
@@ -81,6 +76,6 @@ export function duplicate(client: RedisType | null) {
 export const pub = duplicate(redis)
 export const sub = duplicate(redis)
 
-export function createSubscriber(url = process.env.REDIS_URL || (process.env.NODE_ENV === 'production' ? '' : 'redis://localhost:6379')) {
+export function createSubscriber(url = process.env.REDIS_URL || '') {
   return duplicate(createClient(url))
 }

@@ -8,6 +8,12 @@ const nextConfig = {
   images: {
     unoptimized: true,
   },
+  output: 'standalone',
+  experimental: {
+    serverActions: {
+      allowedOrigins: ['*'],
+    },
+  },
   env: {
     NEXT_PUBLIC_SITE_URL: process.env.NEXT_PUBLIC_SITE_URL || 'https://hybridtradeai.com',
   },

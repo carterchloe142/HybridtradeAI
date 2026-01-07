@@ -6,6 +6,7 @@ import { sendEmail } from '@lib/email'
 import crypto from 'crypto'
 
 export const dynamic = "force-dynamic";
+export const runtime = "nodejs";
 
 export async function GET(req: NextRequest) {
   const { user, error } = await requireRole('USER', req)

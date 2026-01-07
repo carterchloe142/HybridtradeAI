@@ -4,6 +4,7 @@ import { requireRole } from '@lib/requireRole'
 import { publish } from '@lib/sse'
 
 export const dynamic = "force-dynamic";
+export const runtime = "nodejs";
 
 export async function GET(req: NextRequest) {
   const { user, error } = await requireRole('USER', req)

@@ -2,7 +2,7 @@ import { Worker, Job } from 'bullmq'
 import crypto from 'crypto'
 // dynamic imports inside functions to avoid top-level crashes in tests/envs
 
-const connection = { url: process.env.REDIS_URL || 'redis://localhost:6379' }
+const url = process.env.REDIS_URL || ''
 const CONCURRENCY = Math.max(1, Number(process.env.BROADCAST_WORKER_CONCURRENCY || '2'))
 
 function logToRedis(client: any, jobId: string, entry: any) {
@@ -191,9 +191,9 @@ export function startBroadcastWorker() {
   if (process.env.NODE_ENV === 'test') return null as any
   
   // Disable on Vercel to prevent ECONNREFUSED
-  if (process.env.VERCEL || process.env.DISABLE_REDIS === 'true') return null as any
+  if (!url || process.env.VERCEL || process.env.DISABLE_REDIS === 'true') return null as any
 
-  worker = new Worker('broadcast', async (job: Job) => processJob(job), { connection, concurrency: CONCURRENCY })
+  worker = new Worker('broadcast', async (job: Job) => processJob(job), { connection: { url }, concurrency: CONCURRENCY })
   worker.on('failed', (job, err) => console.error('broadcast job failed', job?.id, err))
   return worker
 }
