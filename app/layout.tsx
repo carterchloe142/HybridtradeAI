@@ -1,5 +1,4 @@
 import '../styles/globals.css'
-import { SpeedInsights } from '@vercel/speed-insights/next'
 
 export const metadata = {
   title: 'HybridTradeAI – Modern Fintech Investing',
@@ -13,7 +12,6 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
         <div className="min-h-screen">
           {children}
         </div>
-        <SpeedInsights />
       </body>
     </html>
   )
