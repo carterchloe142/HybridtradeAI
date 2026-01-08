@@ -1,5 +1,5 @@
 import { useState, useRef, useMemo, useEffect } from 'react';
-import { supabase } from '../../lib/supabase';
+import { supabase } from '@/lib/supabase';
 import { AuthChangeEvent, Session, AuthError } from '@supabase/supabase-js';
 
 export type NotificationItem = {

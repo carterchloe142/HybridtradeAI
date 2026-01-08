@@ -4,7 +4,7 @@ export const dynamic = "force-dynamic";
 
 import { useCallback, useEffect, useState } from 'react'
 import AdminGuard from '../../../components/AdminGuard'
-import { supabase } from '../../../lib/supabase'
+import { supabase } from '@/lib/supabase'
 
 type Action = {
   id: string

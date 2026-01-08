@@ -2,7 +2,7 @@
 import useSWR from 'swr'
 import { useState, useEffect } from 'react'
 import AdminGuard from '../../../components/AdminGuard'
-import { authedFetcher, authedJson } from '../../../lib/supabase'
+import { authedFetcher, authedJson } from '@/lib/supabase'
 
 type Summary = {
   reserveBuffer: { currentAmount: number; totalAUM: number; updatedAt: string | null }

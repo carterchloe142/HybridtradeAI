@@ -4,7 +4,7 @@ export const dynamic = "force-dynamic";
 
 import { useEffect, useRef, useState, useCallback } from 'react';
 import AdminGuard from '../../../components/AdminGuard';
-import { authedJson } from '../../../lib/supabase';
+import { authedJson } from '@/lib/supabase';
 import { useAdminNotifications } from '../../../src/hooks/useAdminNotifications'
 
 type Ticket = {

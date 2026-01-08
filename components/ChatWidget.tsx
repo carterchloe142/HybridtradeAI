@@ -2,7 +2,7 @@ import React, { useEffect, useMemo, useRef, useState } from 'react';
 import Link from 'next/link'
 import { Bot, Send } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion'
-import { supabase } from '../lib/supabase'
+import { supabase } from '@/lib/supabase'
 
 export default function ChatWidget() {
   const [open, setOpen] = useState(false);

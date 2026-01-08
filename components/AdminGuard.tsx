@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react';
-import { supabase, supabaseReady } from '../lib/supabase';
+import { supabase, supabaseReady } from '@/lib/supabase';
 
 type Profile = { role?: string | null; is_admin?: boolean | null };
 

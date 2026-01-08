@@ -2,7 +2,7 @@
 import useSWR from 'swr'
 import { useCallback, useMemo, useState, useEffect } from 'react'
 import { useI18n } from '../../../../hooks/useI18n'
-import { authedFetcher, authedJson } from '../../../../lib/supabase'
+import { authedFetcher, authedJson } from '@/lib/supabase'
 
 export default function QueueDashboardPage() {
   const { t } = useI18n()

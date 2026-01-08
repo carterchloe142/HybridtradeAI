@@ -5,7 +5,7 @@ export const dynamic = "force-dynamic";
 import { useEffect, useMemo, useState } from 'react';
 import { motion } from 'framer-motion';
 import AdminGuard from '../../../components/AdminGuard';
-import { supabase, authedJson } from '../../../lib/supabase';
+import { supabase, authedJson } from '@/lib/supabase';
 import { useI18n } from '../../../hooks/useI18n';
 import FuturisticBackground from '../../../components/ui/FuturisticBackground';
 import { Download, Filter, RefreshCw, CheckCircle2, XCircle, Clock } from 'lucide-react';

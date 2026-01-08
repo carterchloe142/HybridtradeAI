@@ -1,12 +1,9 @@
 'use client';
-
-export const dynamic = "force-dynamic";
-
 import { useEffect, useState } from 'react';
-import AdminGuard from '../../../components/AdminGuard';
-import { supabase } from '../../../lib/supabase';
+import AdminGuard from '@/components/AdminGuard';
+import { supabase } from '@/lib/supabase';
 import { motion, AnimatePresence } from 'framer-motion';
-import FuturisticBackground from '../../../components/ui/FuturisticBackground';
+import FuturisticBackground from '@/components/ui/FuturisticBackground';
 import { Filter, RefreshCw, CheckCircle2, XCircle, Clock, Search, MoreHorizontal, X } from 'lucide-react';
 
 type Deposit = {

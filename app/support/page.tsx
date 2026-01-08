@@ -5,7 +5,7 @@ export const dynamic = "force-dynamic";
 import { useEffect, useMemo, useRef, useState } from 'react'
 import Link from 'next/link'
 import RequireAuth from '../../components/RequireAuth'
-import { supabase } from '../../lib/supabase'
+import { supabase } from '@/lib/supabase'
 import { useUserNotifications } from '../../src/hooks/useUserNotifications'
 
 type Ticket = { id: string; subject: string; status: 'open'|'closed'; created_at: string; replies: { id: string; body: string; is_admin: boolean; created_at: string }[] }

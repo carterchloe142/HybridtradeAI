@@ -1,7 +1,7 @@
 'use client'
 import useSWR from 'swr'
 import { useMemo, useState } from 'react'
-import { authedFetcher, authedJson } from '../../../lib/supabase'
+import { authedFetcher, authedJson } from '@/lib/supabase'
 
 type Item = { id: string; type: string; title: string; message: string; createdAt: string; read?: boolean }
 

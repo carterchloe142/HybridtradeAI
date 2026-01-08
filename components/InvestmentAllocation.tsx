@@ -1,6 +1,6 @@
 import { Doughnut } from 'react-chartjs-2';
 import { Chart as ChartJS, ArcElement, Tooltip, Legend } from 'chart.js';
-import { getPlanConfig } from '../lib/plans';
+import { planConfig } from '@/config/planConfig';
 import { useTheme } from './ThemeProvider';
 import { PieChart, Activity, Zap, Layers } from 'lucide-react';
 import { useMemo } from 'react';
@@ -10,7 +10,34 @@ ChartJS.register(ArcElement, Tooltip, Legend);
 export default function InvestmentAllocation({ planId, amount }: { planId: string, amount: number }) {
   const { theme } = useTheme();
   const isDark = theme === 'dark';
-  const config = getPlanConfig(planId);
+  const config = useMemo(() => {
+    const byKey = (planConfig as any)?.[planId] ?? (planConfig as any)?.starter
+    if (!byKey) return null
+
+    const meta: Record<string, { name: string; description: string; color?: string }> = {
+      trading: { name: 'Trading', description: 'Algorithmic execution across liquid markets', color: 'hsl(var(--primary))' },
+      copy_trading: { name: 'Copy Trading', description: 'Mirrored strategies from verified traders', color: 'hsl(var(--accent))' },
+      ads_tasks: { name: 'Ads & Tasks', description: 'Promotional campaigns and partner tasks', color: 'hsl(var(--success))' },
+      staking_yield: { name: 'Staking Yield', description: 'Low-volatility yield strategies', color: 'hsl(var(--warning))' },
+      ai: { name: 'AI Strategies', description: 'Adaptive ML-driven allocation and signals', color: 'hsl(var(--secondary))' },
+    }
+
+    const fallbackColors = [
+      'hsl(var(--primary))',
+      'hsl(var(--accent))',
+      'hsl(var(--success))',
+      'hsl(var(--warning))',
+      'hsl(var(--destructive))',
+      'hsl(var(--secondary))',
+    ]
+
+    const allocation = Object.entries(byKey.allocations || {}).map(([k, v]: any, idx) => {
+      const m = meta[k] || { name: String(k), description: 'Automated capital deployment', color: fallbackColors[idx % fallbackColors.length] }
+      return { key: k, name: m.name, description: m.description, percentage: Number(v) || 0, color: m.color || fallbackColors[idx % fallbackColors.length] }
+    })
+
+    return { id: String(planId), allocation }
+  }, [planId]);
   const palette = useMemo(() => {
     const tokens = ['success', 'primary', 'accent', 'warning', 'destructive', 'secondary'];
     const alpha = isDark ? 0.7 : 0.6;

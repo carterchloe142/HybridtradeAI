@@ -11,7 +11,7 @@ import {
   Legend,
   Filler
 } from 'chart.js'
-import { supabase } from '../lib/supabase'
+import { supabase } from '@/lib/supabase'
 
 ChartJS.register(
   CategoryScale,

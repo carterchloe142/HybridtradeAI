@@ -1,4 +1,4 @@
-import { supabaseServer } from '../../lib/supabaseServer'
+import { supabaseServer } from '@/lib/supabaseServer'
 import { v4 as uuidv4 } from 'uuid'
 
 export type TradeLog = {

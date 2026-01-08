@@ -43,7 +43,7 @@ export default function InvestmentPerformanceChart({ investmentId, amount }: { i
 
     const fetchSim = async () => {
       try {
-        const { data: session } = await import('../lib/supabase').then(m => m.supabase.auth.getSession());
+        const { data: session } = await import('@/lib/supabase').then(m => m.supabase.auth.getSession());
         const token = session.session?.access_token;
         
         const res = await fetch(`/api/user/investments/${investmentId}/simulation`, {

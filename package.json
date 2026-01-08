@@ -5,7 +5,7 @@
   "description": "HybridTradeAI – Production-ready fintech scaffolding with Next.js, TypeScript, Tailwind, Supabase.",
   "scripts": {
     "dev": "next dev",
-    "build": "next build",
+    "build": "prisma generate && next build",
     "start": "next start",
     "lint": "eslint --config node_modules/eslint-config-next/index.js .",
     "deploy:check": "ts-node scripts/deploy-preflight.ts",

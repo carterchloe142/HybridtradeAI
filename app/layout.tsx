@@ -1,5 +1,3 @@
-import '../styles/globals.css'
-
 export const metadata = {
   title: 'HybridTradeAI – Modern Fintech Investing',
   description: 'AI-assisted signals, weekly ROI tracking, and secure withdrawals. Start investing with HybridTradeAI.',

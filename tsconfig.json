@@ -24,7 +24,8 @@
     "baseUrl": ".",
     "paths": {
       "@/*": [
-        "./*"
+        "./*",
+        "./src/*"
       ],
       "@lib/*": [
         "src/lib/*",
@@ -46,6 +47,7 @@
   ],
   "exclude": [
     "node_modules",
+    "_pages_archive/**",
     "tests/**",
     "__tests__/**"
   ]
