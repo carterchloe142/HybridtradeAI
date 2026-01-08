@@ -2,7 +2,7 @@ export const dynamic = "force-dynamic";
 export const runtime = "nodejs";
 
 import { NextRequest, NextResponse } from 'next/server';
-import { SimulationEngine } from '@/lib/simulation/engine';
+import { SimulationEngine } from '@/src/lib/simulation/engine';
 
 export async function GET(req: NextRequest) {
   // Optional: Add admin auth check here if needed, but simulation might be public or protected.

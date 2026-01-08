@@ -2,7 +2,7 @@
 
 export const dynamic = "force-dynamic";
 
-import { useEffect, useRef, useState } from 'react'
+import { useEffect, useRef, useState, Suspense } from 'react'
 import { useRouter } from 'next/navigation'
 import RequireAuth from '@/components/RequireAuth'
 import { useCurrency } from '@/hooks/useCurrency'
@@ -15,7 +15,7 @@ import { motion, AnimatePresence } from 'framer-motion'
 import FuturisticBackground from '@/components/ui/FuturisticBackground'
 import { useSearchParams } from 'next/navigation'
 
-export default function DepositPage() {
+function DepositContent() {
   const { t } = useI18n()
   const router = useRouter()
   const searchParams = useSearchParams()
@@ -247,7 +247,7 @@ export default function DepositPage() {
                        animate={{ opacity: 1, height: 'auto' }}
                        exit={{ opacity: 0, height: 0 }}
                        className="mt-2 text-xs text-red-400 flex items-center gap-1"
-                     >
+                       >
                        <AlertCircle size={12} />
                        Amount must be between ${ranges[plan].min} and ${ranges[plan].max} for {plan} plan
                      </motion.div>
@@ -405,5 +405,13 @@ export default function DepositPage() {
         </div>
       </div>
     </RequireAuth>
+  )
+}
+
+export default function DepositPage() {
+  return (
+    <Suspense fallback={<div className="min-h-screen flex items-center justify-center text-white">Loading...</div>}>
+      <DepositContent />
+    </Suspense>
   )
 }

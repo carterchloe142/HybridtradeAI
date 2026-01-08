@@ -1,5 +1,5 @@
 import Link from 'next/link';
-import { useRouter } from 'next/router';
+import { usePathname } from 'next/navigation';
 import { LayoutGrid, Wallet, User2, Activity, LifeBuoy } from 'lucide-react';
 import { useI18n } from '../hooks/useI18n'
 import { useUserNotifications } from '../src/hooks/useUserNotifications'
@@ -15,7 +15,7 @@ const itemsBase = [
 ];
 
 export default function Sidebar() {
-  const router = useRouter();
+  const pathname = usePathname();
   const { t } = useI18n()
   const { items } = useUserNotifications()
   const supportUnread = items.filter((ev) => !ev.read && (ev.type === 'support_reply' || ev.type === 'support_status' || ev.type === 'support_ticket')).length
@@ -28,7 +28,7 @@ export default function Sidebar() {
       </div>
       <nav className="flex-1 px-4 space-y-2 overflow-y-auto">
         {itemsBase.map(({ href, key, icon: Icon }) => {
-          const active = router.pathname === href;
+          const active = pathname === href;
           return (
             <Link key={href} href={href}
               className={`relative flex items-center gap-3 px-4 py-3 rounded-xl transition-all duration-300 group overflow-hidden ${

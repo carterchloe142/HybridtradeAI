@@ -1,8 +1,5 @@
 import '../styles/globals.css'
-import Navbar from '../components/Navbar'
-import MainWrapper from '../components/MainWrapper'
-import GlobalBanner from '../components/GlobalBanner'
-import { Providers } from './providers'
+import { SpeedInsights } from '@vercel/speed-insights/next'
 
 export const metadata = {
   title: 'HybridTradeAI – Modern Fintech Investing',
@@ -12,16 +9,11 @@ export const metadata = {
 export default function RootLayout({ children }: { children: React.ReactNode }) {
   return (
     <html lang="en" suppressHydrationWarning>
-      <body>
-        <Providers>
-          <div className="min-h-screen">
-            <Navbar />
-            <GlobalBanner />
-            <MainWrapper>
-              {children}
-            </MainWrapper>
-          </div>
-        </Providers>
+      <body className="min-h-screen bg-black text-white">
+        <div className="min-h-screen">
+          {children}
+        </div>
+        <SpeedInsights />
       </body>
     </html>
   )

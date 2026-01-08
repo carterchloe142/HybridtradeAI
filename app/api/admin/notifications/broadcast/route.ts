@@ -8,8 +8,10 @@ import { adminRateLimit } from '@lib/rate-limit/redis-token-bucket'
 import { publish } from '@lib/sse'
 import { broadcastQueue } from '@lib/queue/broadcastQueue'
 import crypto from 'crypto'
+const STAGE_0_DISABLE = true;
 
 export async function POST(req: NextRequest) {
+  if (STAGE_0_DISABLE) return new Response(JSON.stringify({ error: 'disabled' }), { status: 503 })
   const { user, error } = await requireRole('ADMIN')
   if (error || !user) return new Response(JSON.stringify({ error: error || 'unauthenticated' }), { status: error === 'unauthenticated' ? 401 : 403 })
   const allowed = await adminRateLimit.allow(String(user.id))

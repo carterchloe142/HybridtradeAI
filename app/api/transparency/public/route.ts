@@ -2,7 +2,7 @@ export const dynamic = "force-dynamic";
 export const runtime = "nodejs";
 
 import { NextResponse } from 'next/server';
-import { redis } from '@/lib/redis';
+import { redis } from '@/src/lib/redis';
 import { getTransparencySummary } from '@/lib/transparencyLogic';
 
 function clamp(n: number, min: number, max: number) {

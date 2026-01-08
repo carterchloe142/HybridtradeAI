@@ -4,7 +4,11 @@ import type { Redis as RedisType } from 'ioredis'
 // We assume if VERCEL env var is present, we are in build or production on Vercel.
 // We also allow explicit disabling via DISABLE_REDIS.
 const IS_VERCEL = !!process.env.VERCEL
-const DISABLE_REDIS = IS_VERCEL || process.env.DISABLE_REDIS === 'true'
+
+// STAGE 0: Force disable Redis
+const STAGE_0_DISABLE = true;
+
+const DISABLE_REDIS = IS_VERCEL || STAGE_0_DISABLE || process.env.DISABLE_REDIS === 'true'
 
 export const redisEnabled = !DISABLE_REDIS && Boolean(process.env.REDIS_URL)
 

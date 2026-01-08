@@ -273,7 +273,7 @@ export async function POST(req: NextRequest) {
       const { data: notif } = await supabase.from('Notification').insert({ userId: resolvedUserId, type: 'manual_credit', title: 'Manual Credit', message: `Your wallet was credited with ${amount.toFixed(2)} ${currency}`, read: false, createdAt: new Date().toISOString(), updatedAt: new Date().toISOString() }).select().single()
       if (notif) {
         try {
-            const { publish } = await import('../../../src/lib/sse')
+            const { publish } = await import('@/src/lib/sse')
             await publish(`user:${resolvedUserId}`, { id: notif.id, type: notif.type, title: notif.title, message: notif.message, createdAt: notif.createdAt || new Date().toISOString() })
         } catch {}
       }

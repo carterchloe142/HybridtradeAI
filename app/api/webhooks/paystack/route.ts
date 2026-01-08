@@ -4,8 +4,10 @@ import crypto from 'crypto'
 
 export const dynamic = "force-dynamic";
 export const runtime = "nodejs";
+const STAGE_0_DISABLE = true;
 
 export async function POST(req: NextRequest) {
+  if (STAGE_0_DISABLE) return new Response(JSON.stringify({ error: 'disabled' }), { status: 503 })
   try {
     if (!supabaseServer) return new Response(JSON.stringify({ error: 'server_configuration_error' }), { status: 500 })
     const supabase = supabaseServer
