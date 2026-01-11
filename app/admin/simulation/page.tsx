@@ -3,9 +3,9 @@
 export const dynamic = "force-dynamic";
 
 import { useState, useEffect } from 'react';
-import AdminGuard from '../../../components/AdminGuard';
+import AdminGuard from '@/components/AdminGuard';
 import { motion } from 'framer-motion';
-import { SimulationResult, MarketTicker, ScenarioOutcome } from '../../../src/lib/market-data/types';
+import { SimulationResult, MarketTicker, ScenarioOutcome } from '@/src/lib/market-data/types';
 
 export default function AdminSimulation() {
   const [result, setResult] = useState<SimulationResult | null>(null);

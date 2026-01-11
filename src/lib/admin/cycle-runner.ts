@@ -1,5 +1,5 @@
 
-import { supabaseServer } from '../supabaseServer';
+import { supabaseServer } from '@/src/lib/supabaseServer';
 import crypto from 'crypto';
 
 function addDays(dateStr: string, days: number) {

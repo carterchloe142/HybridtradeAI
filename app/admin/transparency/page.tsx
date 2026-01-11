@@ -1,7 +1,7 @@
 'use client'
 import useSWR from 'swr'
 import { useState, useEffect } from 'react'
-import AdminGuard from '../../../components/AdminGuard'
+import AdminGuard from '@/components/AdminGuard'
 import { authedFetcher, authedJson } from '@/lib/supabase'
 
 type Summary = {

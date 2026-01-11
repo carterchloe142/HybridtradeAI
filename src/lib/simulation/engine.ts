@@ -1,6 +1,6 @@
-import { supabaseServer } from '../supabaseServer';
-import { MarketDataService } from '../market-data/service';
-import { MarketTicker, RevenueStream, SimulationResult, ScenarioOutcome } from '../market-data/types';
+import { supabaseServer } from '@/src/lib/supabaseServer';
+import { MarketDataService } from '@/src/lib/market-data/service';
+import { MarketTicker, RevenueStream, SimulationResult, ScenarioOutcome } from '@/src/lib/market-data/types';
 
 // Define revenue streams and their correlation to market data
 const REVENUE_STREAMS: RevenueStream[] = [

@@ -1,7 +1,7 @@
 "use client";
 
 import { Moon, Sun } from 'lucide-react';
-import { useTheme } from './ThemeProvider';
+import { useTheme } from '@/components/ThemeProvider';
 
 type Size = 'sm' | 'md';
 

@@ -3,7 +3,7 @@
 export const dynamic = "force-dynamic";
 
 import { useState } from 'react';
-import AdminGuard from '../../../components/AdminGuard';
+import AdminGuard from '@/components/AdminGuard';
 import { supabase } from '@/lib/supabase';
 
 const defaultStreams = { trading: 0, copy_trading: 0, staking_yield: 0, ads_tasks: 0, ai: 0 };

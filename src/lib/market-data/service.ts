@@ -1,4 +1,4 @@
-import { MarketTicker } from './types';
+import { MarketTicker } from '@/src/lib/market-data/types';
 
 // Mock data for fallback or simulation
 const MOCK_TICKERS: MarketTicker[] = [

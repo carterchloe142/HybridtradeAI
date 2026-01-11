@@ -1,7 +1,7 @@
 "use client";
 
-import { ThemeProvider } from '../components/ThemeProvider';
-import { I18nProvider } from '../hooks/useI18n';
+import { ThemeProvider } from '@/components/ThemeProvider';
+import { I18nProvider } from '@/hooks/useI18n';
 import { SWRConfig } from 'swr';
 
 export function Providers({ children }: { children: React.ReactNode }) {

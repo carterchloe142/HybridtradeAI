@@ -1,9 +1,9 @@
 "use client"
 import { Bell } from 'lucide-react'
 import { useState } from 'react'
-import { useUserNotifications, useUnreadCount } from '../../src/hooks/useUserNotifications'
-import NotificationCenter from './NotificationCenter'
-import { useI18n } from '../../hooks/useI18n'
+import { useUserNotifications, useUnreadCount } from '@/src/hooks/useUserNotifications'
+import NotificationCenter from '@/app/components/NotificationCenter'
+import { useI18n } from '@/hooks/useI18n'
 
 type Props = { variant?: 'user' | 'admin' }
 

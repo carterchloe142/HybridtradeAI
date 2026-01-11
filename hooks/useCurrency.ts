@@ -1,5 +1,5 @@
 import { useMemo, useState, useEffect } from 'react';
-import type { Balance } from '../types';
+import type { Balance } from '@/types';
 
 const staticRates: Record<string, number> = {
   USD: 1,

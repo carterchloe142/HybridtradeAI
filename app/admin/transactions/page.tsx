@@ -3,7 +3,7 @@
 export const dynamic = "force-dynamic";
 
 import { useEffect, useState } from 'react';
-import AdminGuard from '../../../components/AdminGuard';
+import AdminGuard from '@/components/AdminGuard';
 import { supabase } from '@/lib/supabase';
 
 type Tx = {

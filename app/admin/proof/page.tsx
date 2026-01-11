@@ -3,7 +3,7 @@
 export const dynamic = "force-dynamic";
 
 import { useEffect, useMemo, useState } from 'react';
-import AdminGuard from '../../../components/AdminGuard';
+import AdminGuard from '@/components/AdminGuard';
 
 type Summary = {
   reserveBuffer: { currentAmount: number; totalAUM: number; updatedAt: string | null }

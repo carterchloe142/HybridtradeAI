@@ -1,7 +1,7 @@
 'use client'
 import useSWR from 'swr'
-import { useI18n } from '../../../../hooks/useI18n'
-import AdminPresence from '../../../../components/AdminPresence'
+import { useI18n } from '@/hooks/useI18n'
+import AdminPresence from '@/components/AdminPresence'
 import { authedFetcher } from '@/lib/supabase'
 
 export default function AdminStatusPage() {

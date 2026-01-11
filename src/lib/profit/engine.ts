@@ -1,7 +1,7 @@
 import { supabaseServer } from '@lib/supabaseServer'
 import { publish } from '@lib/sse'
 import * as Sentry from '@sentry/node'
-import { logInfo, logError } from '../observability/logger'
+import { logInfo, logError } from '@/src/lib/observability/logger'
 import crypto from 'crypto'
 
 type BaselineInput = { weekEnding: string | Date; dryRun?: boolean }

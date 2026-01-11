@@ -1,5 +1,5 @@
 import { NextRequest } from 'next/server'
-import { supabaseServer } from './supabaseServer'
+import { supabaseServer } from '@/src/lib/supabaseServer'
 import { headers } from 'next/headers'
 
 export async function requireRole(role: 'USER' | 'ADMIN', req?: NextRequest) {

@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
 import Link from 'next/link';
-import { SimulationResult } from '../src/lib/market-data/types';
+import { SimulationResult } from '@/src/lib/market-data/types';
 import { Activity, TrendingUp, TrendingDown, Shield } from 'lucide-react';
 import { motion } from 'framer-motion';
 

@@ -3,7 +3,7 @@
 export const dynamic = "force-dynamic";
 
 import Link from 'next/link'
-import { useI18n } from '../../hooks/useI18n'
+import { useI18n } from '@/hooks/useI18n'
 import { usePathname } from 'next/navigation'
 
 export default function FAQs() {

@@ -1,6 +1,6 @@
 import React from 'react';
 import { motion } from 'framer-motion';
-import { Plan } from '../types';
+import { Plan } from '@/types';
 
 type Props = {
   plan: Plan;

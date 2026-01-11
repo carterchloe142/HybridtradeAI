@@ -1,4 +1,4 @@
-import type { Balance, Plan } from '../types';
+import type { Balance, Plan } from '@/types';
 
 export const PLANS: Plan[] = [
   {

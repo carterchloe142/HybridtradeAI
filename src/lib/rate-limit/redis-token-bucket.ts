@@ -58,7 +58,7 @@ export function createTokenBucket(opts: Options) {
   return { allow }
 }
 
-import { redis } from '../redis'
+import { redis } from '@/src/lib/redis'
 
 export const adminRateLimit = createTokenBucket({
   redis,

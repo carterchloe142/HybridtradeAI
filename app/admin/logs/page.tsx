@@ -3,7 +3,7 @@
 export const dynamic = "force-dynamic";
 
 import { useCallback, useEffect, useState } from 'react';
-import AdminGuard from '../../../components/AdminGuard';
+import AdminGuard from '@/components/AdminGuard';
 
 type LogItem = { id: string; type: string; title?: string; message?: string; createdAt?: string };
 

@@ -1,5 +1,5 @@
 import Link from 'next/link';
-import { ADMIN_MENU } from '../config/adminMenu';
+import { ADMIN_MENU } from '@/config/adminMenu';
 
 export default function AdminSidebar() {
   return (

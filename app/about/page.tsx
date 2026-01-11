@@ -3,7 +3,7 @@ import Link from 'next/link'
 import dynamic from 'next/dynamic'
 import { motion } from 'framer-motion'
 import Head from 'next/head'
-import { useI18n } from '../../hooks/useI18n'
+import { useI18n } from '@/hooks/useI18n'
 import { usePathname } from 'next/navigation'
 import TiltCard from '@/components/ui/TiltCard'
 

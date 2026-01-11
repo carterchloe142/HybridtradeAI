@@ -3,9 +3,9 @@
 export const dynamic = "force-dynamic";
 
 import { useEffect, useState } from 'react';
-import AdminGuard from '../../../components/AdminGuard';
-import AdminNavbar from '../../../components/AdminNavbar';
-import AdminSidebar from '../../../components/AdminSidebar';
+import AdminGuard from '@/components/AdminGuard';
+import AdminNavbar from '@/components/AdminNavbar';
+import AdminSidebar from '@/components/AdminSidebar';
 import { supabase } from '@/lib/supabase';
 
 type AdminProfile = { user_id: string; role?: string | null; is_admin?: boolean | null };

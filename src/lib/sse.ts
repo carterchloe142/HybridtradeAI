@@ -1,5 +1,5 @@
 import type Redis from 'ioredis'
-import { pub, sub, redisEnabled } from './redis'
+import { pub, sub, redisEnabled } from '@/src/lib/redis'
 
 export async function publish(channel: string, payload: unknown) {
   const data = JSON.stringify(payload)

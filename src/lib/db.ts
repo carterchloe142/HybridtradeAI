@@ -1,4 +1,4 @@
-import { supabase } from './supabase'
+import { supabase } from '@/src/lib/supabase'
 
 type SupabaseErrorLike = { message?: string; code?: string } | null | undefined
 

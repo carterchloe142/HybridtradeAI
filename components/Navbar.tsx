@@ -3,10 +3,10 @@ import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 import { useEffect, useMemo, useState } from 'react';
 import { Menu, X, ShieldCheck, ShieldAlert, ShieldX, IdCard } from 'lucide-react';
-import NotificationBell from '../app/components/NotificationBell';
+import NotificationBell from '@/app/components/NotificationBell';
 import { supabase } from '@/lib/supabase';
-import ThemeToggle from './ThemeToggle';
-import LogoMark from './LogoMark';
+import ThemeToggle from '@/components/ThemeToggle';
+import LogoMark from '@/components/LogoMark';
 
 export default function Navbar ()
 {

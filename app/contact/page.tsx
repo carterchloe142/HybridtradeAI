@@ -1,6 +1,6 @@
 "use client"
 import Head from 'next/head'
-import { useI18n } from '../../hooks/useI18n'
+import { useI18n } from '@/hooks/useI18n'
 import { usePathname } from 'next/navigation'
 
 export default function ContactPage() {

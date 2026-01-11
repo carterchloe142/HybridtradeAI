@@ -1,5 +1,5 @@
-import { supabaseServer } from '../supabaseServer';
-import { SimulationEngine } from './engine';
+import { supabaseServer } from '@/src/lib/supabaseServer';
+import { SimulationEngine } from '@/src/lib/simulation/engine';
 
 export interface DailyPerformance {
   day: number;

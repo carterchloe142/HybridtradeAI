@@ -15,7 +15,7 @@ function logToRedis(client: any, jobId: string, entry: any) {
 }
 
 async function processJob(job: Job) {
-  const { createClient } = await import('../lib/redis')
+  const { createClient } = await import('@/src/lib/redis')
   const client = createClient()
   const jobId = String(job.id)
   try {
@@ -24,7 +24,7 @@ async function processJob(job: Job) {
     const globalNotificationId = job.data?.globalNotificationId
     if (!globalNotificationId) throw new Error('missing globalNotificationId')
 
-    const { supabaseServer: _supabaseServer } = await import('../lib/supabaseServer')
+    const { supabaseServer: _supabaseServer } = await import('@/src/lib/supabaseServer')
     if (!_supabaseServer) throw new Error('Supabase not configured')
     const supabaseServer = _supabaseServer
     
@@ -89,7 +89,7 @@ async function processJob(job: Job) {
 
       if (!users.length) break
 
-      const { publish } = await import('../lib/sse')
+      const { publish } = await import('@/src/lib/sse')
       
       for (const u of users) {
         // 3. Create Notification

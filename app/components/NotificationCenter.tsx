@@ -1,7 +1,7 @@
 "use client"
 import { useMemo, useState } from 'react'
-import { useUserNotifications } from '../../src/hooks/useUserNotifications'
-import { useI18n } from '../../hooks/useI18n'
+import { useUserNotifications } from '@/src/hooks/useUserNotifications'
+import { useI18n } from '@/hooks/useI18n'
 
 export default function NotificationCenter() {
   const { t } = useI18n()

@@ -1,4 +1,4 @@
-import { PrismaClient } from '../../lib/generated/prisma/client';
+import { PrismaClient } from '@/lib/generated/prisma/client';
 
 const IS_BUILD = process.env.VERCEL_ENV === "production" && process.env.NEXT_PHASE === "phase-production-build";
 

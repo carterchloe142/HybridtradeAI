@@ -1,8 +1,8 @@
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 import { LayoutGrid, Wallet, User2, Activity, LifeBuoy } from 'lucide-react';
-import { useI18n } from '../hooks/useI18n'
-import { useUserNotifications } from '../src/hooks/useUserNotifications'
+import { useI18n } from '@/hooks/useI18n'
+import { useUserNotifications } from '@/src/hooks/useUserNotifications'
 
 const itemsBase = [
   { href: '/dashboard', key: 'nav_dashboard', icon: LayoutGrid },

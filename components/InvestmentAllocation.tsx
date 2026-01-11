@@ -1,7 +1,7 @@
 import { Doughnut } from 'react-chartjs-2';
 import { Chart as ChartJS, ArcElement, Tooltip, Legend } from 'chart.js';
 import { planConfig } from '@/config/planConfig';
-import { useTheme } from './ThemeProvider';
+import { useTheme } from '@/components/ThemeProvider';
 import { PieChart, Activity, Zap, Layers } from 'lucide-react';
 import { useMemo } from 'react';
 
