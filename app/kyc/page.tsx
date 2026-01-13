@@ -5,8 +5,11 @@ export const dynamic = "force-dynamic";
 import { useEffect, useState } from 'react'
 import RequireAuth from '@/components/RequireAuth'
 import { supabase } from '@/lib/supabase'
-import { User as UserIcon, IdCard, Camera, CheckCircle } from 'lucide-react'
+import { User as UserIcon, IdCard, Camera, CheckCircle, ArrowLeft } from 'lucide-react'
 import { useI18n } from '@/hooks/useI18n'
+import FuturisticBackground from '@/components/ui/FuturisticBackground'
+import { motion } from 'framer-motion'
+import Link from 'next/link'
 
 type Profile = { user_id: string; email?: string; kyc_status?: 'pending'|'approved'|'rejected'|null; kyc_level?: number; kyc_submitted_at?: string|null }
 
@@ -342,122 +345,162 @@ export default function KycPage() {
 
   return (
     <RequireAuth>
-      <div className="min-h-screen bg-background py-10 px-4">
-        <div className="max-w-2xl mx-auto">
-          <div className="flex items-center gap-3 mb-4">
-            <div className="h-10 w-10 rounded-full bg-primary text-primary-foreground flex items-center justify-center">
-              <IdCard className="h-5 w-5" />
-            </div>
+      <FuturisticBackground />
+      <div className="relative min-h-screen pt-24 pb-12 px-4 sm:px-6">
+        <div className="max-w-3xl mx-auto space-y-6">
+          <motion.div 
+            initial={{ opacity: 0, x: -20 }}
+            animate={{ opacity: 1, x: 0 }}
+            className="flex items-center gap-4"
+          >
+            <Link href="/dashboard" className="p-2 rounded-xl bg-card/40 border border-border/10 hover:bg-accent/10 transition-all text-muted-foreground hover:text-foreground backdrop-blur-md group">
+              <ArrowLeft size={20} className="group-hover:-translate-x-1 transition-transform" />
+            </Link>
             <div>
-              <h1 className="text-2xl font-semibold text-foreground">{t('kyc_title')}</h1>
-              <p className="text-sm text-muted-foreground">{t('kyc_subtitle')}</p>
+              <h1 className="text-3xl font-bold text-foreground flex items-center gap-3">
+                {t('kyc_title')}
+              </h1>
+              <p className="text-muted-foreground mt-1">{t('kyc_subtitle')}</p>
             </div>
-          </div>
-          {msg && <p className={`mb-3 text-sm ${status==='approved' ? 'text-success' : status==='rejected' ? 'text-destructive' : 'text-primary'}`}>{msg}</p>}
-          <div className="rounded-2xl shadow-xl border border-border p-6 space-y-4 bg-card text-card-foreground">
-            <p className="text-sm flex flex-wrap items-center gap-2">
-              {t('status_label')}
-              <span className={`px-2 py-1 rounded text-xs capitalize ${status==='approved'?'bg-success/10 text-success':status==='rejected'?'bg-destructive/10 text-destructive':'bg-warning/10 text-warning'}`}>{status}</span>
+          </motion.div>
+
+          {msg && (
+            <motion.div 
+              initial={{ opacity: 0, height: 0 }}
+              animate={{ opacity: 1, height: 'auto' }}
+              className={`mb-3 text-sm px-4 py-3 rounded-xl border ${status==='approved' ? 'bg-green-500/10 text-green-500 border-green-500/20' : status==='rejected' ? 'bg-red-500/10 text-red-500 border-red-500/20' : 'bg-primary/10 text-primary border-primary/20'}`}
+            >
+              {msg}
+            </motion.div>
+          )}
+
+          <motion.div 
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ delay: 0.1 }}
+            className="rounded-3xl shadow-xl border border-border/10 p-8 space-y-6 bg-card/40 backdrop-blur-xl"
+          >
+            <div className="text-sm flex flex-wrap items-center gap-3 pb-6 border-b border-border/10">
+              <span className="text-muted-foreground font-medium">{t('status_label')}</span>
+              <span className={`px-3 py-1 rounded-full text-xs font-semibold capitalize ${status==='approved'?'bg-emerald-500/10 text-emerald-500 border border-emerald-500/20':status==='rejected'?'bg-destructive/10 text-destructive border border-destructive/20':'bg-yellow-500/10 text-yellow-500 border border-yellow-500/20'}`}>{status}</span>
               {typeof profile?.kyc_level === 'number' && (
-                <span className="text-xs text-muted-foreground">
-                  • {t('kyc_level_label')} {profile.kyc_level}
+                <span className="text-xs text-muted-foreground ml-auto bg-muted/50 px-3 py-1 rounded-full border border-border/10">
+                  {t('kyc_level_label')} {profile.kyc_level}
                 </span>
               )}
-            </p>
-            {submittedAt && <p className="text-sm text-muted-foreground">{t('submitted_label')} {submittedAt}</p>}
-          <div className="flex items-center justify-between">
-            <div className="flex items-center gap-3">
-              <div className={`h-8 w-8 rounded-full flex items-center justify-center ${step>=1? 'bg-primary text-primary-foreground' : 'bg-muted text-muted-foreground'}`}><UserIcon className="h-4 w-4" /></div>
-              <div className={`h-1 w-10 rounded ${step>=2? 'bg-primary' : 'bg-muted'}`} />
-              <div className={`h-8 w-8 rounded-full flex items-center justify-center ${step>=2? 'bg-primary text-primary-foreground' : 'bg-muted text-muted-foreground'}`}><IdCard className="h-4 w-4" /></div>
-              <div className={`h-1 w-10 rounded ${step>=3? 'bg-primary' : 'bg-muted'}`} />
-              <div className={`h-8 w-8 rounded-full flex items-center justify-center ${step>=3? 'bg-primary text-primary-foreground' : 'bg-muted text-muted-foreground'}`}><Camera className="h-4 w-4" /></div>
-              <div className={`h-1 w-10 rounded ${step>=4? 'bg-primary' : 'bg-muted'}`} />
-              <div className={`h-8 w-8 rounded-full flex items-center justify-center ${step>=4? 'bg-primary text-primary-foreground' : 'bg-muted text-muted-foreground'}`}><CheckCircle className="h-4 w-4" /></div>
             </div>
-            <div className="text-xs text-muted-foreground">{t('step_of', { step, total: 4 })}</div>
+            {submittedAt && <p className="text-sm text-muted-foreground">{t('submitted_label')} {submittedAt}</p>}
+          
+          <div className="flex items-center justify-between px-2">
+            <div className="flex items-center gap-3 w-full max-w-md justify-between">
+              <div className={`relative z-10 h-10 w-10 rounded-full flex items-center justify-center transition-all ${step>=1? 'bg-primary text-primary-foreground shadow-[0_0_15px_rgba(0,229,255,0.4)]' : 'bg-muted text-muted-foreground'}`}><UserIcon className="h-5 w-5" /></div>
+              <div className={`flex-1 h-1 rounded transition-all mx-2 ${step>=2? 'bg-primary' : 'bg-muted/50'}`} />
+              <div className={`relative z-10 h-10 w-10 rounded-full flex items-center justify-center transition-all ${step>=2? 'bg-primary text-primary-foreground shadow-[0_0_15px_rgba(0,229,255,0.4)]' : 'bg-muted text-muted-foreground'}`}><IdCard className="h-5 w-5" /></div>
+              <div className={`flex-1 h-1 rounded transition-all mx-2 ${step>=3? 'bg-primary' : 'bg-muted/50'}`} />
+              <div className={`relative z-10 h-10 w-10 rounded-full flex items-center justify-center transition-all ${step>=3? 'bg-primary text-primary-foreground shadow-[0_0_15px_rgba(0,229,255,0.4)]' : 'bg-muted text-muted-foreground'}`}><Camera className="h-5 w-5" /></div>
+              <div className={`flex-1 h-1 rounded transition-all mx-2 ${step>=4? 'bg-primary' : 'bg-muted/50'}`} />
+              <div className={`relative z-10 h-10 w-10 rounded-full flex items-center justify-center transition-all ${step>=4? 'bg-primary text-primary-foreground shadow-[0_0_15px_rgba(0,229,255,0.4)]' : 'bg-muted text-muted-foreground'}`}><CheckCircle className="h-5 w-5" /></div>
+            </div>
+            <div className="text-xs text-muted-foreground font-medium hidden sm:block">{t('step_of', { step, total: 4 })}</div>
           </div>
+          
+          <div className="pt-4">
           {step===1 && (
-            <>
+            <motion.div initial={{ opacity: 0, x: 20 }} animate={{ opacity: 1, x: 0 }} className="space-y-4">
               <label className="block text-sm font-medium text-foreground">{t('full_name_label')}</label>
-              <input value={fullName} onChange={(e) => setFullName(e.target.value)} className="border border-input rounded px-3 py-2 w-full bg-background text-foreground placeholder-muted-foreground focus:outline-none focus:ring-2 focus:ring-primary" placeholder="John Doe" />
+              <input value={fullName} onChange={(e) => setFullName(e.target.value)} className="border border-border/10 rounded-xl px-4 py-3 w-full bg-background/50 text-foreground placeholder-muted-foreground focus:outline-none focus:ring-2 focus:ring-primary/50 transition-all" placeholder="John Doe" />
               <label className="block text-sm font-medium text-foreground">{t('dob_label')}</label>
-              <input value={dob} onChange={(e) => setDob(e.target.value)} className="border border-input rounded px-3 py-2 w-full bg-background text-foreground focus:outline-none focus:ring-2 focus:ring-primary" type="date" />
+              <input value={dob} onChange={(e) => setDob(e.target.value)} className="border border-border/10 rounded-xl px-4 py-3 w-full bg-background/50 text-foreground focus:outline-none focus:ring-2 focus:ring-primary/50 transition-all" type="date" />
               <label className="block text-sm font-medium text-foreground">{t('address_label')}</label>
-              <input value={address} onChange={(e) => setAddress(e.target.value)} className="border border-input rounded px-3 py-2 w-full bg-background text-foreground placeholder-muted-foreground focus:outline-none focus:ring-2 focus:ring-primary" placeholder="Street, City, Country" />
+              <input value={address} onChange={(e) => setAddress(e.target.value)} className="border border-border/10 rounded-xl px-4 py-3 w-full bg-background/50 text-foreground placeholder-muted-foreground focus:outline-none focus:ring-2 focus:ring-primary/50 transition-all" placeholder="Street, City, Country" />
               <label className="block text-sm font-medium text-foreground">{t('kyc_level_label')}</label>
-              <select value={level} onChange={(e) => setLevel(Number(e.target.value))} className="border border-input rounded px-3 py-2 bg-background text-foreground focus:outline-none focus:ring-2 focus:ring-primary">
-                {[1,2,3].map(l => <option key={l} value={l}>{t('level_value', { l })}</option>)}
-              </select>
-              <div className="flex gap-2">
-                <button onClick={() => setStep(2)} className="bg-primary hover:bg-primary/90 transition text-primary-foreground rounded-lg px-4 py-2">{t('next')}</button>
+              <div className="relative">
+                <select value={level} onChange={(e) => setLevel(Number(e.target.value))} className="appearance-none border border-border/10 rounded-xl px-4 py-3 w-full bg-background/50 text-foreground focus:outline-none focus:ring-2 focus:ring-primary/50 transition-all">
+                    {[1,2,3].map(l => <option key={l} value={l} className="bg-background text-foreground">{t('level_value', { l })}</option>)}
+                </select>
+                <div className="pointer-events-none absolute inset-y-0 right-0 flex items-center px-4 text-muted-foreground">
+                    <svg className="h-4 w-4 fill-current" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20"><path d="M9.293 12.95l.707.707L15.657 8l-1.414-1.414L10 10.828 5.757 6.586 4.343 8z"/></svg>
+                </div>
               </div>
-            </>
+              <div className="flex gap-2 pt-4">
+                <button onClick={() => setStep(2)} className="bg-primary hover:bg-primary/90 transition text-primary-foreground rounded-xl px-6 py-3 font-semibold shadow-lg hover:shadow-primary/20">{t('next')}</button>
+              </div>
+            </motion.div>
           )}
           {step===2 && (
-            <>
+            <motion.div initial={{ opacity: 0, x: 20 }} animate={{ opacity: 1, x: 0 }} className="space-y-4">
               <label className="block text-sm font-medium text-foreground">{t('gov_id_type_label')}</label>
               <div className="grid grid-cols-2 gap-2">
                 <div>
-                  <label className="block text-xs text-foreground">{t('country_label')}</label>
-                  <select
-                    value={country}
-                    onChange={(e) => {
-                      const next = e.target.value
-                      setCountry(next)
-                      const first = countrySchemas[next]?.idTypes[0]?.value
-                      if (first) setIdType(first)
-                    }}
-                    className="border border-input rounded px-3 py-2 w-full bg-background text-foreground focus:outline-none focus:ring-2 focus:ring-primary"
-                  >
-                    {Object.keys(countrySchemas).map((c) => (<option key={c} value={c}>{countrySchemas[c].name}</option>))}
-                  </select>
+                  <label className="block text-xs text-foreground mb-1">{t('country_label')}</label>
+                  <div className="relative">
+                    <select
+                      value={country}
+                      onChange={(e) => {
+                        const next = e.target.value
+                        setCountry(next)
+                        const first = countrySchemas[next]?.idTypes[0]?.value
+                        if (first) setIdType(first)
+                      }}
+                      className="appearance-none border border-border/10 rounded-xl px-4 py-3 w-full bg-background/50 text-foreground focus:outline-none focus:ring-2 focus:ring-primary/50 transition-all"
+                    >
+                      {Object.keys(countrySchemas).map((c) => (<option key={c} value={c} className="bg-background text-foreground">{countrySchemas[c].name}</option>))}
+                    </select>
+                    <div className="pointer-events-none absolute inset-y-0 right-0 flex items-center px-4 text-muted-foreground">
+                        <svg className="h-4 w-4 fill-current" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20"><path d="M9.293 12.95l.707.707L15.657 8l-1.414-1.414L10 10.828 5.757 6.586 4.343 8z"/></svg>
+                    </div>
+                  </div>
                 </div>
                 <div>
-                  <label className="block text-xs text-foreground">{t('id_type_label')}</label>
-                  <select value={idType} onChange={(e) => setIdType(e.target.value)} className="border border-input rounded px-3 py-2 w-full bg-background text-foreground focus:outline-none focus:ring-2 focus:ring-primary">
-                    {(countrySchemas[country]?.idTypes || []).map((t) => (<option key={t.value} value={t.value}>{t.label}</option>))}
-                  </select>
+                  <label className="block text-xs text-foreground mb-1">{t('id_type_label')}</label>
+                  <div className="relative">
+                    <select value={idType} onChange={(e) => setIdType(e.target.value)} className="appearance-none border border-border/10 rounded-xl px-4 py-3 w-full bg-background/50 text-foreground focus:outline-none focus:ring-2 focus:ring-primary/50 transition-all">
+                      {(countrySchemas[country]?.idTypes || []).map((t) => (<option key={t.value} value={t.value} className="bg-background text-foreground">{t.label}</option>))}
+                    </select>
+                    <div className="pointer-events-none absolute inset-y-0 right-0 flex items-center px-4 text-muted-foreground">
+                        <svg className="h-4 w-4 fill-current" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20"><path d="M9.293 12.95l.707.707L15.657 8l-1.414-1.414L10 10.828 5.757 6.586 4.343 8z"/></svg>
+                    </div>
+                  </div>
                 </div>
               </div>
               <label className="block text-sm font-medium text-foreground">{t('gov_id_number_label')}</label>
-              <input value={idNumber} onChange={(e) => setIdNumber(e.target.value)} className="border border-input rounded px-3 py-2 w-full bg-background text-foreground placeholder-muted-foreground focus:outline-none focus:ring-2 focus:ring-primary" placeholder="ID Number" />
+              <input value={idNumber} onChange={(e) => setIdNumber(e.target.value)} className="border border-border/10 rounded-xl px-4 py-3 w-full bg-background/50 text-foreground placeholder-muted-foreground focus:outline-none focus:ring-2 focus:ring-primary/50 transition-all" placeholder="ID Number" />
               <label className="block text-sm font-medium text-foreground">{t('id_expiry_label')}</label>
-              <input value={idExpiry} onChange={(e) => setIdExpiry(e.target.value)} className="border border-input rounded px-3 py-2 w-full bg-background text-foreground focus:outline-none focus:ring-2 focus:ring-primary" type="date" />
+              <input value={idExpiry} onChange={(e) => setIdExpiry(e.target.value)} className="border border-border/10 rounded-xl px-4 py-3 w-full bg-background/50 text-foreground focus:outline-none focus:ring-2 focus:ring-primary/50 transition-all" type="date" />
               <label className="block text-sm font-medium text-foreground">{t('upload_gov_id_label')}</label>
-              <div className="border-2 border-dashed border-border rounded-lg p-4 text-center">
-                <input onChange={(e) => setIdFile(e.target.files?.[0] || null)} className="w-full text-foreground" type="file" accept="image/*,application/pdf" />
-                <p className="text-xs text-muted-foreground mt-1">{t('accepted_files_note')}</p>
+              <div className="border-2 border-dashed border-border/20 rounded-xl p-8 text-center hover:bg-accent/5 transition-all">
+                <input onChange={(e) => setIdFile(e.target.files?.[0] || null)} className="w-full text-foreground file:mr-4 file:py-2 file:px-4 file:rounded-full file:border-0 file:text-sm file:font-semibold file:bg-primary/10 file:text-primary hover:file:bg-primary/20" type="file" accept="image/*,application/pdf" />
+                <p className="text-xs text-muted-foreground mt-2">{t('accepted_files_note')}</p>
               </div>
-              <div className="flex gap-2">
-                <button onClick={() => setStep(1)} className="border border-input text-primary rounded-lg px-4 py-2 hover:bg-accent hover:text-accent-foreground">{t('back')}</button>
-                <button onClick={() => setStep(3)} className="bg-primary hover:bg-primary/90 transition text-primary-foreground rounded-lg px-4 py-2">{t('next')}</button>
+              <div className="flex gap-2 pt-4">
+                <button onClick={() => setStep(1)} className="border border-border/10 bg-muted/50 text-muted-foreground rounded-xl px-6 py-3 font-medium hover:bg-accent/50 hover:text-foreground transition-all">{t('back')}</button>
+                <button onClick={() => setStep(3)} className="bg-primary hover:bg-primary/90 transition text-primary-foreground rounded-xl px-6 py-3 font-semibold shadow-lg hover:shadow-primary/20">{t('next')}</button>
               </div>
-            </>
+            </motion.div>
           )}
           {step===3 && (
-            <>
+            <motion.div initial={{ opacity: 0, x: 20 }} animate={{ opacity: 1, x: 0 }} className="space-y-4">
               <label className="block text-sm font-medium text-foreground">{t('selfie_liveness_label')}</label>
-              <p className="text-xs text-muted-foreground mb-2">
+              <p className="text-xs text-muted-foreground mb-4 bg-primary/5 p-3 rounded-lg border border-primary/10">
                 {t('selfie_instructions')}
               </p>
-              <div className="flex flex-col md:flex-row gap-4">
-                <div className="flex-1 space-y-2">
+              <div className="flex flex-col md:flex-row gap-6">
+                <div className="flex-1 space-y-3">
                   <div className="flex items-center justify-between mb-2">
                     <button
                       type="button"
                       onClick={() => setCameraOn((v) => !v)}
-                      className="bg-primary text-primary-foreground rounded px-4 py-2 text-sm hover:opacity-90"
+                      className="bg-primary text-primary-foreground rounded-lg px-4 py-2 text-sm hover:opacity-90 font-medium shadow-md"
                     >
                       {cameraOn ? t('stop_camera') : t('start_camera')}
                     </button>
-                    <span className="text-xs text-muted-foreground">
+                    <span className="text-xs text-muted-foreground bg-muted/30 px-2 py-1 rounded">
                       {cameraOn ? t('camera_on') : t('camera_off')}
                     </span>
                   </div>
                   <video
                     id="kyc-selfie-video"
-                    className="w-full rounded-lg border border-border shadow-sm bg-black/5"
+                    className="w-full rounded-xl border border-border/20 shadow-lg bg-black/40 aspect-video object-cover"
                     autoPlay
                     muted
                     playsInline
@@ -467,11 +510,11 @@ export default function KycPage() {
                       type="button"
                       disabled={autoCaptureRunning}
                       onClick={runAutoCapture}
-                      className="bg-secondary text-secondary-foreground rounded px-4 py-2 text-sm disabled:opacity-60 hover:opacity-90"
+                      className="bg-secondary text-secondary-foreground rounded-lg px-4 py-2 text-sm disabled:opacity-60 hover:opacity-90 font-medium w-full md:w-auto"
                     >
                       {autoCaptureRunning ? t('capturing') : t('auto_capture')}
                     </button>
-                    <span className="text-xs text-muted-foreground text-right">
+                    <span className="text-xs text-muted-foreground text-right font-mono">
                       {autoCaptureStep
                         ? `${autoCaptureStep}${autoCountdown !== null ? ` • ${t('countdown')} ${autoCountdown}` : ''}`
                         : t('auto_capture_hint')}
@@ -479,85 +522,85 @@ export default function KycPage() {
                   </div>
                 </div>
                 <div className="flex-1 space-y-3">
-                  <div className="border border-border rounded-lg p-3 space-y-2">
+                  <div className="border border-border/10 rounded-xl p-4 space-y-2 bg-background/30 backdrop-blur-sm">
                     <div className="flex items-center justify-between">
                       <span className="text-sm font-medium text-foreground">{t('capture_neutral')}</span>
-                      {selfieNeutral && <span className="text-xs text-success">{t('captured')}</span>}
+                      {selfieNeutral && <span className="text-xs text-emerald-500 font-bold bg-emerald-500/10 px-2 py-0.5 rounded border border-emerald-500/20">{t('captured')}</span>}
                     </div>
-                    <div className="flex gap-2">
+                    <div className="flex gap-2 flex-col sm:flex-row">
                       <button
                         type="button"
                         onClick={async () => { const f = await captureToFile('selfie_neutral.jpg'); if (f) setSelfieNeutral(f) }}
-                        className="border border-input rounded-lg px-3 py-1 text-sm hover:bg-accent hover:text-accent-foreground"
+                        className="border border-border/10 bg-muted/30 rounded-lg px-3 py-1.5 text-sm hover:bg-primary/10 hover:text-primary hover:border-primary/20 transition-all"
                       >
                         {t('use_camera')}
                       </button>
                       <input
                         onChange={(e) => setSelfieNeutral(e.target.files?.[0] || null)}
-                        className="border border-input rounded px-3 py-1 text-xs text-foreground"
+                        className="border border-border/10 rounded-lg px-3 py-1.5 text-xs text-foreground bg-background/50"
                         type="file"
                         accept="image/*"
                       />
                     </div>
                   </div>
-                  <div className="border border-border rounded-lg p-3 space-y-2">
+                  <div className="border border-border/10 rounded-xl p-4 space-y-2 bg-background/30 backdrop-blur-sm">
                     <div className="flex items-center justify-between">
                       <span className="text-sm font-medium text-foreground">{t('capture_smile')}</span>
-                      {selfieSmile && <span className="text-xs text-success">{t('captured')}</span>}
+                      {selfieSmile && <span className="text-xs text-emerald-500 font-bold bg-emerald-500/10 px-2 py-0.5 rounded border border-emerald-500/20">{t('captured')}</span>}
                     </div>
-                    <div className="flex gap-2">
+                    <div className="flex gap-2 flex-col sm:flex-row">
                       <button
                         type="button"
                         onClick={async () => { const f = await captureToFile('selfie_smile.jpg'); if (f) setSelfieSmile(f) }}
-                        className="border border-input rounded-lg px-3 py-1 text-sm hover:bg-accent hover:text-accent-foreground"
+                        className="border border-border/10 bg-muted/30 rounded-lg px-3 py-1.5 text-sm hover:bg-primary/10 hover:text-primary hover:border-primary/20 transition-all"
                       >
                         {t('use_camera')}
                       </button>
                       <input
                         onChange={(e) => setSelfieSmile(e.target.files?.[0] || null)}
-                        className="border border-input rounded px-3 py-1 text-xs text-foreground"
+                        className="border border-border/10 rounded-lg px-3 py-1.5 text-xs text-foreground bg-background/50"
                         type="file"
                         accept="image/*"
                       />
                     </div>
                   </div>
-                  <div className="border border-border rounded-lg p-3 space-y-2">
+                  <div className="border border-border/10 rounded-xl p-4 space-y-2 bg-background/30 backdrop-blur-sm">
                     <div className="flex items-center justify-between">
                       <span className="text-sm font-medium text-foreground">{t('capture_left')}</span>
-                      {selfieLeft && <span className="text-xs text-success">{t('captured')}</span>}
+                      {selfieLeft && <span className="text-xs text-emerald-500 font-bold bg-emerald-500/10 px-2 py-0.5 rounded border border-emerald-500/20">{t('captured')}</span>}
                     </div>
-                    <div className="flex gap-2">
+                    <div className="flex gap-2 flex-col sm:flex-row">
                       <button
                         type="button"
                         onClick={async () => { const f = await captureToFile('selfie_left.jpg'); if (f) setSelfieLeft(f) }}
-                        className="border border-input rounded-lg px-3 py-1 text-sm hover:bg-accent hover:text-accent-foreground"
+                        className="border border-border/10 bg-muted/30 rounded-lg px-3 py-1.5 text-sm hover:bg-primary/10 hover:text-primary hover:border-primary/20 transition-all"
                       >
                         {t('use_camera')}
                       </button>
                       <input
                         onChange={(e) => setSelfieLeft(e.target.files?.[0] || null)}
-                        className="border border-input rounded px-3 py-1 text-xs text-foreground"
+                        className="border border-border/10 rounded-lg px-3 py-1.5 text-xs text-foreground bg-background/50"
                         type="file"
                         accept="image/*"
                       />
                     </div>
                   </div>
-                  <div className="border border-border rounded-lg p-3 space-y-2">
+                  <div className="border border-border/10 rounded-xl p-4 space-y-2 bg-background/30 backdrop-blur-sm">
                     <div className="flex items-center justify-between">
                       <span className="text-sm font-medium text-foreground">{t('capture_right')}</span>
-                      {selfieRight && <span className="text-xs text-success">{t('captured')}</span>}
+                      {selfieRight && <span className="text-xs text-emerald-500 font-bold bg-emerald-500/10 px-2 py-0.5 rounded border border-emerald-500/20">{t('captured')}</span>}
                     </div>
-                    <div className="flex gap-2">
+                    <div className="flex gap-2 flex-col sm:flex-row">
                       <button
                         type="button"
                         onClick={async () => { const f = await captureToFile('selfie_right.jpg'); if (f) setSelfieRight(f) }}
-                        className="border border-input rounded-lg px-3 py-1 text-sm hover:bg-accent hover:text-accent-foreground"
+                        className="border border-border/10 bg-muted/30 rounded-lg px-3 py-1.5 text-sm hover:bg-primary/10 hover:text-primary hover:border-primary/20 transition-all"
                       >
                         {t('use_camera')}
                       </button>
                       <input
                         onChange={(e) => setSelfieRight(e.target.files?.[0] || null)}
-                        className="border border-input rounded px-3 py-1 text-xs text-foreground"
+                        className="border border-border/10 rounded-lg px-3 py-1.5 text-xs text-foreground bg-background/50"
                         type="file"
                         accept="image/*"
                       />
@@ -565,22 +608,30 @@ export default function KycPage() {
                   </div>
                 </div>
               </div>
-              <div className="flex gap-2 mt-4">
-                <button onClick={() => setStep(2)} className="border border-input text-primary rounded-lg px-4 py-2 hover:bg-accent hover:text-accent-foreground">{t('back')}</button>
-                <button onClick={() => setStep(4)} className="bg-primary hover:bg-primary/90 transition text-primary-foreground rounded-lg px-4 py-2">{t('next')}</button>
+              <div className="flex gap-2 mt-6 pt-4 border-t border-border/10">
+                <button onClick={() => setStep(2)} className="border border-border/10 bg-muted/50 text-muted-foreground rounded-xl px-6 py-3 font-medium hover:bg-accent/50 hover:text-foreground transition-all">{t('back')}</button>
+                <button onClick={() => setStep(4)} className="bg-primary hover:bg-primary/90 transition text-primary-foreground rounded-xl px-6 py-3 font-semibold shadow-lg hover:shadow-primary/20">{t('next')}</button>
               </div>
-            </>
+            </motion.div>
           )}
           {step===4 && (
-            <>
-              <div className="text-sm text-foreground">{t('review_and_submit')}</div>
-              <button disabled={loading || status==='approved'} onClick={submit} className="bg-primary hover:bg-primary/90 transition text-primary-foreground rounded-lg px-4 py-2 disabled:opacity-50">
-                {loading ? t('submitting') : (status==='approved' ? t('already_approved') : t('submit_kyc'))}
-              </button>
-              <button onClick={() => setStep(3)} className="border border-input text-primary rounded-lg px-4 py-2 ml-2 hover:bg-accent hover:text-accent-foreground">{t('back')}</button>
-            </>
+            <motion.div initial={{ opacity: 0, x: 20 }} animate={{ opacity: 1, x: 0 }} className="space-y-6">
+              <div className="text-lg font-medium text-foreground text-center py-4">{t('review_and_submit')}</div>
+              <div className="flex flex-col gap-4 max-w-sm mx-auto">
+                <button disabled={loading || status==='approved'} onClick={submit} className="bg-primary hover:bg-primary/90 transition text-primary-foreground rounded-xl px-6 py-4 font-bold shadow-lg hover:shadow-primary/20 disabled:opacity-50 disabled:cursor-not-allowed w-full text-lg">
+                    {loading ? (
+                        <span className="flex items-center justify-center gap-2">
+                            <span className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin" />
+                            {t('submitting')}
+                        </span>
+                    ) : (status==='approved' ? t('already_approved') : t('submit_kyc'))}
+                </button>
+                <button onClick={() => setStep(3)} className="border border-border/10 bg-muted/50 text-muted-foreground rounded-xl px-6 py-3 font-medium hover:bg-accent/50 hover:text-foreground transition-all w-full">{t('back')}</button>
+              </div>
+            </motion.div>
           )}
           </div>
+          </motion.div>
         </div>
       </div>
     </RequireAuth>

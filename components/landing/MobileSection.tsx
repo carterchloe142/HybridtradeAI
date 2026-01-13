@@ -13,7 +13,7 @@ const benefits = [
 
 export default function MobileSection() {
   return (
-    <section className="relative w-full py-24 bg-[#050A18] overflow-hidden px-6 md:px-16 lg:px-24">
+    <section className="relative w-full py-24 bg-transparent overflow-hidden px-6 md:px-16 lg:px-24">
       {/* Background Gradient */}
       <div className="absolute right-0 top-1/2 -translate-y-1/2 w-[500px] h-[500px] bg-cyan-500/5 rounded-full blur-[120px] pointer-events-none" />
 
@@ -29,9 +29,9 @@ export default function MobileSection() {
             className="relative z-10"
           >
              {/* CSS Phone Mockup */}
-             <div className="w-[300px] h-[600px] border-[12px] border-slate-800 rounded-[3rem] bg-[#02050c] overflow-hidden shadow-2xl relative">
+             <div className="w-[300px] h-[600px] border-[12px] border-border rounded-[3rem] bg-[#02050c] overflow-hidden shadow-2xl relative">
                 {/* Notch */}
-                <div className="absolute top-0 left-1/2 transform -translate-x-1/2 w-1/3 h-6 bg-slate-800 rounded-b-xl z-20"></div>
+                <div className="absolute top-0 left-1/2 transform -translate-x-1/2 w-1/3 h-6 bg-border rounded-b-xl z-20"></div>
                 
                 {/* Screen Content */}
                 <div className="w-full h-full pt-10 px-4 pb-4 flex flex-col">
@@ -99,11 +99,11 @@ export default function MobileSection() {
            >
               <div className="space-y-2">
                 <div className="text-blue-500 font-medium tracking-wide uppercase text-sm">Mobile First</div>
-                <h2 className="text-4xl md:text-5xl font-bold text-white leading-tight">
+                <h2 className="text-4xl md:text-5xl font-bold text-foreground leading-tight">
                     Trade Anywhere, <br />
                     <span className="text-transparent bg-clip-text bg-gradient-to-r from-blue-400 to-cyan-400">Anytime.</span>
                 </h2>
-                <p className="text-slate-400 text-lg max-w-md">
+                <p className="text-muted-foreground text-lg max-w-md">
                     Monitor your portfolio, adjust strategies, and withdraw profits on the go with our powerful mobile dashboard.
                 </p>
               </div>
@@ -121,12 +121,12 @@ export default function MobileSection() {
                        <div className="w-8 h-8 rounded-full bg-blue-500/10 flex items-center justify-center group-hover:bg-blue-500 transition-colors border border-blue-500/20 group-hover:border-blue-500">
                           <Check className="w-4 h-4 text-blue-400 group-hover:text-white transition-colors" />
                        </div>
-                       <span className="text-xl md:text-2xl font-medium text-slate-200 group-hover:text-white transition-colors">{benefit}</span>
+                       <span className="text-xl md:text-2xl font-medium text-muted-foreground group-hover:text-foreground transition-colors">{benefit}</span>
                     </motion.div>
                  ))}
               </div>
 
-              <Link href="/about" className="group flex items-center gap-2 px-8 py-4 bg-white/5 border border-white/10 text-white w-fit rounded-xl hover:bg-white/10 transition-all hover:pl-10">
+              <Link href="/about" className="group flex items-center gap-2 px-8 py-4 bg-muted/5 border border-border/10 text-foreground w-fit rounded-xl hover:bg-muted/10 transition-all hover:pl-10">
                  <span>View Full Features</span>
                  <ArrowRight className="w-4 h-4 group-hover:translate-x-1 transition-transform" />
               </Link>

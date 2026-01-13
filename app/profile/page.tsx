@@ -99,11 +99,11 @@ export default function Profile() {
             animate={{ opacity: 1, x: 0 }}
             className="flex items-center gap-4"
           >
-            <Link href="/dashboard" className="p-2 rounded-xl bg-black/40 border border-white/10 hover:bg-white/10 transition-all text-muted-foreground hover:text-white backdrop-blur-md group">
+            <Link href="/dashboard" className="p-2 rounded-xl bg-card/40 border border-border/10 hover:bg-accent/10 transition-all text-muted-foreground hover:text-foreground backdrop-blur-md group">
               <ArrowLeft size={20} className="group-hover:-translate-x-1 transition-transform" />
             </Link>
             <div>
-              <h1 className="text-3xl font-bold bg-gradient-to-r from-white via-cyan-200 to-blue-400 bg-clip-text text-transparent">
+              <h1 className="text-3xl font-bold text-foreground">
                 {t('profile_title')}
               </h1>
               <p className="text-muted-foreground mt-1">Manage your account and referrals</p>
@@ -115,23 +115,23 @@ export default function Profile() {
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ delay: 0.1 }}
-            className="bg-black/40 backdrop-blur-xl border border-white/10 rounded-3xl p-8 shadow-[0_0_40px_rgba(0,0,0,0.2)]"
+            className="bg-card/40 backdrop-blur-xl border border-border/10 rounded-3xl p-8 shadow-xl"
           >
             <div className="flex items-start justify-between">
               <div className="flex items-start gap-4">
-                <div className="p-3 rounded-2xl bg-white/5 text-gray-300">
+                <div className="p-3 rounded-2xl bg-primary/10 text-primary">
                   <User size={24} />
                 </div>
                 <div className="space-y-1">
-                  <h3 className="text-lg font-medium text-white">{t('user_id_label')}</h3>
-                  <p className="font-mono text-cyan-400 text-lg tracking-wider">{userId || 'Loading...'}</p>
-                  <p className="text-xs text-gray-500">This is your unique identifier in the system.</p>
+                  <h3 className="text-lg font-medium text-foreground">{t('user_id_label')}</h3>
+                  <p className="font-mono text-primary text-lg tracking-wider">{userId || 'Loading...'}</p>
+                  <p className="text-xs text-muted-foreground">This is your unique identifier in the system.</p>
                 </div>
               </div>
               
-              <div className="hidden sm:flex items-center gap-2 px-4 py-2 rounded-full bg-green-500/10 border border-green-500/20">
-                <ShieldCheck size={16} className="text-green-400" />
-                <span className="text-xs font-bold text-green-400 uppercase tracking-wider">Verified Account</span>
+              <div className="hidden sm:flex items-center gap-2 px-4 py-2 rounded-full bg-primary/10 border border-primary/20">
+                <ShieldCheck size={16} className="text-primary" />
+                <span className="text-xs font-bold text-primary uppercase tracking-wider">Verified Account</span>
               </div>
             </div>
           </motion.div>
@@ -141,46 +141,46 @@ export default function Profile() {
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ delay: 0.2 }}
-            className="bg-black/40 backdrop-blur-xl border border-white/10 rounded-3xl p-8 shadow-[0_0_40px_rgba(0,0,0,0.2)]"
+            className="bg-card/40 backdrop-blur-xl border border-border/10 rounded-3xl p-8 shadow-xl"
           >
             <div className="flex items-start gap-4 mb-6">
-              <div className="p-3 rounded-2xl bg-gradient-to-br from-cyan-500/20 to-blue-600/20 text-cyan-400">
+              <div className="p-3 rounded-2xl bg-primary/10 text-primary">
                 <Sparkles size={24} />
               </div>
               <div>
-                <h3 className="text-lg font-medium text-white">{t('referral_title')}</h3>
-                <p className="text-sm text-gray-400 mt-1">Invite friends and earn rewards when they join.</p>
+                <h3 className="text-lg font-medium text-foreground">{t('referral_title')}</h3>
+                <p className="text-sm text-muted-foreground mt-1">Invite friends and earn rewards when they join.</p>
               </div>
             </div>
 
             {referralCode ? (
               <div className="space-y-6">
                 <div className="grid grid-cols-2 gap-4">
-                   <div className="p-4 rounded-2xl bg-white/5 border border-white/10 flex flex-col items-center text-center group hover:bg-white/10 transition-colors">
-                      <div className="mb-2 p-2 rounded-full bg-yellow-500/20 text-yellow-400 group-hover:scale-110 transition-transform">
+                   <div className="p-4 rounded-2xl bg-muted/50 border border-border/10 flex flex-col items-center text-center group hover:bg-muted/80 transition-colors">
+                      <div className="mb-2 p-2 rounded-full bg-yellow-500/20 text-yellow-500 group-hover:scale-110 transition-transform">
                         <Trophy size={20} />
                       </div>
-                      <div className="text-2xl font-bold text-white mb-1">{nf(0)}</div>
-                      <div className="text-xs text-gray-400 uppercase tracking-wider">Invited Users</div>
+                      <div className="text-2xl font-bold text-foreground mb-1">{nf(0)}</div>
+                      <div className="text-xs text-muted-foreground uppercase tracking-wider">Invited Users</div>
                    </div>
-                   <div className="p-4 rounded-2xl bg-white/5 border border-white/10 flex flex-col items-center text-center group hover:bg-white/10 transition-colors">
-                      <div className="mb-2 p-2 rounded-full bg-green-500/20 text-green-400 group-hover:scale-110 transition-transform">
+                   <div className="p-4 rounded-2xl bg-muted/50 border border-border/10 flex flex-col items-center text-center group hover:bg-muted/80 transition-colors">
+                      <div className="mb-2 p-2 rounded-full bg-green-500/20 text-green-500 group-hover:scale-110 transition-transform">
                         <Wallet size={20} />
                       </div>
-                      <div className="text-2xl font-bold text-white mb-1">${nf(totalEarnings)}</div>
-                      <div className="text-xs text-gray-400 uppercase tracking-wider">Total Earnings</div>
+                      <div className="text-2xl font-bold text-foreground mb-1">${nf(totalEarnings)}</div>
+                      <div className="text-xs text-muted-foreground uppercase tracking-wider">Total Earnings</div>
                    </div>
                 </div>
 
-                <div className="p-4 rounded-xl bg-white/5 border border-white/10 space-y-4">
+                <div className="p-4 rounded-xl bg-muted/50 border border-border/10 space-y-4">
                   <div>
-                    <div className="text-xs text-gray-500 uppercase tracking-wider mb-1">{t('referral_code_label')}</div>
-                    <div className="text-2xl font-mono font-bold text-white tracking-widest">{referralCode}</div>
+                    <div className="text-xs text-muted-foreground uppercase tracking-wider mb-1">{t('referral_code_label')}</div>
+                    <div className="text-2xl font-mono font-bold text-foreground tracking-widest">{referralCode}</div>
                   </div>
                   
                   <div>
-                    <div className="text-xs text-gray-500 uppercase tracking-wider mb-1">{t('referral_link_label')}</div>
-                    <div className="text-sm text-cyan-400 truncate font-mono bg-black/20 p-2 rounded border border-white/5 select-all">
+                    <div className="text-xs text-muted-foreground uppercase tracking-wider mb-1">{t('referral_link_label')}</div>
+                    <div className="text-sm text-primary truncate font-mono bg-background/50 p-2 rounded border border-border/10 select-all">
                       {referralLink}
                     </div>
                   </div>
@@ -189,14 +189,14 @@ export default function Profile() {
                 <div className="flex gap-3">
                   <button 
                     onClick={copyLink}
-                    className="flex-1 flex items-center justify-center gap-2 py-3 rounded-xl bg-white/5 hover:bg-white/10 border border-white/10 text-white font-medium transition-all hover:scale-[1.02] active:scale-[0.98]"
+                    className="flex-1 flex items-center justify-center gap-2 py-3 rounded-xl bg-muted/50 hover:bg-muted/80 border border-border/10 text-foreground font-medium transition-all hover:scale-[1.02] active:scale-[0.98]"
                   >
-                    {copied ? <CheckCircle2 size={18} className="text-green-400" /> : <Copy size={18} />}
+                    {copied ? <CheckCircle2 size={18} className="text-green-500" /> : <Copy size={18} />}
                     {copied ? 'Copied!' : t('btn_copy_link')}
                   </button>
                   <button 
                     onClick={shareLink}
-                    className="flex-1 flex items-center justify-center gap-2 py-3 rounded-xl bg-gradient-to-r from-cyan-600 to-blue-600 hover:from-cyan-500 hover:to-blue-500 text-white font-medium transition-all shadow-lg shadow-cyan-500/20 hover:shadow-cyan-500/40 hover:scale-[1.02] active:scale-[0.98]"
+                    className="flex-1 flex items-center justify-center gap-2 py-3 rounded-xl bg-primary hover:bg-primary/90 text-primary-foreground font-medium transition-all shadow-lg hover:shadow-xl hover:scale-[1.02] active:scale-[0.98]"
                   >
                     <Share2 size={18} />
                     {t('btn_share')}

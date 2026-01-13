@@ -12,7 +12,7 @@ const stats = [
 
 export default function StatsSection() {
   return (
-    <section className="py-12 border-y border-white/5 bg-black/20 backdrop-blur-sm">
+    <section className="py-12 border-y border-border/5 bg-muted/20 backdrop-blur-xl">
       <div className="max-w-7xl mx-auto px-6 md:px-12 lg:px-24">
         <div className="grid grid-cols-2 md:grid-cols-4 gap-8 md:gap-12">
           {stats.map((stat, index) => (
@@ -24,10 +24,10 @@ export default function StatsSection() {
               transition={{ delay: index * 0.1, duration: 0.5 }}
               className="text-center"
             >
-              <h3 className="text-3xl md:text-4xl font-bold text-white mb-2 bg-clip-text text-transparent bg-gradient-to-r from-cyan-400 to-blue-500">
+              <h3 className="text-3xl md:text-4xl font-bold text-foreground mb-2 bg-clip-text text-transparent bg-gradient-to-r from-cyan-400 to-blue-500">
                 {stat.value}
               </h3>
-              <p className="text-sm md:text-base text-gray-500 font-medium uppercase tracking-wider">
+              <p className="text-sm md:text-base text-muted-foreground font-medium uppercase tracking-wider">
                 {stat.label}
               </p>
             </motion.div>

@@ -89,11 +89,11 @@ export default function Plans() {
             animate={{ opacity: 1, x: 0 }}
             className="flex items-center gap-4"
           >
-            <Link href="/dashboard" className="p-2 rounded-xl bg-black/40 border border-white/10 hover:bg-white/10 transition-all text-muted-foreground hover:text-white backdrop-blur-md group">
+            <Link href="/dashboard" className="p-2 rounded-xl bg-card/40 border border-border/10 hover:bg-muted/10 transition-all text-muted-foreground hover:text-foreground backdrop-blur-md group">
               <ArrowLeft size={20} className="group-hover:-translate-x-1 transition-transform" />
             </Link>
             <div>
-              <h1 className="text-3xl md:text-4xl font-bold bg-gradient-to-r from-white via-cyan-200 to-blue-400 bg-clip-text text-transparent">
+              <h1 className="text-3xl md:text-4xl font-bold bg-gradient-to-r from-foreground via-primary to-primary/50 bg-clip-text text-transparent">
                 {t('plans_title')}
               </h1>
               <p className="text-muted-foreground mt-1">{t('plans_intro')}</p>
@@ -107,43 +107,43 @@ export default function Plans() {
               whileInView={{ opacity: 1, y: 0 }}
               viewport={{ once: true }}
               transition={{ delay: 0.1 }}
-              className="bg-black/40 backdrop-blur-xl border border-white/10 rounded-3xl p-8 shadow-[0_0_40px_rgba(0,0,0,0.2)] flex flex-col hover:border-cyan-500/30 transition-all duration-300 group"
+              className="bg-card/40 backdrop-blur-xl border border-border/10 rounded-3xl p-8 shadow-[0_0_40px_rgba(0,0,0,0.2)] flex flex-col hover:border-primary/30 transition-all duration-300 group"
             >
               <div className="flex items-center justify-between mb-6">
-                <div className="p-3 rounded-2xl bg-cyan-500/10 text-cyan-400 group-hover:scale-110 transition-transform duration-300">
+                <div className="p-3 rounded-2xl bg-primary/10 text-primary group-hover:scale-110 transition-transform duration-300">
                   <Zap size={28} />
                 </div>
-                <div className="px-3 py-1 rounded-full bg-white/5 border border-white/10 text-xs font-medium text-gray-400 uppercase tracking-wider">
+                <div className="px-3 py-1 rounded-full bg-muted/10 border border-border/10 text-xs font-medium text-muted-foreground uppercase tracking-wider">
                   Entry Level
                 </div>
               </div>
               
-              <h3 className="text-2xl font-bold text-white mb-2">{t('plan_starter_title')}</h3>
-              <div className="text-3xl font-mono text-cyan-400 mb-6">$100 <span className="text-sm text-gray-500 font-sans font-normal">min deposit</span></div>
+              <h3 className="text-2xl font-bold text-foreground mb-2">{t('plan_starter_title')}</h3>
+              <div className="text-3xl font-mono text-primary mb-6">$100 <span className="text-sm text-muted-foreground font-sans font-normal">min deposit</span></div>
               
-              <div className="space-y-4 text-sm text-gray-300 flex-1">
+              <div className="space-y-4 text-sm text-muted-foreground flex-1">
                 <div className="space-y-2">
-                  <div className="font-semibold text-white">{t('allocation_label')}</div>
+                  <div className="font-semibold text-foreground">{t('allocation_label')}</div>
                   <ul className="space-y-1">
-                    <li className="flex items-start gap-2"><div className="w-1.5 h-1.5 rounded-full bg-cyan-500 mt-1.5" /> 70% Ads & Tasks</li>
-                    <li className="flex items-start gap-2"><div className="w-1.5 h-1.5 rounded-full bg-cyan-500 mt-1.5" /> 30% Basic Algorithmic Trading</li>
+                    <li className="flex items-start gap-2"><div className="w-1.5 h-1.5 rounded-full bg-primary mt-1.5" /> 70% Ads & Tasks</li>
+                    <li className="flex items-start gap-2"><div className="w-1.5 h-1.5 rounded-full bg-primary mt-1.5" /> 30% Basic Algorithmic Trading</li>
                   </ul>
                 </div>
                 
-                <div className="space-y-2 pt-4 border-t border-white/5">
-                  <div className="font-semibold text-white">{t('expected_weekly_label')}</div>
-                  <div className="text-lg font-bold text-green-400">{t('projected_weekly_range', { range: '10–20%' })}</div>
+                <div className="space-y-2 pt-4 border-t border-border/5">
+                  <div className="font-semibold text-foreground">{t('expected_weekly_label')}</div>
+                  <div className="text-lg font-bold text-green-500">{t('projected_weekly_range', { range: '10–20%' })}</div>
                 </div>
 
-                <div className="pt-4 border-t border-white/5">
-                  <div className="font-semibold text-white mb-1">{t('benefits_label')}</div>
-                  <p className="text-xs text-gray-400 leading-relaxed">Low volatility, quick onboarding, educational tasks, low minimum entry.</p>
+                <div className="pt-4 border-t border-border/5">
+                  <div className="font-semibold text-foreground mb-1">{t('benefits_label')}</div>
+                  <p className="text-xs text-muted-foreground/80 leading-relaxed">Low volatility, quick onboarding, educational tasks, low minimum entry.</p>
                 </div>
               </div>
 
               <button 
                 onClick={() => invest('starter', 100)}
-                className="w-full mt-8 bg-white/5 hover:bg-cyan-500/10 border border-white/10 hover:border-cyan-500/50 text-white hover:text-cyan-400 font-semibold py-3 rounded-xl transition-all"
+                className="w-full mt-8 bg-muted/10 hover:bg-primary/10 border border-border/10 hover:border-primary/50 text-foreground hover:text-primary font-semibold py-3 rounded-xl transition-all"
               >
                 {t('invest_with_plan')}
               </button>
@@ -155,48 +155,48 @@ export default function Plans() {
               whileInView={{ opacity: 1, y: 0 }}
               viewport={{ once: true }}
               transition={{ delay: 0.2 }}
-              className="relative bg-gradient-to-b from-cyan-900/20 to-black/40 backdrop-blur-xl border border-cyan-500/30 rounded-3xl p-8 shadow-[0_0_60px_rgba(6,182,212,0.15)] flex flex-col scale-105 z-10"
+              className="relative bg-gradient-to-b from-primary/10 to-card/40 backdrop-blur-xl border border-primary/30 rounded-3xl p-8 shadow-[0_0_60px_rgba(6,182,212,0.15)] flex flex-col scale-105 z-10"
             >
-              <div className="absolute top-0 left-1/2 -translate-x-1/2 -translate-y-1/2 px-4 py-1 bg-cyan-500 text-black text-xs font-bold uppercase tracking-wider rounded-full shadow-[0_0_20px_rgba(6,182,212,0.4)]">
+              <div className="absolute top-0 left-1/2 -translate-x-1/2 -translate-y-1/2 px-4 py-1 bg-primary text-primary-foreground text-xs font-bold uppercase tracking-wider rounded-full shadow-[0_0_20px_rgba(6,182,212,0.4)]">
                 Most Popular
               </div>
 
               <div className="flex items-center justify-between mb-6">
-                <div className="p-3 rounded-2xl bg-cyan-500 text-black group-hover:scale-110 transition-transform duration-300 shadow-[0_0_20px_rgba(6,182,212,0.3)]">
+                <div className="p-3 rounded-2xl bg-primary text-primary-foreground group-hover:scale-110 transition-transform duration-300 shadow-[0_0_20px_rgba(6,182,212,0.3)]">
                   <Star size={28} fill="currentColor" />
                 </div>
-                <div className="px-3 py-1 rounded-full bg-cyan-500/10 border border-cyan-500/20 text-xs font-medium text-cyan-400 uppercase tracking-wider">
+                <div className="px-3 py-1 rounded-full bg-primary/10 border border-primary/20 text-xs font-medium text-primary uppercase tracking-wider">
                   Advanced
                 </div>
               </div>
               
-              <h3 className="text-2xl font-bold text-white mb-2">{t('plan_pro_title')}</h3>
-              <div className="text-3xl font-mono text-cyan-400 mb-6">$501 <span className="text-sm text-gray-500 font-sans font-normal">min deposit</span></div>
+              <h3 className="text-2xl font-bold text-foreground mb-2">{t('plan_pro_title')}</h3>
+              <div className="text-3xl font-mono text-primary mb-6">$501 <span className="text-sm text-muted-foreground font-sans font-normal">min deposit</span></div>
               
-              <div className="space-y-4 text-sm text-gray-300 flex-1">
+              <div className="space-y-4 text-sm text-muted-foreground flex-1">
                 <div className="space-y-2">
-                  <div className="font-semibold text-white">{t('allocation_label')}</div>
+                  <div className="font-semibold text-foreground">{t('allocation_label')}</div>
                   <ul className="space-y-1">
-                    <li className="flex items-start gap-2"><div className="w-1.5 h-1.5 rounded-full bg-cyan-400 mt-1.5" /> 60% Algorithmic Trading</li>
-                    <li className="flex items-start gap-2"><div className="w-1.5 h-1.5 rounded-full bg-cyan-400 mt-1.5" /> 25% Copy‑Trading</li>
-                    <li className="flex items-start gap-2"><div className="w-1.5 h-1.5 rounded-full bg-cyan-400 mt-1.5" /> 15% Ads & Tasks</li>
+                    <li className="flex items-start gap-2"><div className="w-1.5 h-1.5 rounded-full bg-primary mt-1.5" /> 60% Algorithmic Trading</li>
+                    <li className="flex items-start gap-2"><div className="w-1.5 h-1.5 rounded-full bg-primary mt-1.5" /> 25% Copy‑Trading</li>
+                    <li className="flex items-start gap-2"><div className="w-1.5 h-1.5 rounded-full bg-primary mt-1.5" /> 15% Ads & Tasks</li>
                   </ul>
                 </div>
                 
-                <div className="space-y-2 pt-4 border-t border-white/5">
-                  <div className="font-semibold text-white">{t('expected_weekly_label')}</div>
-                  <div className="text-lg font-bold text-green-400">{t('projected_weekly_range', { range: '15–30%' })}</div>
+                <div className="space-y-2 pt-4 border-t border-border/5">
+                  <div className="font-semibold text-foreground">{t('expected_weekly_label')}</div>
+                  <div className="text-lg font-bold text-green-500">{t('projected_weekly_range', { range: '15–30%' })}</div>
                 </div>
 
-                <div className="pt-4 border-t border-white/5">
-                  <div className="font-semibold text-white mb-1">{t('benefits_label')}</div>
-                  <p className="text-xs text-gray-400 leading-relaxed">Balanced risk, access to verified traders, higher potential returns.</p>
+                <div className="pt-4 border-t border-border/5">
+                  <div className="font-semibold text-foreground mb-1">{t('benefits_label')}</div>
+                  <p className="text-xs text-muted-foreground/80 leading-relaxed">Balanced risk, access to verified traders, higher potential returns.</p>
                 </div>
               </div>
 
               <button 
                 onClick={() => invest('pro', 501)}
-                className="w-full mt-8 bg-gradient-to-r from-cyan-600 to-blue-600 hover:from-cyan-500 hover:to-blue-500 text-white font-semibold py-4 rounded-xl transition-all shadow-lg shadow-cyan-500/20 hover:shadow-cyan-500/40 hover:scale-[1.02]"
+                className="w-full mt-8 bg-primary text-primary-foreground hover:bg-primary/90 font-semibold py-4 rounded-xl transition-all shadow-lg shadow-primary/20 hover:shadow-primary/40 hover:scale-[1.02]"
               >
                 {t('invest_with_plan')}
               </button>
@@ -208,23 +208,23 @@ export default function Plans() {
               whileInView={{ opacity: 1, y: 0 }}
               viewport={{ once: true }}
               transition={{ delay: 0.3 }}
-              className="bg-black/40 backdrop-blur-xl border border-white/10 rounded-3xl p-8 shadow-[0_0_40px_rgba(0,0,0,0.2)] flex flex-col hover:border-purple-500/30 transition-all duration-300 group"
+              className="bg-card/40 backdrop-blur-xl border border-border/10 rounded-3xl p-8 shadow-[0_0_40px_rgba(0,0,0,0.2)] flex flex-col hover:border-purple-500/30 transition-all duration-300 group"
             >
               <div className="flex items-center justify-between mb-6">
-                <div className="p-3 rounded-2xl bg-purple-500/10 text-purple-400 group-hover:scale-110 transition-transform duration-300">
+                <div className="p-3 rounded-2xl bg-purple-500/10 text-purple-500 group-hover:scale-110 transition-transform duration-300">
                   <Crown size={28} />
                 </div>
-                <div className="px-3 py-1 rounded-full bg-white/5 border border-white/10 text-xs font-medium text-gray-400 uppercase tracking-wider">
+                <div className="px-3 py-1 rounded-full bg-muted/10 border border-border/10 text-xs font-medium text-muted-foreground uppercase tracking-wider">
                   Professional
                 </div>
               </div>
               
-              <h3 className="text-2xl font-bold text-white mb-2">{t('plan_elite_title')}</h3>
-              <div className="text-3xl font-mono text-purple-400 mb-6">$2,001 <span className="text-sm text-gray-500 font-sans font-normal">min deposit</span></div>
+              <h3 className="text-2xl font-bold text-foreground mb-2">{t('plan_elite_title')}</h3>
+              <div className="text-3xl font-mono text-purple-500 mb-6">$2,001 <span className="text-sm text-muted-foreground font-sans font-normal">min deposit</span></div>
               
-              <div className="space-y-4 text-sm text-gray-300 flex-1">
+              <div className="space-y-4 text-sm text-muted-foreground flex-1">
                 <div className="space-y-2">
-                  <div className="font-semibold text-white">{t('allocation_label')}</div>
+                  <div className="font-semibold text-foreground">{t('allocation_label')}</div>
                   <ul className="space-y-1">
                     <li className="flex items-start gap-2"><div className="w-1.5 h-1.5 rounded-full bg-purple-500 mt-1.5" /> 50% Algorithmic Trading</li>
                     <li className="flex items-start gap-2"><div className="w-1.5 h-1.5 rounded-full bg-purple-500 mt-1.5" /> 30% Crypto Staking & Yield</li>
@@ -232,27 +232,27 @@ export default function Plans() {
                   </ul>
                 </div>
                 
-                <div className="space-y-2 pt-4 border-t border-white/5">
-                  <div className="font-semibold text-white">{t('expected_weekly_label')}</div>
-                  <div className="text-lg font-bold text-green-400">{t('projected_weekly_range', { range: '25–45%' })}</div>
+                <div className="space-y-2 pt-4 border-t border-border/5">
+                  <div className="font-semibold text-foreground">{t('expected_weekly_label')}</div>
+                  <div className="text-lg font-bold text-green-500">{t('projected_weekly_range', { range: '25–45%' })}</div>
                 </div>
 
-                <div className="pt-4 border-t border-white/5">
-                  <div className="font-semibold text-white mb-1">{t('benefits_label')}</div>
-                  <p className="text-xs text-gray-400 leading-relaxed">Highest return potential, premium support, monthly audit summaries, tailored allocations.</p>
+                <div className="pt-4 border-t border-border/5">
+                  <div className="font-semibold text-foreground mb-1">{t('benefits_label')}</div>
+                  <p className="text-xs text-muted-foreground/80 leading-relaxed">Highest return potential, premium support, monthly audit summaries, tailored allocations.</p>
                 </div>
               </div>
 
               <button 
                 onClick={() => invest('elite', 2001)}
-                className="w-full mt-8 bg-white/5 hover:bg-purple-500/10 border border-white/10 hover:border-purple-500/50 text-white hover:text-purple-400 font-semibold py-3 rounded-xl transition-all"
+                className="w-full mt-8 bg-muted/10 hover:bg-purple-500/10 border border-border/10 hover:border-purple-500/50 text-foreground hover:text-purple-500 font-semibold py-3 rounded-xl transition-all"
               >
                 {t('invest_with_plan')}
               </button>
             </motion.div>
           </div>
 
-          <div className="text-center text-xs text-gray-500 max-w-2xl mx-auto">
+          <div className="text-center text-xs text-muted-foreground/60 max-w-2xl mx-auto">
             {t('returns_variable_disclaimer')}
           </div>
         </div>

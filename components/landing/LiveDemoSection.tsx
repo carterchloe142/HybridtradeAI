@@ -22,7 +22,7 @@ const logs = [
 ]
 
 const LogItem = ({ log }: { log: any }) => {
-  let color = 'text-slate-400'
+  let color = 'text-muted-foreground'
   let icon = <Activity className="w-3 h-3" />
   
   switch(log.type) {
@@ -74,7 +74,7 @@ export default function LiveDemoSection() {
   }, [])
 
   return (
-    <section ref={scrollRef} className="relative w-full py-32 px-6 md:px-16 lg:px-24 overflow-hidden bg-[#050A18]">
+    <section ref={scrollRef} className="relative w-full py-32 px-6 md:px-16 lg:px-24 overflow-hidden bg-transparent">
       {/* Narrative Header */}
       <div className="relative z-10 max-w-4xl mx-auto text-center mb-16">
         <motion.div
@@ -92,7 +92,7 @@ export default function LiveDemoSection() {
           whileInView={{ opacity: 1, y: 0 }}
           viewport={{ once: true }}
           transition={{ delay: 0.1 }}
-          className="text-4xl md:text-5xl font-bold text-white mb-6 leading-tight"
+          className="text-4xl md:text-5xl font-bold text-foreground mb-6 leading-tight"
         >
           Watch the AI <span className="text-transparent bg-clip-text bg-gradient-to-r from-purple-400 to-pink-400">Analyze & Execute</span> <br />
           in Real-Time
@@ -103,7 +103,7 @@ export default function LiveDemoSection() {
           whileInView={{ opacity: 1, y: 0 }}
           viewport={{ once: true }}
           transition={{ delay: 0.2 }}
-          className="text-slate-400 text-lg max-w-2xl mx-auto"
+          className="text-muted-foreground text-lg max-w-2xl mx-auto"
         >
           See exactly how our Hybrid Engine processes millions of data points to identify profitable opportunities before the market moves.
         </motion.p>
@@ -114,9 +114,9 @@ export default function LiveDemoSection() {
         {/* The "Brain" Visual - Left Side */}
         <motion.div style={{ y: y1 }} className="w-full lg:w-1/2 relative">
              <div className="absolute inset-0 bg-blue-500/10 blur-[80px] rounded-full" />
-             <div className="relative bg-slate-900/80 backdrop-blur-md border border-slate-700/50 rounded-2xl p-6 shadow-2xl">
+             <div className="relative bg-card/80 backdrop-blur-md border border-border/50 rounded-2xl p-6 shadow-2xl">
                 {/* Simulated Chart/Visual */}
-                <div className="h-[300px] w-full bg-[#0a0f1b] rounded-xl border border-slate-800 relative overflow-hidden flex items-center justify-center">
+                <div className="h-[300px] w-full bg-card/50 rounded-xl border border-border/50 relative overflow-hidden flex items-center justify-center">
                     <div className="absolute inset-0 opacity-20" 
                         style={{ backgroundImage: 'radial-gradient(circle, #3b82f6 1px, transparent 1px)', backgroundSize: '20px 20px' }} 
                     />
@@ -151,7 +151,7 @@ export default function LiveDemoSection() {
                     </motion.div>
                 </div>
                 
-                <div className="mt-4 flex justify-between items-center text-xs text-slate-500">
+                <div className="mt-4 flex justify-between items-center text-xs text-muted-foreground">
                     <div className="flex gap-2">
                         <span className="w-2 h-2 rounded-full bg-green-500" />
                         System Optimal
@@ -163,20 +163,20 @@ export default function LiveDemoSection() {
 
         {/* The "Terminal" - Right Side */}
         <motion.div style={{ y: y2 }} className="w-full lg:w-1/2">
-             <div className="relative bg-[#020408] border border-slate-800 rounded-xl overflow-hidden shadow-2xl h-[400px] flex flex-col">
+             <div className="relative bg-card/40 backdrop-blur-xl border border-border/10 rounded-xl overflow-hidden shadow-2xl h-[400px] flex flex-col">
                 {/* Terminal Header */}
-                <div className="bg-[#0a0f1b] px-4 py-2 border-b border-slate-800 flex items-center gap-2">
+                <div className="bg-muted/30 px-4 py-2 border-b border-border flex items-center gap-2">
                     <div className="flex gap-1.5">
                         <div className="w-3 h-3 rounded-full bg-red-500/80" />
                         <div className="w-3 h-3 rounded-full bg-yellow-500/80" />
                         <div className="w-3 h-3 rounded-full bg-green-500/80" />
                     </div>
-                    <div className="ml-4 text-xs text-slate-400 font-mono">hybrid-engine-core — bash — 80x24</div>
+                    <div className="ml-4 text-xs text-muted-foreground font-mono">hybrid-engine-core — bash — 80x24</div>
                 </div>
                 
                 {/* Terminal Content */}
                 <div className="p-6 font-mono text-sm overflow-hidden flex-1 relative">
-                    <div className="absolute inset-0 bg-gradient-to-b from-transparent via-transparent to-[#020408]/80 pointer-events-none z-10" />
+                    <div className="absolute inset-0 bg-gradient-to-b from-transparent via-transparent to-card/80 pointer-events-none z-10" />
                     
                     {visibleLogs.map((log, idx) => (
                         <LogItem key={idx} log={log} />

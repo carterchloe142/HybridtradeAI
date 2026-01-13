@@ -81,7 +81,14 @@ export function useUserNotifications(userId?: string) {
                 bc.postMessage({ t: 'event', data });
             } catch {}
         };
-        es.onerror = () => { };
+        es.onerror = () => { 
+            if (!mounted) return;
+            setConnected(false);
+            // Allow browser to auto-reconnect; if closed, try re-leader later
+            if (es.readyState === 2) {
+                leaderRef.current = false;
+            }
+        };
     }
 
     let heardLeader = false;

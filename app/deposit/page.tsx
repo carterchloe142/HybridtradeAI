@@ -175,12 +175,12 @@ function DepositContent() {
             animate={{ opacity: 1, x: 0 }}
             className="mb-8 flex items-center gap-4"
           >
-            <Link href="/dashboard" className="p-2 rounded-xl bg-black/40 border border-white/10 hover:bg-white/10 transition-all text-muted-foreground hover:text-white backdrop-blur-md group">
+            <Link href="/dashboard" className="p-2 rounded-xl bg-card/40 border border-border/10 hover:bg-accent/10 transition-all text-muted-foreground hover:text-foreground backdrop-blur-md group">
               <ArrowLeft size={20} className="group-hover:-translate-x-1 transition-transform" />
             </Link>
             <div className="flex-1">
-               <h1 className="text-3xl font-bold bg-gradient-to-r from-white via-cyan-200 to-blue-400 bg-clip-text text-transparent">Deploy Capital</h1>
-               <p className="text-sm text-gray-400">Fund your wallet and activate a strategy in one step</p>
+               <h1 className="text-3xl font-bold bg-gradient-to-r from-foreground via-primary to-primary/60 bg-clip-text text-transparent">Deploy Capital</h1>
+               <p className="text-sm text-muted-foreground">Fund your wallet and activate a strategy in one step</p>
             </div>
             {kycStatus && (
               <motion.div 
@@ -203,9 +203,9 @@ function DepositContent() {
               className="space-y-6"
             >
                {/* Plan Selection */}
-               <div className="bg-black/40 backdrop-blur-xl border border-white/10 rounded-3xl p-6 shadow-[0_0_40px_rgba(0,0,0,0.2)]">
-                 <div className="text-sm text-cyan-400 mb-4 font-medium uppercase tracking-wider flex items-center gap-2">
-                   <span className="w-6 h-6 rounded-full bg-cyan-500/10 flex items-center justify-center text-xs border border-cyan-500/20">1</span>
+               <div className="bg-card/40 backdrop-blur-xl border border-border/10 rounded-3xl p-6 shadow-xl">
+                 <div className="text-sm text-primary mb-4 font-medium uppercase tracking-wider flex items-center gap-2">
+                   <span className="w-6 h-6 rounded-full bg-primary/10 flex items-center justify-center text-xs border border-primary/20">1</span>
                    Select Strategy Tier
                  </div>
                  <div className="grid grid-cols-3 gap-3">
@@ -213,30 +213,30 @@ function DepositContent() {
                      <button 
                        key={p}
                        onClick={() => setPlan(p as any)}
-                       className={`relative p-4 rounded-xl border text-left transition-all duration-300 group overflow-hidden ${plan === p ? 'bg-cyan-500/10 border-cyan-500 shadow-[0_0_20px_rgba(6,182,212,0.15)]' : 'bg-white/5 border-white/10 hover:border-white/20 hover:bg-white/10'}`}
+                       className={`relative p-4 rounded-xl border text-left transition-all duration-300 group overflow-hidden ${plan === p ? 'bg-primary/10 border-primary shadow-[0_0_20px_rgba(var(--primary),0.15)]' : 'bg-muted/10 border-border/10 hover:border-border/20 hover:bg-muted/20'}`}
                      >
-                       <div className={`absolute inset-0 bg-gradient-to-br from-cyan-500/0 via-cyan-500/0 to-cyan-500/5 transition-opacity ${plan === p ? 'opacity-100' : 'opacity-0'}`} />
-                       <div className={`font-bold capitalize mb-1 relative z-10 ${plan === p ? 'text-cyan-400' : 'text-gray-300 group-hover:text-white'}`}>{p}</div>
-                       <div className="text-xs text-gray-500 relative z-10 group-hover:text-gray-400 transition-colors">${ranges[p as keyof typeof ranges].min.toLocaleString()} - ${ranges[p as keyof typeof ranges].max.toLocaleString()}</div>
-                       {plan === p && <motion.div layoutId="check" className="absolute top-2 right-2 text-cyan-400"><CheckCircle2 size={16} /></motion.div>}
+                       <div className={`absolute inset-0 bg-gradient-to-br from-primary/0 via-primary/0 to-primary/5 transition-opacity ${plan === p ? 'opacity-100' : 'opacity-0'}`} />
+                       <div className={`font-bold capitalize mb-1 relative z-10 ${plan === p ? 'text-primary' : 'text-muted-foreground group-hover:text-foreground'}`}>{p}</div>
+                       <div className="text-xs text-muted-foreground/80 relative z-10 group-hover:text-muted-foreground transition-colors">${ranges[p as keyof typeof ranges].min.toLocaleString()} - ${ranges[p as keyof typeof ranges].max.toLocaleString()}</div>
+                       {plan === p && <motion.div layoutId="check" className="absolute top-2 right-2 text-primary"><CheckCircle2 size={16} /></motion.div>}
                      </button>
                    ))}
                  </div>
                </div>
 
                {/* Amount Input */}
-               <div className="bg-black/40 backdrop-blur-xl border border-white/10 rounded-3xl p-6 shadow-[0_0_40px_rgba(0,0,0,0.2)]">
-                 <div className="text-sm text-cyan-400 mb-4 font-medium uppercase tracking-wider flex items-center gap-2">
-                   <span className="w-6 h-6 rounded-full bg-cyan-500/10 flex items-center justify-center text-xs border border-cyan-500/20">2</span>
+               <div className="bg-card/40 backdrop-blur-xl border border-border/10 rounded-3xl p-6 shadow-xl">
+                 <div className="text-sm text-primary mb-4 font-medium uppercase tracking-wider flex items-center gap-2">
+                   <span className="w-6 h-6 rounded-full bg-primary/10 flex items-center justify-center text-xs border border-primary/20">2</span>
                    Enter Amount
                  </div>
                  <div className="relative group">
-                    <span className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-500 group-focus-within:text-cyan-400 transition-colors">$</span>
+                    <span className="absolute left-4 top-1/2 -translate-y-1/2 text-muted-foreground group-focus-within:text-primary transition-colors">$</span>
                     <input 
                       type="number" 
                       value={amount}
                       onChange={(e) => setAmount(e.target.value)}
-                      className="w-full bg-black/20 border border-white/10 rounded-xl pl-8 pr-4 py-4 text-white focus:border-cyan-500/50 focus:bg-cyan-950/10 focus:outline-none transition-all text-xl placeholder-gray-600 shadow-inner"
+                      className="w-full bg-muted/10 border border-border/10 rounded-xl pl-8 pr-4 py-4 text-foreground focus:border-primary/50 focus:bg-primary/5 focus:outline-none transition-all text-xl placeholder-muted-foreground/50 shadow-inner"
                       placeholder={`Min $${ranges[plan].min}`}
                     />
                  </div>
@@ -256,34 +256,34 @@ function DepositContent() {
                </div>
 
                {/* Payment Method */}
-               <div className="bg-black/40 backdrop-blur-xl border border-white/10 rounded-3xl p-6 shadow-[0_0_40px_rgba(0,0,0,0.2)]">
-                 <div className="text-sm text-cyan-400 mb-4 font-medium uppercase tracking-wider flex items-center gap-2">
-                   <span className="w-6 h-6 rounded-full bg-cyan-500/10 flex items-center justify-center text-xs border border-cyan-500/20">3</span>
+               <div className="bg-card/40 backdrop-blur-xl border border-border/10 rounded-3xl p-6 shadow-xl">
+                 <div className="text-sm text-primary mb-4 font-medium uppercase tracking-wider flex items-center gap-2">
+                   <span className="w-6 h-6 rounded-full bg-primary/10 flex items-center justify-center text-xs border border-primary/20">3</span>
                    Choose Payment Method
                  </div>
                  <div className="grid md:grid-cols-2 gap-4">
                     <button 
                       onClick={() => setProvider('paystack')}
-                      className={`p-4 rounded-xl border flex items-center gap-3 transition-all duration-300 relative overflow-hidden group ${provider === 'paystack' ? 'bg-cyan-500/10 border-cyan-500 shadow-[0_0_20px_rgba(6,182,212,0.15)]' : 'bg-white/5 border-white/10 hover:border-white/20 hover:bg-white/10'}`}
+                      className={`p-4 rounded-xl border flex items-center gap-3 transition-all duration-300 relative overflow-hidden group ${provider === 'paystack' ? 'bg-primary/10 border-primary shadow-[0_0_20px_rgba(var(--primary),0.15)]' : 'bg-muted/10 border-border/10 hover:border-border/20 hover:bg-muted/20'}`}
                     >
-                      <div className={`p-2 rounded-lg transition-colors ${provider === 'paystack' ? 'bg-cyan-500/20 text-cyan-400' : 'bg-white/5 text-gray-400 group-hover:text-white'}`}><CreditCard size={20} /></div>
+                      <div className={`p-2 rounded-lg transition-colors ${provider === 'paystack' ? 'bg-primary/20 text-primary' : 'bg-muted/20 text-muted-foreground group-hover:text-foreground'}`}><CreditCard size={20} /></div>
                       <div className="text-left relative z-10">
-                        <div className={`font-medium transition-colors ${provider === 'paystack' ? 'text-white' : 'text-gray-300 group-hover:text-white'}`}>Card / Bank</div>
-                        <div className="text-xs text-gray-500">Instant deposit</div>
+                        <div className={`font-medium transition-colors ${provider === 'paystack' ? 'text-foreground' : 'text-muted-foreground group-hover:text-foreground'}`}>Card / Bank</div>
+                        <div className="text-xs text-muted-foreground/70">Instant deposit</div>
                       </div>
-                      {provider === 'paystack' && <div className="absolute inset-0 bg-gradient-to-br from-cyan-500/0 via-cyan-500/0 to-cyan-500/5" />}
+                      {provider === 'paystack' && <div className="absolute inset-0 bg-gradient-to-br from-primary/0 via-primary/0 to-primary/5" />}
                     </button>
 
                     <button 
                       onClick={() => setProvider('crypto')}
-                      className={`p-4 rounded-xl border flex items-center gap-3 transition-all duration-300 relative overflow-hidden group ${provider === 'crypto' ? 'bg-cyan-500/10 border-cyan-500 shadow-[0_0_20px_rgba(6,182,212,0.15)]' : 'bg-white/5 border-white/10 hover:border-white/20 hover:bg-white/10'}`}
+                      className={`p-4 rounded-xl border flex items-center gap-3 transition-all duration-300 relative overflow-hidden group ${provider === 'crypto' ? 'bg-primary/10 border-primary shadow-[0_0_20px_rgba(var(--primary),0.15)]' : 'bg-muted/10 border-border/10 hover:border-border/20 hover:bg-muted/20'}`}
                     >
-                      <div className={`p-2 rounded-lg transition-colors ${provider === 'crypto' ? 'bg-cyan-500/20 text-cyan-400' : 'bg-white/5 text-gray-400 group-hover:text-white'}`}><Bitcoin size={20} /></div>
+                      <div className={`p-2 rounded-lg transition-colors ${provider === 'crypto' ? 'bg-primary/20 text-primary' : 'bg-muted/20 text-muted-foreground group-hover:text-foreground'}`}><Bitcoin size={20} /></div>
                       <div className="text-left relative z-10">
-                        <div className={`font-medium transition-colors ${provider === 'crypto' ? 'text-white' : 'text-gray-300 group-hover:text-white'}`}>Crypto</div>
-                        <div className="text-xs text-gray-500">USDT, BTC, ETH</div>
+                        <div className={`font-medium transition-colors ${provider === 'crypto' ? 'text-foreground' : 'text-muted-foreground group-hover:text-foreground'}`}>Crypto</div>
+                        <div className="text-xs text-muted-foreground/70">USDT, BTC, ETH</div>
                       </div>
-                      {provider === 'crypto' && <div className="absolute inset-0 bg-gradient-to-br from-cyan-500/0 via-cyan-500/0 to-cyan-500/5" />}
+                      {provider === 'crypto' && <div className="absolute inset-0 bg-gradient-to-br from-primary/0 via-primary/0 to-primary/5" />}
                     </button>
                  </div>
 
@@ -293,15 +293,15 @@ function DepositContent() {
                        initial={{ opacity: 0, height: 0, marginTop: 0 }}
                        animate={{ opacity: 1, height: 'auto', marginTop: 16 }}
                        exit={{ opacity: 0, height: 0, marginTop: 0 }}
-                       className="pt-4 border-t border-white/10 overflow-hidden"
+                       className="pt-4 border-t border-border/10 overflow-hidden"
                      >
-                       <label className="block text-sm text-gray-400 mb-3">Select Asset</label>
+                       <label className="block text-sm text-muted-foreground mb-3">Select Asset</label>
                        <div className="flex gap-3">
                          {['usdt', 'btc', 'eth'].map(c => (
                            <button
                              key={c}
                              onClick={() => setCryptoCurrency(c as any)}
-                             className={`px-4 py-2 rounded-lg border text-sm uppercase transition-all ${cryptoCurrency === c ? 'bg-cyan-500/20 border-cyan-500 text-cyan-400 shadow-[0_0_15px_rgba(6,182,212,0.2)]' : 'bg-white/5 border-white/10 text-gray-400 hover:text-white hover:border-white/20'}`}
+                             className={`px-4 py-2 rounded-lg border text-sm uppercase transition-all ${cryptoCurrency === c ? 'bg-primary/20 border-primary text-primary shadow-sm' : 'bg-muted/10 border-border/10 text-muted-foreground hover:text-foreground hover:border-border/20'}`}
                            >
                              {c}
                            </button>
@@ -338,7 +338,7 @@ function DepositContent() {
                <button 
                  onClick={submit}
                  disabled={loading}
-                 className={`w-full relative group overflow-hidden bg-gradient-to-r from-cyan-600 to-blue-600 hover:from-cyan-500 hover:to-blue-500 text-white font-semibold py-4 text-lg rounded-xl transition-all shadow-lg shadow-cyan-500/20 hover:shadow-cyan-500/40 hover:scale-[1.02] active:scale-[0.98] disabled:opacity-50 disabled:cursor-not-allowed disabled:hover:scale-100 mt-4`}
+                 className={`w-full relative group overflow-hidden bg-gradient-to-r from-primary to-primary/80 hover:from-primary/90 hover:to-primary/70 text-primary-foreground font-semibold py-4 text-lg rounded-xl transition-all shadow-lg hover:shadow-xl hover:scale-[1.02] active:scale-[0.98] disabled:opacity-50 disabled:cursor-not-allowed disabled:hover:scale-100 mt-4`}
                >
                  <div className="absolute inset-0 bg-white/20 translate-y-full group-hover:translate-y-0 transition-transform duration-300" />
                  <span className="relative flex items-center justify-center gap-2">
@@ -361,40 +361,40 @@ function DepositContent() {
               transition={{ delay: 0.2 }}
               className="space-y-4"
             >
-              <div className="bg-black/40 backdrop-blur-xl border border-white/10 rounded-3xl p-6 shadow-[0_0_40px_rgba(0,0,0,0.2)]">
-                <div className="flex items-center gap-2 mb-6 text-white font-medium">
-                  <div className="p-2 rounded-lg bg-cyan-500/10 text-cyan-400">
+              <div className="bg-card/40 backdrop-blur-xl border border-border/10 rounded-3xl p-6 shadow-xl">
+                <div className="flex items-center gap-2 mb-6 text-foreground font-medium">
+                  <div className="p-2 rounded-lg bg-primary/10 text-primary">
                     <TrendingUp size={18} />
                   </div>
-                  Selected Strategy: <span className="capitalize text-cyan-400 ml-auto bg-cyan-500/10 px-3 py-1 rounded-full text-xs">{plan}</span>
+                  Selected Strategy: <span className="capitalize text-primary ml-auto bg-primary/10 px-3 py-1 rounded-full text-xs">{plan}</span>
                 </div>
                 
                 <div className="space-y-4 text-sm">
-                  <div className="flex justify-between py-2 border-b border-white/5">
-                    <span className="text-gray-400">Min Deposit</span>
-                    <span className="text-white font-mono">${ranges[plan].min.toLocaleString()}</span>
+                  <div className="flex justify-between py-2 border-b border-border/10">
+                    <span className="text-muted-foreground">Min Deposit</span>
+                    <span className="text-foreground font-mono">${ranges[plan].min.toLocaleString()}</span>
                   </div>
-                  <div className="flex justify-between py-2 border-b border-white/5">
-                    <span className="text-gray-400">Max Deposit</span>
-                    <span className="text-white font-mono">${ranges[plan].max.toLocaleString()}</span>
+                  <div className="flex justify-between py-2 border-b border-border/10">
+                    <span className="text-muted-foreground">Max Deposit</span>
+                    <span className="text-foreground font-mono">${ranges[plan].max.toLocaleString()}</span>
                   </div>
-                  <div className="flex justify-between py-2 border-b border-white/5">
-                    <span className="text-gray-400">Capital Lock</span>
-                    <span className="text-white">14 Days</span>
+                  <div className="flex justify-between py-2 border-b border-border/10">
+                    <span className="text-muted-foreground">Capital Lock</span>
+                    <span className="text-foreground">14 Days</span>
                   </div>
                   <div className="flex justify-between py-2">
-                    <span className="text-gray-400">Management Fee</span>
-                    <span className="text-white">{plan === 'elite' ? '15%' : plan === 'pro' ? '20%' : '25%'}</span>
+                    <span className="text-muted-foreground">Management Fee</span>
+                    <span className="text-foreground">{plan === 'elite' ? '15%' : plan === 'pro' ? '20%' : '25%'}</span>
                   </div>
                 </div>
               </div>
 
-              <div className="bg-black/40 backdrop-blur-xl border border-white/10 rounded-3xl p-6 shadow-[0_0_40px_rgba(0,0,0,0.2)]">
-                 <div className="flex items-center gap-2 mb-4 text-white font-medium">
-                   <Info size={18} className="text-gray-400" />
+              <div className="bg-card/40 backdrop-blur-xl border border-border/10 rounded-3xl p-6 shadow-xl">
+                 <div className="flex items-center gap-2 mb-4 text-foreground font-medium">
+                   <Info size={18} className="text-muted-foreground" />
                    Important Notes
                  </div>
-                 <ul className="text-xs text-gray-400 space-y-3 list-disc list-inside leading-relaxed">
+                 <ul className="text-xs text-muted-foreground space-y-3 list-disc list-inside leading-relaxed">
                    <li>Capital is deployed immediately upon confirmation.</li>
                    <li>Crypto deposits require network confirmation (usually 10-30 mins).</li>
                    <li>KYC Level {kycLevel || 1} limits apply.</li>

@@ -27,24 +27,24 @@ export default function LandingNavbar() {
   ]
 
   return (
-    <nav className={`fixed top-0 left-0 right-0 z-50 transition-all duration-300 ${scrolled ? 'bg-[#050A18]/80 backdrop-blur-md py-4 border-b border-white/5' : 'bg-transparent py-6'}`}>
+    <nav className={`fixed top-0 left-0 right-0 z-50 transition-all duration-300 ${scrolled ? 'bg-background/80 backdrop-blur-xl py-4 border-b border-border/5' : 'bg-transparent py-6'}`}>
       <div className="max-w-7xl mx-auto px-6 md:px-12 flex items-center justify-between">
         
         {/* Logo */}
         <Link href="/" className="flex items-center gap-2 z-50 group">
-          <LogoMark size={28} className="text-white group-hover:text-blue-400 transition-colors" animated={true} />
-          <span className="text-xl font-bold text-white tracking-wide transition-all">
+          <LogoMark size={28} className="text-foreground group-hover:text-blue-400 transition-colors" animated={true} />
+          <span className="text-xl font-bold text-foreground tracking-wide transition-all">
             HybridTrade<span className="text-[#E5C15B]">AI</span>
           </span>
         </Link>
 
         {/* Desktop Links */}
-        <div className="hidden md:flex items-center gap-1 bg-white/5 p-1 rounded-full border border-white/5 backdrop-blur-sm">
+        <div className="hidden md:flex items-center gap-1 bg-muted/5 p-1 rounded-full border border-border/5 backdrop-blur-sm">
           {navLinks.map((link) => (
             <Link 
               key={link.name} 
               href={link.href} 
-              className="relative px-5 py-2 text-sm font-medium text-gray-300 hover:text-white transition-colors rounded-full hover:bg-white/10"
+              className="relative px-5 py-2 text-sm font-medium text-muted-foreground hover:text-foreground transition-colors rounded-full hover:bg-muted/10"
             >
               {link.name}
             </Link>
@@ -55,7 +55,7 @@ export default function LandingNavbar() {
         <div className="hidden md:flex items-center gap-4">
           <Link 
             href="/auth/login" 
-            className="text-sm font-medium text-white hover:text-blue-400 transition-colors"
+            className="text-sm font-medium text-foreground hover:text-blue-400 transition-colors"
           >
             Sign In
           </Link>
@@ -69,7 +69,7 @@ export default function LandingNavbar() {
 
         {/* Mobile Menu Button */}
         <button 
-          className="md:hidden text-white z-50"
+          className="md:hidden text-foreground z-50"
           onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
         >
           {mobileMenuOpen ? <X /> : <Menu />}
@@ -82,13 +82,13 @@ export default function LandingNavbar() {
               initial={{ opacity: 0, y: -20 }}
               animate={{ opacity: 1, y: 0 }}
               exit={{ opacity: 0, y: -20 }}
-              className="absolute top-0 left-0 w-full bg-[#050A18] border-b border-white/10 p-6 pt-24 flex flex-col gap-6 md:hidden shadow-2xl"
+              className="absolute top-0 left-0 w-full bg-background border-b border-border/10 p-6 pt-24 flex flex-col gap-6 md:hidden shadow-2xl"
             >
               {navLinks.map((link) => (
                 <Link 
                   key={link.name} 
                   href={link.href} 
-                  className="text-lg font-medium text-white"
+                  className="text-lg font-medium text-foreground"
                   onClick={() => setMobileMenuOpen(false)}
                 >
                   {link.name}
@@ -97,7 +97,7 @@ export default function LandingNavbar() {
               <div className="flex flex-col gap-4 mt-4">
                  <Link 
                     href="/auth/login" 
-                    className="px-5 py-3 border border-white/20 text-white rounded text-center"
+                    className="px-5 py-3 border border-border/20 text-foreground rounded text-center"
                     onClick={() => setMobileMenuOpen(false)}
                  >
                     Sign In

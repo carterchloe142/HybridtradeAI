@@ -60,7 +60,7 @@ export default function Register() {
         className="w-full max-w-md relative z-10"
       >
         {/* Glass Card */}
-        <div className="relative overflow-hidden rounded-3xl bg-black/40 backdrop-blur-xl border border-white/10 shadow-[0_0_40px_rgba(0,229,255,0.1)] p-8">
+        <div className="relative overflow-hidden rounded-3xl bg-card/40 backdrop-blur-xl border border-border/10 shadow-2xl p-8">
           
           {/* Header */}
           <div className="text-center mb-8">
@@ -69,22 +69,22 @@ export default function Register() {
               animate={{ opacity: 1, y: 0 }}
               transition={{ delay: 0.2 }}
             >
-              <h2 className="text-3xl font-bold bg-gradient-to-r from-white via-cyan-200 to-blue-400 bg-clip-text text-transparent drop-shadow-sm">
+              <h2 className="text-3xl font-bold bg-gradient-to-r from-foreground via-cyan-500 to-blue-500 bg-clip-text text-transparent drop-shadow-sm">
                 Create Account
               </h2>
-              <p className="text-blue-200/50 mt-2 text-sm">Join the future of algorithmic trading</p>
+              <p className="text-muted-foreground mt-2 text-sm">Join the future of algorithmic trading</p>
             </motion.div>
           </div>
 
           <form onSubmit={onSubmit} className="space-y-5">
             <div className="space-y-1">
-              <label className="text-xs font-medium text-blue-200/70 ml-1">Email Address</label>
+              <label className="text-xs font-medium text-muted-foreground ml-1">Email Address</label>
               <div className="relative group">
-                <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none text-blue-200/30 group-focus-within:text-cyan-400 transition-colors">
+                <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none text-muted-foreground/50 group-focus-within:text-primary transition-colors">
                   <Mail size={18} />
                 </div>
                 <input 
-                  className="w-full bg-white/5 border border-white/10 rounded-xl py-3 pl-10 pr-4 text-white placeholder:text-white/20 focus:outline-none focus:border-cyan-500/50 focus:bg-white/10 focus:shadow-[0_0_15px_rgba(0,229,255,0.1)] transition-all"
+                  className="w-full bg-muted/20 border border-border/50 rounded-xl py-3 pl-10 pr-4 text-foreground placeholder:text-muted-foreground/50 focus:outline-none focus:border-primary/50 focus:bg-muted/30 focus:shadow-[0_0_15px_rgba(0,229,255,0.1)] transition-all"
                   type="email" 
                   placeholder="name@example.com"
                   value={form.email} 
@@ -94,13 +94,13 @@ export default function Register() {
             </div>
 
             <div className="space-y-1">
-              <label className="text-xs font-medium text-blue-200/70 ml-1">Password</label>
+              <label className="text-xs font-medium text-muted-foreground ml-1">Password</label>
               <div className="relative group">
-                <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none text-blue-200/30 group-focus-within:text-cyan-400 transition-colors">
+                <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none text-muted-foreground/50 group-focus-within:text-primary transition-colors">
                   <Lock size={18} />
                 </div>
                 <input 
-                  className="w-full bg-white/5 border border-white/10 rounded-xl py-3 pl-10 pr-4 text-white placeholder:text-white/20 focus:outline-none focus:border-cyan-500/50 focus:bg-white/10 focus:shadow-[0_0_15px_rgba(0,229,255,0.1)] transition-all"
+                  className="w-full bg-muted/20 border border-border/50 rounded-xl py-3 pl-10 pr-4 text-foreground placeholder:text-muted-foreground/50 focus:outline-none focus:border-primary/50 focus:bg-muted/30 focus:shadow-[0_0_15px_rgba(0,229,255,0.1)] transition-all"
                   type="password" 
                   placeholder="Create a strong password"
                   value={form.password} 
@@ -113,9 +113,9 @@ export default function Register() {
               <motion.div 
                 initial={{ opacity: 0, height: 0 }} 
                 animate={{ opacity: 1, height: 'auto' }}
-                className="p-3 rounded-lg bg-red-500/10 border border-red-500/20 text-red-200 text-sm flex items-center gap-2"
+                className="p-3 rounded-lg bg-destructive/10 border border-destructive/20 text-destructive text-sm flex items-center gap-2"
               >
-                <span className="w-1.5 h-1.5 rounded-full bg-red-500" />
+                <span className="w-1.5 h-1.5 rounded-full bg-destructive" />
                 {error}
               </motion.div>
             )}
@@ -124,7 +124,7 @@ export default function Register() {
               <motion.div 
                 initial={{ opacity: 0, height: 0 }} 
                 animate={{ opacity: 1, height: 'auto' }}
-                className="p-3 rounded-lg bg-green-500/10 border border-green-500/20 text-green-200 text-sm flex items-center gap-2"
+                className="p-3 rounded-lg bg-green-500/10 border border-green-500/20 text-green-500 text-sm flex items-center gap-2"
               >
                 <CheckCircle2 size={16} className="text-green-500" />
                 {success}
@@ -132,7 +132,7 @@ export default function Register() {
             )}
 
             <button 
-              className="w-full relative group overflow-hidden bg-gradient-to-r from-cyan-600 to-blue-600 hover:from-cyan-500 hover:to-blue-500 text-white font-semibold py-3.5 rounded-xl transition-all shadow-lg shadow-cyan-500/20 hover:shadow-cyan-500/40 hover:scale-[1.02] active:scale-[0.98] disabled:opacity-70 disabled:cursor-not-allowed"
+              className="w-full relative group overflow-hidden bg-primary text-primary-foreground hover:bg-primary/90 font-semibold py-3.5 rounded-xl transition-all shadow-lg shadow-primary/20 hover:shadow-primary/40 hover:scale-[1.02] active:scale-[0.98] disabled:opacity-70 disabled:cursor-not-allowed"
               disabled={loading}
             >
               <div className="absolute inset-0 bg-white/20 translate-y-full group-hover:translate-y-0 transition-transform duration-300" />
@@ -151,9 +151,9 @@ export default function Register() {
           </form>
 
           <div className="mt-8 text-center">
-            <p className="text-sm text-blue-200/60">
+            <p className="text-sm text-muted-foreground">
               Already have an account?{' '}
-              <Link className="text-cyan-400 hover:text-cyan-300 font-medium transition-colors hover:underline decoration-cyan-400/30 underline-offset-4" href="/auth/login">
+              <Link className="text-primary hover:text-primary/80 font-medium transition-colors hover:underline decoration-primary/30 underline-offset-4" href="/auth/login">
                 Sign In
               </Link>
             </p>

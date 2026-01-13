@@ -103,11 +103,11 @@ export default function WithdrawPage() {
             animate={{ opacity: 1, x: 0 }}
             className="mb-8 flex items-center gap-4"
           >
-            <Link href="/dashboard" className="p-2 rounded-xl bg-black/40 border border-white/10 hover:bg-white/10 transition-all text-muted-foreground hover:text-white backdrop-blur-md group">
+            <Link href="/dashboard" className="p-2 rounded-xl bg-card/40 border border-border/10 hover:bg-accent/10 transition-all text-muted-foreground hover:text-foreground backdrop-blur-md group">
               <ArrowLeft size={20} className="group-hover:-translate-x-1 transition-transform" />
             </Link>
             <div>
-              <h1 className="text-3xl font-bold bg-gradient-to-r from-white via-cyan-200 to-blue-400 bg-clip-text text-transparent">
+              <h1 className="text-3xl font-bold bg-gradient-to-r from-foreground via-primary to-primary/60 bg-clip-text text-transparent">
                 Withdraw Funds
               </h1>
               <p className="text-muted-foreground text-sm">Securely transfer your assets to external wallets</p>
@@ -120,18 +120,18 @@ export default function WithdrawPage() {
               initial={{ opacity: 0, y: 20 }}
               animate={{ opacity: 1, y: 0 }}
               transition={{ delay: 0.1 }}
-              className="relative overflow-hidden rounded-3xl bg-black/40 backdrop-blur-xl border border-white/10 shadow-[0_0_40px_rgba(0,229,255,0.05)] p-8"
+              className="relative overflow-hidden rounded-3xl bg-card/40 backdrop-blur-xl border border-border/10 shadow-xl p-8"
             >
               {/* Background decoration */}
-              <div className="absolute top-0 right-0 w-64 h-64 bg-cyan-500/10 rounded-full blur-[100px] pointer-events-none -mr-32 -mt-32"></div>
+              <div className="absolute top-0 right-0 w-64 h-64 bg-primary/10 rounded-full blur-[100px] pointer-events-none -mr-32 -mt-32"></div>
 
               <div className="relative z-10">
-                <div className="mb-8 p-6 rounded-2xl bg-gradient-to-br from-white/5 to-transparent border border-white/5">
-                   <div className="text-sm text-cyan-400 mb-2 flex items-center gap-2 font-medium">
+                <div className="mb-8 p-6 rounded-2xl bg-gradient-to-br from-muted/10 to-transparent border border-border/10">
+                   <div className="text-sm text-primary mb-2 flex items-center gap-2 font-medium">
                      <Wallet size={16} />
                      Available Balance
                    </div>
-                   <div className="text-5xl font-bold tracking-tight text-white drop-shadow-[0_0_15px_rgba(255,255,255,0.3)]">
+                   <div className="text-5xl font-bold tracking-tight text-foreground drop-shadow-sm">
                      ${available.toLocaleString(undefined, {minimumFractionDigits: 2})}
                    </div>
                 </div>
@@ -140,12 +140,12 @@ export default function WithdrawPage() {
                   <motion.div 
                     initial={{ opacity: 0, scale: 0.95 }}
                     animate={{ opacity: 1, scale: 1 }}
-                    className="bg-green-500/10 border border-green-500/20 text-green-200 p-4 rounded-xl mb-6 text-sm flex items-start gap-3"
+                    className="bg-green-500/10 border border-green-500/20 text-green-500 p-4 rounded-xl mb-6 text-sm flex items-start gap-3"
                   >
-                    <CheckCircle2 size={18} className="mt-0.5 shrink-0 text-green-400"/>
+                    <CheckCircle2 size={18} className="mt-0.5 shrink-0"/>
                     <span className="flex-1">
                       {msg}{' '}
-                      <Link href="/transactions" className="underline decoration-green-500/30 hover:text-green-300 transition-colors">View history</Link>
+                      <Link href="/transactions" className="underline decoration-green-500/30 hover:text-green-600 transition-colors">View history</Link>
                     </span>
                   </motion.div>
                 )}
@@ -153,23 +153,23 @@ export default function WithdrawPage() {
                   <motion.div 
                     initial={{ opacity: 0, scale: 0.95 }}
                     animate={{ opacity: 1, scale: 1 }}
-                    className="bg-red-500/10 border border-red-500/20 text-red-200 p-4 rounded-xl mb-6 text-sm flex items-start gap-3"
+                    className="bg-red-500/10 border border-red-500/20 text-red-500 p-4 rounded-xl mb-6 text-sm flex items-start gap-3"
                   >
-                    <AlertCircle size={18} className="mt-0.5 shrink-0 text-red-400"/> 
+                    <AlertCircle size={18} className="mt-0.5 shrink-0"/> 
                     <span>{err}</span>
                   </motion.div>
                 )}
 
                 <div className="space-y-6">
                   <div>
-                    <label className="block text-sm text-gray-400 mb-2 ml-1">Amount to withdraw (USD)</label>
+                    <label className="block text-sm text-muted-foreground mb-2 ml-1">Amount to withdraw (USD)</label>
                     <div className="relative group">
-                      <span className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-400 group-focus-within:text-cyan-400 transition-colors">$</span>
+                      <span className="absolute left-4 top-1/2 -translate-y-1/2 text-muted-foreground group-focus-within:text-primary transition-colors">$</span>
                       <input 
                         type="number" 
                         value={amount}
                         onChange={(e) => setAmount(e.target.value)}
-                        className="w-full bg-black/20 border border-white/10 rounded-xl pl-8 pr-4 py-4 text-xl text-white placeholder:text-gray-600 focus:border-cyan-500/50 focus:ring-1 focus:ring-cyan-500/50 transition-all outline-none"
+                        className="w-full bg-muted/10 border border-border/10 rounded-xl pl-8 pr-4 py-4 text-xl text-foreground placeholder:text-muted-foreground/50 focus:border-primary/50 focus:ring-1 focus:ring-primary/50 transition-all outline-none"
                         placeholder="0.00"
                       />
                     </div>
@@ -179,25 +179,25 @@ export default function WithdrawPage() {
                           animate={{ opacity: 1 }}
                           className="mt-3 text-xs flex justify-between px-1"
                         >
-                            <span className="text-gray-400">Fee (1%): <span className="text-gray-300">${(Number(amount) * 0.01).toFixed(2)}</span></span>
-                            <span className="text-cyan-400 font-medium">You receive: ${(Number(amount) * 0.99).toFixed(2)}</span>
+                            <span className="text-muted-foreground">Fee (1%): <span className="text-foreground">${(Number(amount) * 0.01).toFixed(2)}</span></span>
+                            <span className="text-primary font-medium">You receive: ${(Number(amount) * 0.99).toFixed(2)}</span>
                         </motion.div>
                     )}
                   </div>
 
                   <div>
-                    <label className="block text-sm text-gray-400 mb-2 ml-1">Network</label>
+                    <label className="block text-sm text-muted-foreground mb-2 ml-1">Network</label>
                     <div className="relative">
                       <select 
                         value={network}
                         onChange={(e) => setNetwork(e.target.value)}
-                        className="w-full bg-black/20 border border-white/10 rounded-xl px-4 py-4 text-white appearance-none focus:border-cyan-500/50 focus:ring-1 focus:ring-cyan-500/50 transition-all outline-none cursor-pointer"
+                        className="w-full bg-muted/10 border border-border/10 rounded-xl px-4 py-4 text-foreground appearance-none focus:border-primary/50 focus:ring-1 focus:ring-primary/50 transition-all outline-none cursor-pointer"
                       >
-                        <option value="TRC20" className="bg-gray-900">USDT (TRC20)</option>
-                        <option value="ERC20" className="bg-gray-900">USDT (ERC20)</option>
-                        <option value="BTC" className="bg-gray-900">Bitcoin</option>
+                        <option value="TRC20" className="bg-card">USDT (TRC20)</option>
+                        <option value="ERC20" className="bg-card">USDT (ERC20)</option>
+                        <option value="BTC" className="bg-card">Bitcoin</option>
                       </select>
-                      <div className="absolute right-4 top-1/2 -translate-y-1/2 pointer-events-none text-gray-400">
+                      <div className="absolute right-4 top-1/2 -translate-y-1/2 pointer-events-none text-muted-foreground">
                         <svg width="12" height="12" viewBox="0 0 12 12" fill="none" xmlns="http://www.w3.org/2000/svg">
                           <path d="M2.5 4.5L6 8L9.5 4.5" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/>
                         </svg>
@@ -206,12 +206,12 @@ export default function WithdrawPage() {
                   </div>
 
                   <div>
-                    <label className="block text-sm text-gray-400 mb-2 ml-1">Destination Address</label>
+                    <label className="block text-sm text-muted-foreground mb-2 ml-1">Destination Address</label>
                     <input 
                       type="text" 
                       value={destinationAddress}
                       onChange={(e) => setDestinationAddress(e.target.value)}
-                      className="w-full bg-black/20 border border-white/10 rounded-xl px-4 py-4 text-white placeholder:text-gray-600 focus:border-cyan-500/50 focus:ring-1 focus:ring-cyan-500/50 transition-all outline-none font-mono text-sm"
+                      className="w-full bg-muted/10 border border-border/10 rounded-xl px-4 py-4 text-foreground placeholder:text-muted-foreground/50 focus:border-primary/50 focus:ring-1 focus:ring-primary/50 transition-all outline-none font-mono text-sm"
                       placeholder="Enter wallet address"
                     />
                   </div>
@@ -219,7 +219,7 @@ export default function WithdrawPage() {
                   <button 
                     onClick={submit}
                     disabled={loading || available <= 0}
-                    className={`w-full relative group overflow-hidden bg-gradient-to-r from-cyan-600 to-blue-600 hover:from-cyan-500 hover:to-blue-500 text-white font-semibold py-4 text-lg rounded-xl transition-all shadow-lg shadow-cyan-500/20 hover:shadow-cyan-500/40 hover:scale-[1.02] active:scale-[0.98] disabled:opacity-50 disabled:cursor-not-allowed disabled:hover:scale-100 mt-4`}
+                    className={`w-full relative group overflow-hidden bg-gradient-to-r from-primary to-primary/80 hover:from-primary/90 hover:to-primary/70 text-primary-foreground font-semibold py-4 text-lg rounded-xl transition-all shadow-lg hover:shadow-xl hover:scale-[1.02] active:scale-[0.98] disabled:opacity-50 disabled:cursor-not-allowed disabled:hover:scale-100 mt-4`}
                   >
                     <div className="absolute inset-0 bg-white/20 translate-y-full group-hover:translate-y-0 transition-transform duration-300" />
                     <span className="relative flex items-center justify-center gap-2">
@@ -246,13 +246,13 @@ export default function WithdrawPage() {
                 initial={{ opacity: 0, x: 20 }}
                 animate={{ opacity: 1, x: 0 }}
                 transition={{ delay: 0.2 }}
-                className="bg-black/40 backdrop-blur-xl border border-white/10 rounded-2xl p-6"
+                className="bg-card/40 backdrop-blur-xl border border-border/10 rounded-2xl p-6"
               >
-                <div className="flex items-center gap-2 mb-4 text-white font-medium">
-                  <ShieldCheck size={20} className="text-cyan-400" />
+                <div className="flex items-center gap-2 mb-4 text-foreground font-medium">
+                  <ShieldCheck size={20} className="text-primary" />
                   Security Check
                 </div>
-                <p className="text-sm text-gray-400 leading-relaxed">
+                <p className="text-sm text-muted-foreground leading-relaxed">
                   For your security, all withdrawals are processed manually. Requests over $10,000 may require additional identity verification steps to ensure compliance and safety.
                 </p>
               </motion.div>
@@ -261,20 +261,20 @@ export default function WithdrawPage() {
                 initial={{ opacity: 0, x: 20 }}
                 animate={{ opacity: 1, x: 0 }}
                 transition={{ delay: 0.3 }}
-                className="bg-black/40 backdrop-blur-xl border border-white/10 rounded-2xl p-6"
+                className="bg-card/40 backdrop-blur-xl border border-border/10 rounded-2xl p-6"
               >
-                <div className="flex items-center gap-2 mb-4 text-white font-medium">
-                  <Clock size={20} className="text-blue-400" />
+                <div className="flex items-center gap-2 mb-4 text-foreground font-medium">
+                  <Clock size={20} className="text-blue-500" />
                   Processing Times
                 </div>
                 <div className="space-y-3">
-                  <div className="flex justify-between items-center p-3 rounded-xl bg-white/5 border border-white/5">
-                    <span className="text-sm text-gray-400">Standard</span>
-                    <span className="text-sm font-medium text-white">24-48 hours</span>
+                  <div className="flex justify-between items-center p-3 rounded-xl bg-muted/10 border border-border/10">
+                    <span className="text-sm text-muted-foreground">Standard</span>
+                    <span className="text-sm font-medium text-foreground">24-48 hours</span>
                   </div>
-                  <div className="flex justify-between items-center p-3 rounded-xl bg-gradient-to-r from-cyan-500/10 to-blue-500/10 border border-cyan-500/20">
-                    <span className="text-sm text-gray-400">Priority</span>
-                    <span className="text-sm font-medium text-cyan-300">Instant - 4 hours</span>
+                  <div className="flex justify-between items-center p-3 rounded-xl bg-gradient-to-r from-primary/10 to-blue-500/10 border border-primary/20">
+                    <span className="text-sm text-muted-foreground">Priority</span>
+                    <span className="text-sm font-medium text-primary">Instant - 4 hours</span>
                   </div>
                 </div>
               </motion.div>

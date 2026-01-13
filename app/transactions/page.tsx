@@ -83,6 +83,16 @@ export default function UserTransactions() {
     })
   }, [rows, typeFilter, statusFilter])
 
+  function formatType(tx: TxRow) {
+    const t = tx.type?.toUpperCase() || '';
+    if (t === 'DEPOSIT') return 'Deposit';
+    if (t === 'WITHDRAWAL') return 'Withdrawal';
+    if (t === 'INVESTMENT') return 'Investment';
+    if (t === 'ROI') return 'ROI';
+    if (t === 'REFERRAL') return 'Referral';
+    return tx.type || '-';
+  }
+
   return (
     <>
       <FuturisticBackground />
@@ -94,11 +104,11 @@ export default function UserTransactions() {
             animate={{ opacity: 1, x: 0 }}
             className="flex items-center gap-4"
           >
-            <Link href="/dashboard" className="p-2 rounded-xl bg-black/40 border border-white/10 hover:bg-white/10 transition-all text-muted-foreground hover:text-white backdrop-blur-md group">
+            <Link href="/dashboard" className="p-2 rounded-xl bg-card/40 border border-border/10 hover:bg-accent/10 transition-all text-muted-foreground hover:text-foreground backdrop-blur-md group">
               <ArrowLeft size={20} className="group-hover:-translate-x-1 transition-transform" />
             </Link>
             <div>
-              <h1 className="text-3xl font-bold bg-gradient-to-r from-white via-cyan-200 to-blue-400 bg-clip-text text-transparent">
+              <h1 className="text-3xl font-bold text-foreground">
                 Transaction History
               </h1>
               <p className="text-muted-foreground text-sm">Track your deposits, withdrawals, and trades</p>
@@ -109,7 +119,7 @@ export default function UserTransactions() {
             <motion.div 
               initial={{ opacity: 0, height: 0 }}
               animate={{ opacity: 1, height: 'auto' }}
-              className="p-4 rounded-xl bg-red-500/10 border border-red-500/20 text-red-200 text-sm flex items-center gap-2"
+              className="p-4 rounded-xl bg-destructive/10 border border-destructive/20 text-destructive text-sm flex items-center gap-2"
             >
               <XCircle size={16} />
               {msg}
@@ -120,34 +130,34 @@ export default function UserTransactions() {
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ delay: 0.1 }}
-            className="bg-black/40 backdrop-blur-xl border border-white/10 rounded-3xl p-6 shadow-[0_0_40px_rgba(0,0,0,0.2)]"
+            className="bg-card/40 backdrop-blur-xl border border-border/10 rounded-3xl p-6 shadow-xl"
           >
             {/* Filters */}
-            <div className="flex flex-wrap items-center gap-4 mb-6 pb-6 border-b border-white/5">
-              <div className="flex items-center gap-2 text-sm text-gray-400">
+            <div className="flex flex-wrap items-center gap-4 mb-6 pb-6 border-b border-border/10">
+              <div className="flex items-center gap-2 text-sm text-muted-foreground">
                 <Filter size={16} />
                 Filters:
               </div>
               
               <select 
-                className="bg-black/20 border border-white/10 rounded-lg px-3 py-2 text-sm text-white focus:border-cyan-500/50 outline-none transition-colors capitalize" 
+                className="bg-background/50 border border-border/10 rounded-lg px-3 py-2 text-sm text-foreground focus:border-primary/50 outline-none transition-colors capitalize" 
                 value={typeFilter} 
                 onChange={(e) => setTypeFilter(e.target.value)}
               >
-                {types.map((t) => (<option key={t} value={t} className="bg-gray-900 capitalize">{t === 'all' ? 'All Types' : t}</option>))}
+                {types.map((t) => (<option key={t} value={t} className="bg-background text-foreground capitalize">{t === 'all' ? 'All Types' : t}</option>))}
               </select>
 
               <select 
-                className="bg-black/20 border border-white/10 rounded-lg px-3 py-2 text-sm text-white focus:border-cyan-500/50 outline-none transition-colors capitalize" 
+                className="bg-background/50 border border-border/10 rounded-lg px-3 py-2 text-sm text-foreground focus:border-primary/50 outline-none transition-colors capitalize" 
                 value={statusFilter} 
                 onChange={(e) => setStatusFilter(e.target.value)}
               >
-                {statuses.map((s) => (<option key={s} value={s} className="bg-gray-900 capitalize">{s === 'all' ? 'All Statuses' : s}</option>))}
+                {statuses.map((s) => (<option key={s} value={s} className="bg-background text-foreground capitalize">{s === 'all' ? 'All Statuses' : s}</option>))}
               </select>
 
               <button 
                 onClick={fetchTx}
-                className="ml-auto flex items-center gap-2 px-4 py-2 rounded-lg bg-white/5 hover:bg-white/10 border border-white/10 transition-colors text-sm text-gray-300 hover:text-white"
+                className="ml-auto flex items-center gap-2 px-4 py-2 rounded-lg bg-muted/50 hover:bg-muted/80 border border-border/10 transition-colors text-sm text-muted-foreground hover:text-foreground"
               >
                 <RefreshCw size={16} className={loading ? "animate-spin" : ""} />
                 Refresh
@@ -158,23 +168,23 @@ export default function UserTransactions() {
             <div className="overflow-x-auto">
               <table className="w-full text-sm">
                 <thead>
-                  <tr className="border-b border-white/10">
-                    <th className="px-4 py-3 text-left font-medium text-gray-400">Type</th>
-                    <th className="px-4 py-3 text-left font-medium text-gray-400">Amount</th>
-                    <th className="px-4 py-3 text-left font-medium text-gray-400">Currency</th>
-                    <th className="px-4 py-3 text-left font-medium text-gray-400">Status</th>
-                    <th className="px-4 py-3 text-right font-medium text-gray-400">Date</th>
+                  <tr className="border-b border-border/10">
+                    <th className="px-4 py-3 text-left font-medium text-muted-foreground">Type</th>
+                    <th className="px-4 py-3 text-left font-medium text-muted-foreground">Amount</th>
+                    <th className="px-4 py-3 text-left font-medium text-muted-foreground">Currency</th>
+                    <th className="px-4 py-3 text-left font-medium text-muted-foreground">Status</th>
+                    <th className="px-4 py-3 text-right font-medium text-muted-foreground">Date</th>
                   </tr>
                 </thead>
-                <tbody className="divide-y divide-white/5">
+                <tbody className="divide-y divide-border/10">
                   {loading && rows.length === 0 && (
                     Array.from({ length: 5 }).map((_, i) => (
                       <tr key={`sk_${i}`} className="animate-pulse">
-                        <td className="px-4 py-4"><div className="h-4 w-24 bg-white/5 rounded" /></td>
-                        <td className="px-4 py-4"><div className="h-4 w-20 bg-white/5 rounded" /></td>
-                        <td className="px-4 py-4"><div className="h-4 w-12 bg-white/5 rounded" /></td>
-                        <td className="px-4 py-4"><div className="h-4 w-20 bg-white/5 rounded" /></td>
-                        <td className="px-4 py-4"><div className="h-4 w-32 bg-white/5 rounded ml-auto" /></td>
+                        <td className="px-4 py-4"><div className="h-4 w-24 bg-muted/50 rounded" /></td>
+                        <td className="px-4 py-4"><div className="h-4 w-20 bg-muted/50 rounded" /></td>
+                        <td className="px-4 py-4"><div className="h-4 w-12 bg-muted/50 rounded" /></td>
+                        <td className="px-4 py-4"><div className="h-4 w-20 bg-muted/50 rounded" /></td>
+                        <td className="px-4 py-4"><div className="h-4 w-32 bg-muted/50 rounded ml-auto" /></td>
                       </tr>
                     ))
                   )}
@@ -184,48 +194,48 @@ export default function UserTransactions() {
                       animate={{ opacity: 1, y: 0 }}
                       transition={{ delay: idx * 0.05 }}
                       key={tx.id} 
-                      className="hover:bg-white/5 transition-colors group"
+                      className="hover:bg-muted/50 transition-colors group"
                     >
-                      <td className="px-4 py-4 text-white capitalize flex items-center gap-2">
-                        <span className="p-1.5 rounded-lg bg-white/5 text-gray-400 group-hover:text-cyan-400 group-hover:bg-cyan-500/10 transition-colors">
+                      <td className="px-4 py-4 text-foreground capitalize flex items-center gap-2">
+                        <span className="p-1.5 rounded-lg bg-muted/50 text-muted-foreground group-hover:text-primary group-hover:bg-primary/10 transition-colors">
                           <ArrowRightLeft size={14} />
                         </span>
-                        {tx.type}
+                        {formatType(tx)}
                       </td>
-                      <td className="px-4 py-4 text-white font-mono font-medium">
+                      <td className="px-4 py-4 text-foreground font-mono font-medium">
                         {typeof tx.amount_usd === 'number' ? tx.amount_usd.toFixed(2) : tx.amount}
                       </td>
                       <td className="px-4 py-4">
-                        <span className="px-2 py-1 rounded bg-white/5 border border-white/10 text-xs font-medium text-gray-300 uppercase">
+                        <span className="px-2 py-1 rounded bg-muted/50 border border-border/10 text-xs font-medium text-muted-foreground uppercase">
                           {tx.currency}
                         </span>
                       </td>
                       <td className="px-4 py-4">
                         <span
                           className={`inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-medium border ${
-                            tx.status === 'confirmed'
-                              ? 'bg-green-500/10 border-green-500/20 text-green-400'
-                              : tx.status === 'cancelled' || tx.status === 'failed' || tx.status === 'rejected'
-                              ? 'bg-red-500/10 border-red-500/20 text-red-400'
-                              : 'bg-yellow-500/10 border-yellow-500/20 text-yellow-400'
+                            tx.status.toLowerCase() === 'confirmed' || tx.status.toLowerCase() === 'completed'
+                              ? 'bg-green-500/10 border-green-500/20 text-green-500'
+                              : tx.status.toLowerCase() === 'cancelled' || tx.status.toLowerCase() === 'failed' || tx.status.toLowerCase() === 'rejected'
+                              ? 'bg-destructive/10 border-destructive/20 text-destructive'
+                              : 'bg-yellow-500/10 border-yellow-500/20 text-yellow-500'
                           }`}
                         >
-                          {tx.status === 'confirmed' && <CheckCircle2 size={12} />}
-                          {(tx.status === 'cancelled' || tx.status === 'failed' || tx.status === 'rejected') && <XCircle size={12} />}
-                          {tx.status !== 'confirmed' && tx.status !== 'cancelled' && tx.status !== 'failed' && tx.status !== 'rejected' && <Clock size={12} />}
-                          {tx.status.charAt(0).toUpperCase() + tx.status.slice(1)}
+                          {tx.status.toLowerCase() === 'confirmed' && <CheckCircle2 size={12} />}
+                          {(tx.status.toLowerCase() === 'cancelled' || tx.status.toLowerCase() === 'failed' || tx.status.toLowerCase() === 'rejected') && <XCircle size={12} />}
+                          {tx.status.toLowerCase() !== 'confirmed' && tx.status.toLowerCase() !== 'cancelled' && tx.status.toLowerCase() !== 'failed' && tx.status.toLowerCase() !== 'rejected' && <Clock size={12} />}
+                          {tx.status.charAt(0).toUpperCase() + tx.status.slice(1).toLowerCase()}
                         </span>
                       </td>
-                      <td className="px-4 py-4 text-gray-400 text-xs text-right font-mono">
+                      <td className="px-4 py-4 text-muted-foreground text-xs text-right font-mono">
                         {new Date(tx.created_at).toLocaleString()}
                       </td>
                     </motion.tr>
                   ))}
                   {filtered.length === 0 && !loading && (
                     <tr>
-                      <td className="px-4 py-12 text-center text-gray-500" colSpan={5}>
+                      <td className="px-4 py-12 text-center text-muted-foreground" colSpan={5}>
                         <div className="flex flex-col items-center gap-2">
-                          <div className="p-3 rounded-full bg-white/5">
+                          <div className="p-3 rounded-full bg-muted/50">
                             <Filter size={24} className="opacity-20" />
                           </div>
                           <p>No transactions found</p>

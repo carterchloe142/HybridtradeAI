@@ -66,7 +66,10 @@ export default function Dashboard() {
   useEffect(() => {
     async function fetchData() {
       const userId = await getCurrentUserId();
-      if (!userId) return;
+      if (!userId) {
+        setLoading(false);
+        return;
+      }
       userIdRef.current = userId;
       
       try {
@@ -187,37 +190,37 @@ export default function Dashboard() {
               className="space-y-8"
             >
           {/* Header Section */}
-          <div className="flex flex-col lg:flex-row justify-between items-start lg:items-center gap-6 bg-card/30 backdrop-blur-md p-6 rounded-3xl border border-white/5 shadow-2xl">
+          <div className="flex flex-col lg:flex-row justify-between items-start lg:items-center gap-6 bg-card/40 backdrop-blur-xl p-6 rounded-3xl border border-border/10 shadow-xl">
             <div>
-              <h1 className="text-4xl font-extrabold tracking-tight bg-gradient-to-r from-white via-primary to-purple-400 bg-clip-text text-transparent drop-shadow-lg">
+              <h1 className="text-4xl font-extrabold tracking-tight text-foreground drop-shadow-lg">
                 Dashboard
               </h1>
               <div className="text-muted-foreground mt-2 flex items-center gap-3 text-sm font-medium">
                 <span className="flex items-center gap-1.5 px-3 py-1 rounded-full bg-primary/10 text-primary border border-primary/20 shadow-[0_0_10px_rgba(0,229,255,0.2)]">
-                    <span className="w-2 h-2 rounded-full bg-green-400 animate-pulse shadow-[0_0_8px_#4ade80]" />
+                    <span className="w-2 h-2 rounded-full bg-green-500 animate-pulse shadow-[0_0_8px_#22c55e]" />
                     {activeApprox.toLocaleString()} Active
                 </span>
-                <span className="text-white/20">•</span>
-                <span className="font-mono text-white/60">{new Date().toLocaleDateString(undefined, { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' })}</span>
+                <span className="text-muted-foreground/20">•</span>
+                <span className="font-mono text-muted-foreground/60">{new Date().toLocaleDateString(undefined, { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' })}</span>
               </div>
             </div>
             
             <div className="flex flex-wrap items-center gap-4">
                <select
-                  className="bg-black/40 border border-white/10 text-white text-sm py-2.5 px-4 rounded-xl focus:outline-none focus:ring-2 focus:ring-primary/50 backdrop-blur-sm transition-all"
+                  className="bg-background/50 border border-border/10 text-foreground text-sm py-2.5 px-4 rounded-xl focus:outline-none focus:ring-2 focus:ring-primary/50 backdrop-blur-sm transition-all"
                   value={currency}
                   onChange={(e) => setCurrency(e.target.value as any)}
                 >
                   {supportedCurrencies.map(c => (
-                    <option key={c} value={c} className="bg-gray-900">{c}</option>
+                    <option key={c} value={c} className="bg-background text-foreground">{c}</option>
                   ))}
                 </select>
 
-              <button onClick={() => router.push('/deposit')} className="relative group overflow-hidden bg-primary text-primary-foreground px-6 py-2.5 rounded-xl font-semibold shadow-[0_0_20px_rgba(0,229,255,0.4)] transition-all hover:scale-105 hover:shadow-[0_0_30px_rgba(0,229,255,0.6)]">
+              <button onClick={() => router.push('/deposit')} className="relative group overflow-hidden bg-primary text-primary-foreground px-6 py-2.5 rounded-xl font-semibold shadow-lg hover:shadow-xl transition-all hover:scale-105">
                 <div className="absolute inset-0 bg-white/20 translate-y-full group-hover:translate-y-0 transition-transform duration-300" />
                 <span className="relative flex items-center gap-2"><PlusCircle size={18} /> Deposit</span>
               </button>
-              <button onClick={() => router.push('/withdraw')} className="flex items-center gap-2 px-6 py-2.5 rounded-xl font-semibold bg-white/5 border border-white/10 hover:bg-white/10 hover:border-white/20 transition-all backdrop-blur-md">
+              <button onClick={() => router.push('/withdraw')} className="flex items-center gap-2 px-6 py-2.5 rounded-xl font-semibold bg-muted/50 border border-border/10 hover:bg-muted/80 hover:border-border/20 transition-all backdrop-blur-md text-foreground">
                 <ArrowUpCircle size={18} /> Withdraw
               </button>
             </div>
@@ -251,7 +254,7 @@ export default function Dashboard() {
                 <div className="flex items-end justify-between mt-1">
                      <div className="text-sm font-medium text-muted-foreground">{cycleDay}/14 Days</div>
                      {currentPlan !== 'none' && (
-                        <div className="w-20 h-1 bg-white/10 rounded-full overflow-hidden mb-1.5">
+                        <div className="w-20 h-1 bg-muted/10 rounded-full overflow-hidden mb-1.5">
                             <div className="h-full bg-yellow-500" style={{ width: `${cyclePct}%` }} />
                         </div>
                      )}
@@ -277,8 +280,8 @@ export default function Dashboard() {
             <div className="lg:col-span-2 space-y-6">
                 
                 {/* Main Chart Card */}
-                <div className="glass rounded-2xl border border-border/50 overflow-hidden">
-                    <div className="p-4 border-b border-border/50 flex items-center justify-between">
+                <div className="bg-card/40 backdrop-blur-xl border border-border/10 rounded-3xl shadow-xl overflow-hidden">
+                    <div className="p-4 border-b border-border/10 flex items-center justify-between">
                         <h3 className="font-semibold flex items-center gap-2">
                             <Activity size={18} className="text-primary" />
                             Live Market Performance
@@ -306,7 +309,7 @@ export default function Dashboard() {
                 {/* Portfolio & Heatmap Split */}
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                     {/* Allocation */}
-                    <div className="bg-card/20 backdrop-blur-md border border-white/10 shadow-lg rounded-3xl p-6 h-[350px] flex flex-col hover:border-blue-500/30 transition-colors">
+                    <div className="bg-card/40 backdrop-blur-xl border border-border/10 shadow-xl rounded-3xl p-6 h-[350px] flex flex-col hover:border-blue-500/30 transition-colors">
                         <h3 className="font-semibold flex items-center gap-2 mb-4">
                             <PieChart size={18} className="text-blue-500" />
                             Asset Allocation
@@ -329,7 +332,7 @@ export default function Dashboard() {
                     </div>
 
                     {/* Heatmap */}
-                    <div className="glass rounded-2xl border border-border/50 p-5 h-[350px] flex flex-col">
+                    <div className="bg-card/40 backdrop-blur-xl border border-border/10 rounded-3xl shadow-xl p-5 h-[350px] flex flex-col">
                         <h3 className="font-semibold flex items-center gap-2 mb-4">
                             <BarChart3 size={18} className="text-purple-500" />
                             Market Heatmap
@@ -341,7 +344,7 @@ export default function Dashboard() {
                 </div>
 
                 {/* Strategy Insights */}
-                <div className="glass rounded-2xl border border-border/50 p-5 h-[300px]">
+                <div className="bg-card/40 backdrop-blur-xl border border-border/10 rounded-3xl shadow-xl p-5 h-[300px]">
                     <StrategyInsights />
                 </div>
 
@@ -351,27 +354,27 @@ export default function Dashboard() {
             <div className="lg:col-span-1 space-y-6">
                 
                 {/* AI Prediction */}
-                <div className="glass rounded-2xl border border-border/50 overflow-hidden">
+                <div className="bg-card/40 backdrop-blur-xl border border-border/10 rounded-3xl shadow-xl overflow-hidden">
                      <AIPredictionCard />
                 </div>
 
                 {/* Market Pulse Group */}
                 <div className="grid grid-cols-2 gap-4">
-                    <div className="glass rounded-xl border border-border/50 p-4 h-[160px]">
+                    <div className="bg-card/40 backdrop-blur-xl border border-border/10 rounded-3xl shadow-xl p-4 h-[160px]">
                         <SentimentGauge />
                     </div>
-                    <div className="glass rounded-xl border border-border/50 p-4 h-[160px]">
+                    <div className="bg-card/40 backdrop-blur-xl border border-border/10 rounded-3xl shadow-xl p-4 h-[160px]">
                          <RiskRadar />
                     </div>
                 </div>
 
                 {/* World Clock */}
-                <div className="glass rounded-2xl border border-border/50 p-4 h-[200px]">
+                <div className="bg-card/40 backdrop-blur-xl border border-border/10 rounded-3xl shadow-xl p-4 h-[200px]">
                     <WorldMarketClock />
                 </div>
 
                 {/* Recent Activity */}
-                <div className="bg-card/20 backdrop-blur-md border border-white/10 shadow-lg rounded-3xl p-6 min-h-[300px]">
+                <div className="bg-card/40 backdrop-blur-xl border border-border/10 shadow-xl rounded-3xl p-6 min-h-[300px]">
                     <div className="flex items-center justify-between mb-4">
                         <h3 className="font-semibold flex items-center gap-2">
                             <History size={18} className="text-muted-foreground" />
@@ -383,7 +386,7 @@ export default function Dashboard() {
                 </div>
 
                 {/* News Feed */}
-                <div className="bg-card/20 backdrop-blur-md border border-white/10 shadow-lg rounded-3xl p-6 h-[400px] flex flex-col">
+                <div className="bg-card/40 backdrop-blur-xl border border-border/10 shadow-xl rounded-3xl p-6 h-[400px] flex flex-col">
                     <div className="flex items-center justify-between mb-4">
                         <h3 className="font-semibold flex items-center gap-2">
                             <Globe size={18} className="text-cyan-500" />

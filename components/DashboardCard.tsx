@@ -21,7 +21,7 @@ export default function DashboardCard({ title, value, sublabel, icon, trend, tre
       transition={{ type: "spring", stiffness: 300, damping: 20 }}
       className={`
         relative overflow-hidden rounded-2xl p-6
-        bg-card/40 backdrop-blur-md border border-white/10
+        bg-card/40 backdrop-blur-xl border border-border/10
         shadow-lg group
         ${className}
       `}

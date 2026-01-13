@@ -79,6 +79,22 @@ export default function AdminTransactions() {
     }
   }
 
+  function formatType(t: string) {
+    if (!t) return '-';
+    const upper = t.toUpperCase();
+    if (upper === 'DEPOSIT') return 'Deposit';
+    if (upper === 'WITHDRAWAL') return 'Withdrawal';
+    if (upper === 'INVESTMENT') return 'Investment';
+    if (upper === 'ROI') return 'ROI';
+    if (upper === 'REFERRAL') return 'Referral';
+    return t;
+  }
+
+  function formatStatus(s: string) {
+    if (!s) return '-';
+    return s.charAt(0).toUpperCase() + s.slice(1).toLowerCase();
+  }
+
   return (
     <AdminGuard>
       <div className="max-w-7xl mx-auto p-6 space-y-4">
@@ -160,25 +176,25 @@ export default function AdminTransactions() {
               {rows.map((tx) => (
                 <tr key={tx.id} className="border-t border-border hover:bg-muted/50 transition-colors">
                   <td className="px-2 py-1 text-foreground">{tx.profiles?.email || tx.user_id}</td>
-                  <td className="px-2 py-1 text-foreground">{tx.type}</td>
+                  <td className="px-2 py-1 text-foreground">{formatType(tx.type)}</td>
                   <td className="px-2 py-1 text-foreground">{typeof tx.amount_usd === 'number' ? tx.amount_usd : tx.amount}</td>
                   <td className="px-2 py-1 uppercase text-foreground">{tx.currency}</td>
                   <td className="px-2 py-1">
                     <span
                       className={`inline-block px-2 rounded text-xs ${
-                        tx.status === 'confirmed'
+                        tx.status.toUpperCase() === 'CONFIRMED' || tx.status.toUpperCase() === 'COMPLETED'
                           ? 'bg-success/10 text-success'
-                          : tx.status === 'cancelled' || tx.status === 'failed' || tx.status === 'rejected'
+                          : tx.status.toUpperCase() === 'CANCELLED' || tx.status.toUpperCase() === 'FAILED' || tx.status.toUpperCase() === 'REJECTED'
                           ? 'bg-destructive/10 text-destructive'
                           : 'bg-warning/10 text-warning'
                       }`}
                     >
-                      {tx.status}
+                      {formatStatus(tx.status)}
                     </span>
                   </td>
                   <td className="px-2 py-1 text-xs text-muted-foreground">{tx.tx_hash ? `${tx.tx_hash.slice(0, 8)}…${tx.tx_hash.slice(-6)}` : '-'}</td>
                   <td className="px-2 py-1">
-                    {tx.type === 'withdrawal' && tx.status === 'pending' && (
+                    {tx.type.toUpperCase() === 'WITHDRAWAL' && tx.status.toUpperCase() === 'PENDING' && (
                       <div className="flex gap-2">
                         <button className="bg-primary text-primary-foreground rounded px-2 py-1 hover:opacity-90" onClick={() => updateStatus(tx.id, 'confirmed')}>Approve</button>
                         <button className="bg-destructive text-destructive-foreground rounded px-2 py-1 hover:opacity-90" onClick={() => updateStatus(tx.id, 'rejected')}>Reject</button>

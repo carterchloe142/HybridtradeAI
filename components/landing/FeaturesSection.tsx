@@ -34,7 +34,7 @@ const features = [
 
 export default function FeaturesSection() {
   return (
-    <section id="platform" className="relative w-full py-24 bg-[#050A18] overflow-hidden px-6 md:px-16 lg:px-24">
+    <section id="platform" className="relative w-full py-24 bg-transparent overflow-hidden px-6 md:px-16 lg:px-24">
       {/* Background Mesh */}
       <div className="absolute inset-0 z-0 pointer-events-none">
         <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[800px] h-[800px] bg-indigo-900/10 rounded-full blur-[150px]" />
@@ -46,7 +46,7 @@ export default function FeaturesSection() {
             initial={{ opacity: 0, y: 20 }}
             whileInView={{ opacity: 1, y: 0 }}
             viewport={{ once: true }}
-            className="text-4xl md:text-5xl font-bold text-white mb-6"
+            className="text-4xl md:text-5xl font-bold text-foreground mb-6"
           >
             Intelligent Investing with <br />
             <span className="bg-clip-text text-transparent bg-gradient-to-r from-blue-400 to-purple-400">Advanced AI Models</span>
@@ -56,7 +56,7 @@ export default function FeaturesSection() {
             whileInView={{ opacity: 1, y: 0 }}
             viewport={{ once: true }}
             transition={{ delay: 0.1 }}
-            className="text-slate-400 max-w-2xl mx-auto text-lg"
+            className="text-muted-foreground max-w-2xl mx-auto text-lg"
           >
             Our platform leverages state-of-the-art neural networks to predict market movements and execute trades with superhuman precision.
           </motion.p>
@@ -72,12 +72,12 @@ export default function FeaturesSection() {
                 transition={{ duration: 0.5, delay: idx * 0.1 }}
                 className={`${feature.colSpan} h-full group`}
               >
-                <TiltCard className="h-full bg-slate-900/40 backdrop-blur-xl border border-white/10 rounded-3xl p-8 hover:border-blue-500/50 hover:shadow-[0_0_30px_rgba(59,130,246,0.15)] transition-all duration-500">
-                    <div className="mb-6 p-4 bg-white/5 rounded-2xl w-fit border border-white/5 shadow-lg group-hover:scale-110 group-hover:bg-blue-500/10 group-hover:border-blue-500/30 transition-all duration-300">
+                <TiltCard className="h-full bg-card/40 backdrop-blur-xl border border-border/10 rounded-3xl p-8 hover:border-blue-500/50 hover:shadow-[0_0_30px_rgba(59,130,246,0.15)] transition-all duration-500">
+                    <div className="mb-6 p-4 bg-muted/5 rounded-2xl w-fit border border-border/5 shadow-lg group-hover:scale-110 group-hover:bg-blue-500/10 group-hover:border-blue-500/30 transition-all duration-300">
                         {feature.icon}
                     </div>
-                    <h3 className="text-2xl font-bold text-white mb-3">{feature.title}</h3>
-                    <p className="text-slate-400 leading-relaxed">{feature.desc}</p>
+                    <h3 className="text-2xl font-bold text-foreground mb-3">{feature.title}</h3>
+                    <p className="text-muted-foreground leading-relaxed">{feature.desc}</p>
                 </TiltCard>
               </motion.div>
             ))}
