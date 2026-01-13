@@ -16,16 +16,33 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
 
   // Check role
   let isAdmin = false;
-  // Check 'User' table role or 'users' table
-  let { data: u1, error: e1 } = await supabaseServer.from('User').select('role').eq('id', user.id).single();
-  if (e1 && (e1.message.includes('relation') || e1.code === '42P01')) {
-       let { data: u2 } = await supabaseServer.from('users').select('role').eq('id', user.id).single();
-       if (u2 && u2.role === 'admin') isAdmin = true;
-  } else if (u1 && u1.role === 'admin') {
-      isAdmin = true;
+  
+  // 1. Check 'profiles' table (Primary Source of Truth)
+  const { data: profile } = await supabaseServer
+    .from('profiles')
+    .select('role,is_admin')
+    .eq('user_id', user.id)
+    .maybeSingle();
+
+  if (profile) {
+      const r = String(profile.role || '').toLowerCase();
+      if (Boolean(profile.is_admin) || r === 'admin') {
+          isAdmin = true;
+      }
+  }
+
+  // 2. Fallback: Check 'User' table role or 'users' table
+  if (!isAdmin) {
+      let { data: u1, error: e1 } = await supabaseServer.from('User').select('role').eq('id', user.id).single();
+      if (e1 && (e1.message.includes('relation') || e1.code === '42P01')) {
+           let { data: u2 } = await supabaseServer.from('users').select('role').eq('id', user.id).single();
+           if (u2 && u2.role === 'admin') isAdmin = true;
+      } else if (u1 && u1.role === 'admin') {
+          isAdmin = true;
+      }
   }
   
-  // Also check App metadata if RBAC is there
+  // 3. Fallback: Check App metadata if RBAC is there
   if (!isAdmin && user.app_metadata?.role === 'admin') isAdmin = true;
 
   if (!isAdmin) return res.status(403).json({ error: 'Forbidden' });

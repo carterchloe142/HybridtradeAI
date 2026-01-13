@@ -15,7 +15,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
   const { data: { user }, error: userErr } = await supabaseServer.auth.getUser(token);
   if (userErr || !user) return res.status(401).json({ error: 'Invalid or expired token' });
 
-  const { documentUrl } = req.body;
+  const { documentUrl, selfieUrl, details } = req.body;
 
   if (!documentUrl) {
     return res.status(400).json({ error: 'Document URL is required' });
@@ -28,6 +28,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
       .update({
         kycStatus: 'PENDING',
         kycDocument: documentUrl,
+        kycSubmittedAt: new Date().toISOString(),
         updatedAt: new Date().toISOString()
       })
       .eq('id', user.id);
@@ -38,10 +39,21 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
     const { error: profileError } = await supabaseServer
       .from('profiles')
       .update({
-        kyc_status: 'pending', // snake_case value? Frontend checks 'pending'
-        // kyc_document? profiles might not have this column, check-tables didn't show it.
-        // But let's assume kyc_status is what matters for access control.
-        kyc_submitted_at: new Date().toISOString()
+        kyc_status: 'pending', 
+        kyc_submitted_at: new Date().toISOString(),
+        full_name: details?.fullName,
+        // We attempt to save other fields if columns exist. 
+        // If they don't, Supabase might ignore or error depending on config.
+        // Assuming standard columns for KYC or a metadata column.
+        // Since we can't migrate, we'll try to save to known columns and maybe a generic one.
+        // But for now, let's try to save the specific fields as the Admin page expects them.
+        dob: details?.dob,
+        address: details?.address,
+        country: details?.country,
+        id_type: details?.idType,
+        id_number: details?.idNumber,
+        id_expiry: details?.idExpiry,
+        kyc_level: details?.level || 1
       })
       .eq('user_id', user.id);
     

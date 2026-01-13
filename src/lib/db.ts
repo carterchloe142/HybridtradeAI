@@ -81,3 +81,20 @@ export async function getReferralByUser(userId: string): Promise<any | null> {
   return res.data ?? null
 }
 
+export async function getUserRecentTransactions(userId: string, limit = 5): Promise<any[]> {
+  const res = await selectFirstExistingTable(['Transaction', 'transactions', 'transaction'], (t) => selectByUser(t, userId))
+  if (res.error || !Array.isArray(res.data)) return []
+  // Sort by createdAt desc and take top N
+  return res.data
+    .sort((a: any, b: any) => new Date(b.createdAt || b.created_at).getTime() - new Date(a.createdAt || a.created_at).getTime())
+    .slice(0, limit)
+    .map((t: any) => ({
+      ...t,
+      createdAt: t.createdAt || t.created_at,
+      type: t.type || 'UNKNOWN',
+      amount: Number(t.amount || 0),
+      currency: t.currency || 'USD',
+      status: t.status || 'PENDING'
+    }))
+}
+

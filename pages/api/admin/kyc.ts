@@ -102,6 +102,21 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
         
       if (updateErr) return res.status(500).json({ error: updateErr.message });
 
+      // Update User table as well (Sync)
+      const userUpdate: any = {
+        kycStatus: dbStatus,
+        kycLevel: level || 1,
+        kycDecisionAt: new Date().toISOString()
+      };
+      if (dbStatus === 'REJECTED' && reason) userUpdate.kycRejectReason = reason;
+
+      const { error: userUpdateErr } = await supabaseServer
+          .from('User')
+          .update(userUpdate)
+          .eq('id', userId);
+      
+      if (userUpdateErr) console.warn('User table update failed:', userUpdateErr);
+
       return res.status(200).json({ success: true });
   }
 

@@ -285,6 +285,18 @@ function DepositContent() {
                       </div>
                       {provider === 'crypto' && <div className="absolute inset-0 bg-gradient-to-br from-primary/0 via-primary/0 to-primary/5" />}
                     </button>
+
+                    <button 
+                      onClick={() => setProvider('simulation')}
+                      className={`p-4 rounded-xl border flex items-center gap-3 transition-all duration-300 relative overflow-hidden group md:col-span-2 ${provider === 'simulation' ? 'bg-primary/10 border-primary shadow-[0_0_20px_rgba(var(--primary),0.15)]' : 'bg-muted/10 border-border/10 hover:border-border/20 hover:bg-muted/20'}`}
+                    >
+                      <div className={`p-2 rounded-lg transition-colors ${provider === 'simulation' ? 'bg-primary/20 text-primary' : 'bg-muted/20 text-muted-foreground group-hover:text-foreground'}`}><Info size={20} /></div>
+                      <div className="text-left relative z-10">
+                        <div className={`font-medium transition-colors ${provider === 'simulation' ? 'text-foreground' : 'text-muted-foreground group-hover:text-foreground'}`}>Test Mode (Simulation)</div>
+                        <div className="text-xs text-muted-foreground/70">Simulate a deposit for testing purposes</div>
+                      </div>
+                      {provider === 'simulation' && <div className="absolute inset-0 bg-gradient-to-br from-primary/0 via-primary/0 to-primary/5" />}
+                    </button>
                  </div>
 
                  <AnimatePresence>

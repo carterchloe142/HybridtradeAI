@@ -1,5 +1,8 @@
-# HybridTradeAI
+# Hybrid Trade AI
 
+**Live Deployment:** [https://hybrid-trade-ai-omega.vercel.app/](https://hybrid-trade-ai-omega.vercel.app/)
+
+## Overview
 Production-ready fintech web app scaffolding built with Next.js, TypeScript, Tailwind CSS, and Supabase (Postgres). Modern neon/glassmorphic UI, modular backend, and API stubs for rapid iteration.
 
 ## Features

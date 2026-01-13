@@ -10,11 +10,12 @@ import { useI18n } from '@/hooks/useI18n';
 import Link from 'next/link';
 import { motion, AnimatePresence } from 'framer-motion';
 import FuturisticBackground from '@/components/ui/FuturisticBackground';
-import { ArrowLeft, User, Share2, Copy, CheckCircle2, AlertCircle, Sparkles, ShieldCheck, Wallet, Trophy } from 'lucide-react';
+import { ArrowLeft, User, Share2, Copy, CheckCircle2, AlertCircle, Sparkles, ShieldCheck, Wallet, Trophy, Settings } from 'lucide-react';
 
 export default function Profile() {
   const { t, nf } = useI18n();
   const [userId, setUserId] = useState<string | null>(null);
+  const [kycStatus, setKycStatus] = useState<string>('');
   const [referralCode, setReferralCode] = useState<string | null>(null);
   const [totalEarnings, setTotalEarnings] = useState<number>(0);
   const [loading, setLoading] = useState(false);
@@ -129,10 +130,17 @@ export default function Profile() {
                 </div>
               </div>
               
-              <div className="hidden sm:flex items-center gap-2 px-4 py-2 rounded-full bg-primary/10 border border-primary/20">
-                <ShieldCheck size={16} className="text-primary" />
-                <span className="text-xs font-bold text-primary uppercase tracking-wider">Verified Account</span>
-              </div>
+              {kycStatus === 'approved' || kycStatus === 'verified' ? (
+                <div className="hidden sm:flex items-center gap-2 px-4 py-2 rounded-full bg-primary/10 border border-primary/20">
+                  <ShieldCheck size={16} className="text-primary" />
+                  <span className="text-xs font-bold text-primary uppercase tracking-wider">Verified Account</span>
+                </div>
+              ) : (
+                <Link href="/kyc" className="hidden sm:flex items-center gap-2 px-4 py-2 rounded-full bg-yellow-500/10 border border-yellow-500/20 hover:bg-yellow-500/20 transition-colors">
+                  <AlertCircle size={16} className="text-yellow-500" />
+                  <span className="text-xs font-bold text-yellow-500 uppercase tracking-wider">Verify Now</span>
+                </Link>
+              )}
             </div>
           </motion.div>
 

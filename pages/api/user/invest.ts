@@ -23,6 +23,35 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
   if (!planId) return res.status(400).json({ error: 'Missing planId' });
 
   try {
+    // 0. Validate Plan
+    const PLAN_RANGES: any = {
+        starter: { min: 100, max: 500 },
+        pro: { min: 501, max: 2000 },
+        elite: { min: 2001, max: 10000 }
+    };
+    
+    let min = 0;
+    let max = Infinity;
+
+    // Try to fetch from DB
+    let { data: dbPlan } = await supabaseServer.from('InvestmentPlan').select('*').or(`id.eq.${planId},name.ilike.${planId}`).maybeSingle();
+    if (!dbPlan) {
+        const { data: dbPlan2 } = await supabaseServer.from('investment_plans').select('*').or(`id.eq.${planId},name.ilike.${planId}`).maybeSingle();
+        dbPlan = dbPlan2;
+    }
+
+    if (dbPlan) {
+        min = Number(dbPlan.minAmount || dbPlan.min_amount || 0);
+        max = Number(dbPlan.maxAmount || dbPlan.max_amount || Infinity);
+    } else if (PLAN_RANGES[planId]) {
+        min = PLAN_RANGES[planId].min;
+        max = PLAN_RANGES[planId].max;
+    }
+
+    if (amt < min || amt > max) {
+        return res.status(400).json({ error: `Amount must be between ${min} and ${max} for ${planId} plan` });
+    }
+
     // 1. Check Balance
     // Try 'Wallet' then 'wallets'
     let wallet = null;
@@ -126,6 +155,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
         amount: -amt, 
         currency,
         status: 'COMPLETED',
+        // metadata: { description: `Investment in ${planId} plan` }, // Column missing
         createdAt: new Date().toISOString(),
         updatedAt: new Date().toISOString()
     };
@@ -134,9 +164,21 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
     const { error: tErr1 } = await supabaseServer.from('Transaction').insert(txPayload);
     if (tErr1) {
          console.error('Invest Transaction Try 1 Error:', tErr1);
-         // Fallback logic removed as 'Transaction' table exists and 'transactions' does not.
-         // If this fails, we want to know why.
-         // throw tErr1; // Don't throw for now to avoid rolling back investment? But better to throw.
+         // Fallback to 'transactions'
+         const snakeTxPayload = {
+             id: txPayload.id,
+             user_id: user.id,
+             investment_id: investPayload.id, // If column exists
+             type: 'TRANSFER',
+             amount: -amt,
+             currency,
+             status: 'COMPLETED',
+             // metadata: { description: `Investment in ${planId} plan` },
+             created_at: new Date().toISOString(),
+             updated_at: new Date().toISOString()
+         };
+         const { error: tErr2 } = await supabaseServer.from('transactions').insert(snakeTxPayload);
+         if (tErr2) console.error('Invest Transaction Try 2 Error:', tErr2);
     }
 
     return res.status(200).json({ message: 'Investment active', newBalance });

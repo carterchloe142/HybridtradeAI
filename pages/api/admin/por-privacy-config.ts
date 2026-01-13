@@ -52,7 +52,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
       }
       return res.status(200).json({ config });
 
-  } else if (req.method === 'POST') {
+  } else if (req.method === 'POST' || req.method === 'PUT') {
       const config = req.body;
       const value = JSON.stringify(config);
 

@@ -36,12 +36,10 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
 
   if (req.method === 'GET') {
       // Mock audit log for now or fetch from a log table if one exists
-      // The transparency page doesn't seem to iterate over audit logs, just checks existence?
-      // "const { data: audit } = useSWR<any>('/api/admin/por-audit', authedFetcher)"
-      // It's not used in the UI snippet I read!
+      // The transparency page iterates over audit?.items
       
-      // Let's return an empty list or some mock data
-      return res.status(200).json({ logs: [] });
+      // Return empty list compatible with frontend
+      return res.status(200).json({ items: [] });
   } else {
       return res.status(405).json({ error: 'Method not allowed' });
   }

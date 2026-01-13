@@ -55,12 +55,16 @@ enum TransactionStatus {
 }
 
 model User {
-  id            String           @id @default(cuid())
+  id            String           @id // Matches Supabase Auth ID
   email         String           @unique
   name          String?
   role          Role             @default(USER)
   kycStatus     KycStatus        @default(PENDING)
+  kycLevel      Int              @default(1)
   kycDocument   String?
+  kycSubmittedAt DateTime?
+  kycDecisionAt DateTime?
+  kycRejectReason String?
   wallets       Wallet[]
   investments   Investment[]
   transactions  Transaction[]

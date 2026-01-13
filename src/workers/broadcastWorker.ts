@@ -27,9 +27,6 @@ async function processJob(job: Job) {
     const { supabaseServer: _supabaseServer } = await import('@/src/lib/supabaseServer')
     if (!_supabaseServer) throw new Error('Supabase not configured')
     const supabaseServer = _supabaseServer
-
-    // Import email service
-    const { sendNotificationEmail } = await import('@/src/lib/email/service')
     
     // 1. Fetch GlobalNotification
     let g: any = null
@@ -58,11 +55,11 @@ async function processJob(job: Job) {
 
     while (true) {
       // 2. Fetch Users
-      let users: { id: string, email?: string }[] = []
+      let users: { id: string }[] = []
       
       let q1 = supabaseServer
         .from('User')
-        .select('id, email')
+        .select('id')
         .order('id', { ascending: true })
         .limit(batchSize)
       
@@ -80,7 +77,7 @@ async function processJob(job: Job) {
       if (useLowercaseUsers) {
         let q2 = supabaseServer
           .from('users')
-          .select('id, email')
+          .select('id')
           .order('id', { ascending: true })
           .limit(batchSize)
         
@@ -164,12 +161,6 @@ async function processJob(job: Job) {
               message: note.message, 
               createdAt: note.createdAt 
             })
-
-            // 5. Send Email (if user has email)
-            if (u.email) {
-               // Fire and forget - don't block the loop
-               sendNotificationEmail(u.email, note.title, note.message).catch(console.error)
-            }
         }
 
         processed += 1

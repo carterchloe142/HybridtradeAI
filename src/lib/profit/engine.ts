@@ -94,7 +94,7 @@ async function checkKycStatus(userId: string) {
         .eq('userId', userId)
         .maybeSingle()
     
-    if (!e1 && p1) return p1.kycStatus === 'APPROVED'
+    if (!e1 && p1) return (p1.kycStatus === 'APPROVED' || p1.kycStatus === 'VERIFIED')
 
     // Try snake_case profiles
     const { data: p2 } = await supabase
@@ -103,7 +103,7 @@ async function checkKycStatus(userId: string) {
         .eq('user_id', userId)
         .maybeSingle()
     
-    if (p2) return p2.kyc_status === 'approved'
+    if (p2) return (p2.kyc_status === 'approved' || p2.kyc_status === 'verified')
     
     return false // Default to false if no profile or status found
 }

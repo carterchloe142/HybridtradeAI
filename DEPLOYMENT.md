@@ -1,5 +1,7 @@
 # Deployment Guide
 
+**Live Demo:** [https://hybrid-trade-ai-omega.vercel.app/](https://hybrid-trade-ai-omega.vercel.app/)
+
 ## 1. Environment Setup
 Ensure your `.env` file (or environment variables in your hosting provider) contains:
 - `NEXT_PUBLIC_SUPABASE_URL`

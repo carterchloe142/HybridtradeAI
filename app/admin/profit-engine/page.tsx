@@ -98,10 +98,36 @@ export default function AdminProfitEngine() {
           </div>
           <button
             onClick={saveConfig}
-            className="bg-primary text-primary-foreground px-4 py-2 rounded hover:opacity-90 transition-opacity"
+            className="w-full bg-primary text-primary-foreground py-2 rounded font-medium hover:bg-primary/90 transition-colors"
           >
-            Save
+            {loading ? 'Saving...' : 'Save Settings'}
           </button>
+        </div>
+
+        <div className="mt-8 pt-8 border-t border-border">
+             <h2 className="text-xl font-semibold mb-4 text-foreground">Manual Actions</h2>
+             <button
+                onClick={async () => {
+                    if (!confirm('Run Daily ROI Distribution now?')) return;
+                    setLoading(true);
+                    try {
+                        const { data: session } = await supabase.auth.getSession();
+                        const token = session.session?.access_token;
+                        const res = await fetch('/api/admin/run-roi?force=true', {
+                            method: 'POST',
+                            headers: { Authorization: `Bearer ${token}` }
+                        });
+                        const json = await res.json();
+                        setMsg(JSON.stringify(json.results || json));
+                    } catch (e: any) {
+                        setMsg(e.message);
+                    }
+                    setLoading(false);
+                }}
+                className="w-full bg-green-600 text-white py-3 rounded font-medium hover:bg-green-700 transition-colors"
+             >
+                Run ROI Distribution (Force Daily)
+             </button>
         </div>
       </div>
     </AdminGuard>

@@ -125,37 +125,44 @@ export default function Dashboard() {
     fetchData();
   }, [currency, refreshKey, convertToUSD, setCurrency]);
 
-  // Presence / Active Traders
-  useEffect(() => {
-    const fetchPresence = async () => {
-      try {
-        const res = await fetch('/api/presence/simulated', { cache: 'no-store' })
-        const json = await res.json()
-        if (res.ok) setActiveApprox(Number(json?.activeTradersApprox || 0))
-      } catch {}
-    }
-    fetchPresence()
-    const id = setInterval(fetchPresence, 45000)
-    return () => clearInterval(id)
-  }, [])
-
-  // Best Performing Stream (from simulation stats)
+  // Market Stats (Best Stream, Presence, Sentiment)
   useEffect(() => {
     let mounted = true
     ;(async () => {
       try {
-        const res = await fetch('/api/simulation/stats', { cache: 'no-store' })
+        const res = await fetch('/api/simulation/market', { cache: 'no-store' })
         const json = await res.json()
         if (!mounted || !res.ok) return
-        const b = json?.best
-        if (b && typeof b?.avg === 'number') {
-          setBestStream({ name: String(b.name || 'Top Stream'), roi: Number((b.avg).toFixed(2)) })
+        
+        // Best Stream
+        const b = json?.bestStream
+        if (b && typeof b?.roi === 'number') {
+          setBestStream({ name: String(b.name || 'Top Stream'), roi: Number((b.roi).toFixed(2)) })
         }
+
+        // Active Traders
+        if (typeof json?.activeTraders === 'number') {
+          setActiveApprox(json.activeTraders)
+        }
+
       } catch {
         // keep existing mock if API fails
       }
     })()
-    return () => { mounted = false }
+    const id = setInterval(async () => {
+        try {
+            const res = await fetch('/api/simulation/market', { cache: 'no-store' })
+            const json = await res.json()
+            if (res.ok) {
+                if (typeof json?.activeTraders === 'number') setActiveApprox(json.activeTraders)
+                const b = json?.bestStream
+                if (b && typeof b?.roi === 'number') {
+                    setBestStream({ name: String(b.name || 'Top Stream'), roi: Number((b.roi).toFixed(2)) })
+                }
+            }
+        } catch {}
+    }, 45000)
+    return () => { mounted = false; clearInterval(id) }
   }, [])
 
   const activeInvestments = investmentsState.filter(i => i.status === 'active');

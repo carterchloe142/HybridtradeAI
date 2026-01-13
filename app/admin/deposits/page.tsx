@@ -203,7 +203,14 @@ export default function AdminDeposits() {
                           {d.currency}
                         </span>
                       </td>
-                      <td className="px-6 py-4 text-gray-400 text-xs uppercase">{String(d.provider || '-')}</td>
+                      <td className="px-6 py-4 text-gray-400 text-xs uppercase">
+                        {String(d.provider || '-')}
+                        {d.provider === 'simulation' && (
+                          <span className="ml-2 px-1.5 py-0.5 rounded bg-purple-500/20 text-purple-300 text-[10px] border border-purple-500/30 uppercase tracking-wider">
+                            Sim
+                          </span>
+                        )}
+                      </td>
                       <td className="px-6 py-4 text-gray-400 text-xs uppercase">{String(d.metadata?.planId || '-')}</td>
                       <td className="px-6 py-4">
                         <span

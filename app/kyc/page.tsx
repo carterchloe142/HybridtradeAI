@@ -303,7 +303,7 @@ export default function KycPage() {
         selfieRightDataUrl: await toDataUrl(selfieRight!),
         payload: { fullName, dob, address, country, idType, idNumber, idExpiry, level, livenessMetrics: metrics },
       }
-      const upRes = await fetch('/api/kyc/upload', {
+      const upRes = await fetch('/api/user/kyc/upload', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` },
         body: JSON.stringify(body),
@@ -311,10 +311,15 @@ export default function KycPage() {
       const upJson = await upRes.json()
       if (!upRes.ok) throw new Error(upJson.error || 'Upload failed')
 
-      const res = await fetch('/api/kyc/submit', {
+      const res = await fetch('/api/user/kyc/submit', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` },
-        body: JSON.stringify({ level }),
+        body: JSON.stringify({ 
+          level,
+          documentUrl: upJson.documentUrl,
+          selfieUrl: upJson.selfieUrl,
+          details: body.payload 
+        }),
       })
       const json = await res.json()
       if (!res.ok) throw new Error(json.error || 'Submit failed')

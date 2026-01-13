@@ -24,10 +24,28 @@ export default function WithdrawPage() {
   const [err, setErr] = useState('')
   const [available, setAvailable] = useState(0)
   const [loading, setLoading] = useState(false)
+  const [isSimulation, setIsSimulation] = useState(false)
+  const [kycStatus, setKycStatus] = useState<'pending'|'approved'|'rejected'|''>('')
+  const [kycLevel, setKycLevel] = useState<number | null>(null)
 
   useEffect(() => {
     fetchBalance()
+    fetchKyc()
   }, [])
+
+  async function fetchKyc() {
+    const uid = await getCurrentUserId()
+    if (!uid) return
+    const { data: prof } = await supabase
+      .from('profiles')
+      .select('kyc_status,kyc_level')
+      .eq('user_id', uid)
+      .maybeSingle()
+    const k = String((prof as any)?.kyc_status || '')
+    setKycStatus((k === 'approved' || k === 'rejected' || k === 'pending') ? k : '')
+    const lvl = (prof as any)?.kyc_level
+    if (typeof lvl === 'number') setKycLevel(lvl)
+  }
 
   async function fetchBalance() {
     const uid = await getCurrentUserId()
@@ -44,6 +62,26 @@ export default function WithdrawPage() {
     if (amt > available) { setErr(t('insufficient_funds') || 'Insufficient funds'); return }
     if (!destinationAddress) { setErr('Please enter a destination address'); return }
     
+    // Enforce KYC
+    if (kycStatus !== 'approved') {
+      setErr('Identity Verification Required: Please complete your KYC verification to withdraw funds.')
+      return
+    }
+    
+    // Enforce Limits based on KYC Level
+    if (kycLevel) {
+      const limits: Record<number, number> = {
+        1: 1000,
+        2: 10000,
+        3: 100000,
+      }
+      const max = limits[kycLevel] ?? limits[1]
+      if (amt > max) {
+        setErr(`Limit Exceeded: Your current KYC Level ${kycLevel} limit is $${max.toLocaleString()}`)
+        return
+      }
+    }
+
     setLoading(true)
     try {
       const { data: session } = await supabase.auth.getSession()
@@ -206,13 +244,22 @@ export default function WithdrawPage() {
                   </div>
 
                   <div>
-                    <label className="block text-sm text-muted-foreground mb-2 ml-1">Destination Address</label>
+                    <div className="flex justify-between items-center mb-2 ml-1">
+                      <label className="block text-sm text-muted-foreground">Destination Address</label>
+                      <button 
+                        onClick={() => setIsSimulation(!isSimulation)}
+                        className={`text-xs px-2 py-1 rounded transition-colors ${isSimulation ? 'bg-primary/20 text-primary' : 'bg-muted/20 text-muted-foreground hover:bg-muted/30'}`}
+                      >
+                        {isSimulation ? 'Simulation Mode ON' : 'Test Mode'}
+                      </button>
+                    </div>
                     <input 
                       type="text" 
                       value={destinationAddress}
                       onChange={(e) => setDestinationAddress(e.target.value)}
-                      className="w-full bg-muted/10 border border-border/10 rounded-xl px-4 py-4 text-foreground placeholder:text-muted-foreground/50 focus:border-primary/50 focus:ring-1 focus:ring-primary/50 transition-all outline-none font-mono text-sm"
-                      placeholder="Enter wallet address"
+                      disabled={isSimulation}
+                      className={`w-full bg-muted/10 border border-border/10 rounded-xl px-4 py-4 text-foreground placeholder:text-muted-foreground/50 focus:border-primary/50 focus:ring-1 focus:ring-primary/50 transition-all outline-none font-mono text-sm ${isSimulation ? 'opacity-50 cursor-not-allowed' : ''}`}
+                      placeholder={isSimulation ? "Simulation Mode - No address needed" : "Enter wallet address"}
                     />
                   </div>
                   

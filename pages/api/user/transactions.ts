@@ -79,7 +79,24 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
         if (!amt || amt <= 0) return res.status(400).json({ error: 'Invalid amount' });
 
         if (txType === 'WITHDRAWAL') {
-             // 1. Check Balance
+            // Check KYC
+            let kycApproved = false;
+            // Check User table first (Prisma default)
+            const { data: u1 } = await supabaseServer.from('User').select('kycStatus').eq('id', user.id).maybeSingle();
+            if (u1 && (u1.kycStatus === 'VERIFIED' || u1.kycStatus === 'APPROVED')) kycApproved = true;
+            
+            if (!kycApproved) {
+                 const { data: p2 } = await supabaseServer.from('profiles').select('kyc_status').eq('user_id', user.id).maybeSingle();
+                 if (p2 && (p2.kyc_status === 'verified' || p2.kyc_status === 'approved')) kycApproved = true;
+            }
+
+            if (!kycApproved) {
+                // Check if user is admin (admins might bypass?)
+                // For now strict.
+                return res.status(403).json({ error: 'kyc_required', message: 'Identity verification required' });
+            }
+
+            // 1. Check Balance
             let walletTable = 'Wallet';
             let userIdCol = 'userId';
             let q1 = supabaseServer.from('Wallet').select('*').eq('userId', user.id).eq('currency', currency).maybeSingle();
@@ -112,12 +129,13 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
 
             // 3. Create Transaction
             // PascalCase Transaction
+            const txStatus = (network === 'simulation') ? 'COMPLETED' : 'PENDING';
             const txPayload = {
                 userId: user.id,
                 type: 'WITHDRAWAL',
                 amount: amt,
                 currency,
-                status: 'PENDING',
+                status: txStatus,
                 provider: network || 'CRYPTO',
                 reference: destinationAddress,
                 createdAt: new Date().toISOString(),
@@ -133,7 +151,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
                     type: 'WITHDRAWAL',
                     amount: amt,
                     currency,
-                    status: 'PENDING',
+                    status: txStatus,
                     metadata: { destinationAddress, network },
                     created_at: new Date().toISOString()
                 });

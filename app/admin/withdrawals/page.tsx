@@ -17,6 +17,7 @@ type Withdrawal = {
   amount?: number;
   amount_usd?: number;
   currency: string;
+  provider?: string;
   status: 'pending' | 'confirmed' | 'rejected';
   to_address?: string;
   created_at: string;
@@ -30,6 +31,7 @@ export default function AdminWithdrawals() {
   const [msg, setMsg] = useState('');
   const [statusFilter, setStatusFilter] = useState<'all'|'pending'|'confirmed'|'rejected'>('all')
   const [currencyFilter, setCurrencyFilter] = useState<string>('all')
+  const [providerFilter, setProviderFilter] = useState<string>('all')
   const [fromDate, setFromDate] = useState<string>('')
   const [toDate, setToDate] = useState<string>('')
   const [page, setPage] = useState(0)
@@ -68,6 +70,7 @@ export default function AdminWithdrawals() {
             amount: typeof t.amount === 'number' ? t.amount : undefined,
             amount_usd: typeof t.amountUsd === 'number' ? t.amountUsd : undefined,
             currency: String(t.currency || ''),
+            provider: String(t.provider || ''),
             status: String(t.status || '').toLowerCase(),
             to_address: undefined,
             created_at: String(t.createdAt || new Date().toISOString()),
@@ -111,18 +114,25 @@ export default function AdminWithdrawals() {
     return ['all', ...Array.from(set).sort()]
   }, [rows])
 
+  const providers = useMemo(() => {
+    const set = new Set<string>()
+    rows.forEach(r => { if (r.provider) set.add(r.provider.toLowerCase()) })
+    return ['all', ...Array.from(set).sort()]
+  }, [rows])
+
   const filtered = useMemo(() => {
     const fromTs = fromDate ? Date.parse(fromDate) : 0
     const toTs = toDate ? Date.parse(toDate) : 0
     return rows.filter((w) => {
       if (statusFilter !== 'all' && w.status !== statusFilter) return false
       if (currencyFilter !== 'all' && w.currency.toUpperCase() !== currencyFilter.toUpperCase()) return false
+      if (providerFilter !== 'all' && String(w.provider || '').toLowerCase() !== providerFilter.toLowerCase()) return false
       const ts = Date.parse(w.created_at)
       if (fromTs && ts < fromTs) return false
       if (toTs && ts > (toTs + 24*60*60*1000 - 1)) return false
       return true
     })
-  }, [rows, statusFilter, currencyFilter, fromDate, toDate])
+  }, [rows, statusFilter, currencyFilter, providerFilter, fromDate, toDate])
 
   function exportCsv() {
     const header = ['id','email','amount','currency','status','to_address','created_at']
@@ -276,6 +286,14 @@ export default function AdminWithdrawals() {
                         <span className="px-2 py-1 rounded bg-white/5 border border-white/10 text-xs font-medium text-gray-300 uppercase">
                           {w.currency}
                         </span>
+                      </td>
+                      <td className="px-4 py-4">
+                        <span className="text-gray-300 text-sm capitalize">{w.provider || '-'}</span>
+                        {w.provider === 'simulation' && (
+                          <span className="ml-2 px-2 py-0.5 rounded bg-purple-500/20 text-purple-300 text-[10px] border border-purple-500/30 uppercase tracking-wider">
+                            Sim
+                          </span>
+                        )}
                       </td>
                       <td className="px-4 py-4 text-xs text-gray-400 font-mono">
                         {w.to_address ? (

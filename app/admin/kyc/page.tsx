@@ -283,7 +283,7 @@ export default function AdminKyc() {
                   <h3 className="text-sm font-medium text-foreground uppercase tracking-wider mb-2">Personal Info</h3>
                   {details ? (
                     <div className="text-sm space-y-2">
-                      <DetailRow label="Full Name" value={details?.fullName} />
+                      <DetailRow label="Full Name" value={details?.full_name || details?.fullName} />
                       <DetailRow label="DOB" value={details?.dob} />
                       <DetailRow label="Address" value={details?.address} />
                       <DetailRow label="Country" value={details?.country || 'N/A'} />
@@ -295,10 +295,10 @@ export default function AdminKyc() {
                   <h3 className="text-sm font-medium text-foreground uppercase tracking-wider mb-2">ID Document</h3>
                   {details ? (
                     <div className="text-sm space-y-2">
-                      <DetailRow label="Type" value={details?.idType} />
-                      <DetailRow label="Number" value={details?.idNumber} />
-                      <DetailRow label="Expiry" value={details?.idExpiry || 'N/A'} />
-                      <DetailRow label="Current Level" value={String(details?.level || '1')} />
+                      <DetailRow label="Type" value={details?.id_type || details?.idType} />
+                      <DetailRow label="Number" value={details?.id_number || details?.idNumber} />
+                      <DetailRow label="Expiry" value={details?.id_expiry || details?.idExpiry || 'N/A'} />
+                      <DetailRow label="Current Level" value={String(details?.kyc_level || details?.level || '1')} />
                     </div>
                   ) : <div className="h-20 animate-pulse bg-muted rounded"></div>}
                 </div>
