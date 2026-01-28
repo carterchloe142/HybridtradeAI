@@ -30,6 +30,20 @@ export default function Profile() {
         const ref = await getReferralByUser(id);
         if (ref?.code) setReferralCode(ref.code);
         if (ref?.total_earnings) setTotalEarnings(ref.total_earnings);
+
+        // Fetch KYC Status
+        const { data: profile } = await supabase
+          .from('profiles')
+          .select('kyc_status')
+          .eq('user_id', id)
+          .maybeSingle();
+        
+        if (profile?.kyc_status) {
+             setKycStatus(String(profile.kyc_status).toLowerCase());
+        } else {
+             const { data: u } = await supabase.from('User').select('kycStatus').eq('id', id).maybeSingle();
+             if (u?.kycStatus) setKycStatus(String(u.kycStatus).toLowerCase());
+        }
       }
     })();
   }, []);

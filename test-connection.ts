@@ -38,6 +38,7 @@ async function main() {
         const email = `test-${Date.now()}@example.com`
         const newUser = await prisma.user.create({
             data: {
+                id: `test-${Date.now()}`,
                 email,
                 role: 'USER',
                 updatedAt: new Date()

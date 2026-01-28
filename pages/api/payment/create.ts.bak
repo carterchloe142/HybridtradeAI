@@ -1,0 +1,78 @@
+import { NextApiRequest, NextApiResponse } from 'next';
+import { supabaseServer } from '@/src/lib/supabaseServer';
+import { getPaymentProvider } from '@/src/lib/payment';
+import { v4 as uuidv4 } from 'uuid';
+import { sendEmail, TEMPLATES } from '@/src/lib/email';
+
+export default async function handler(req: NextApiRequest, res: NextApiResponse) {
+  if (req.method !== 'POST') return res.status(405).json({ error: 'Method not allowed' });
+
+  const authHeader = req.headers.authorization || '';
+  const token = authHeader.startsWith('Bearer ') ? authHeader.slice(7).trim() : '';
+
+  if (!token) return res.status(401).json({ error: 'Unauthorized' });
+
+  // 1. Auth
+  const { data: { user }, error: authErr } = await supabaseServer.auth.getUser(token);
+  if (authErr || !user) return res.status(401).json({ error: 'Invalid token' });
+
+  const { amount, currency = 'USD', cryptoCurrency, provider = 'nowpayments' } = req.body;
+  const amt = Number(amount);
+
+  if (!amt || amt <= 0) return res.status(400).json({ error: 'Invalid amount' });
+
+  try {
+    const txId = uuidv4();
+
+    // 2. Create Pending Transaction
+    const txData = {
+      id: txId,
+      userId: user.id,
+      type: 'DEPOSIT',
+      amount: amt,
+      currency,
+      status: 'PENDING',
+      provider,
+      reference: `Order: ${txId}`,
+      createdAt: new Date().toISOString(),
+      updatedAt: new Date().toISOString()
+    };
+
+    // Insert (Try PascalCase then snake_case)
+    const { error: txErr } = await supabaseServer.from('Transaction').insert(txData);
+    if (txErr && (txErr.message.includes('relation') || txErr.code === '42P01')) {
+       await supabaseServer.from('transactions').insert({
+           ...txData,
+           user_id: user.id,
+           created_at: txData.createdAt,
+           updated_at: txData.updatedAt
+       });
+    }
+
+    // 3. Call Payment Provider
+    const paymentProvider = getPaymentProvider(provider);
+    const payment = await paymentProvider.createPayment({
+      amount: amt,
+      currency,
+      cryptoCurrency,
+      orderId: txId,
+      email: user.email || '',
+      userId: user.id
+    });
+
+    // 4. Send Email
+    if (user.email) {
+        await sendEmail(user.email, TEMPLATES.depositPending(amt, currency, txId));
+    }
+
+    return res.status(200).json({
+      success: true,
+      transactionId: txId,
+      ...payment
+    });
+
+  } catch (error: any) {
+    console.error('Payment Create Error:', error);
+    return res.status(500).json({ error: error.message });
+  }
+}

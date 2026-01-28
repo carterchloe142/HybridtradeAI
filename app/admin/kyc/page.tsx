@@ -63,8 +63,22 @@ export default function AdminKyc() {
       const res = await fetch(`/api/admin/kyc?userId=${encodeURIComponent(userId)}&files=1`, { headers: { Authorization: `Bearer ${token}` } });
       const json = await res.json();
       if (!res.ok) throw new Error(json.error || 'Failed');
+      
       setFiles(json.files || null);
-      setDetails(json.details || null);
+      
+      // Ensure details are mapped correctly for the view
+      const d = json.details || {};
+      setDetails({
+          full_name: d.full_name || d.fullName || d.name,
+          dob: d.dob,
+          address: d.address,
+          country: d.country,
+          id_type: d.id_type || d.idType,
+          id_number: d.id_number || d.idNumber,
+          id_expiry: d.id_expiry || d.idExpiry,
+          kyc_level: d.kyc_level || d.kycLevel || d.level,
+          livenessMetrics: d.livenessMetrics
+      });
     } catch (e: any) {
       setMsg(e.message);
     }
@@ -156,10 +170,13 @@ export default function AdminKyc() {
                 const { data: session } = await supabase.auth.getSession();
                 const token = session.session?.access_token;
                 if (!token) throw new Error('Session lost');
-                const res = await fetch('/api/admin/storage/kyc-init', { headers: { Authorization: `Bearer ${token}` } });
+                const res = await fetch('/api/admin/storage/kyc-init', { 
+                  method: 'POST', // Changed from GET default to POST
+                  headers: { Authorization: `Bearer ${token}` } 
+                });
                 const json = await res.json();
                 if (!res.ok) throw new Error(json.error || 'Failed');
-                setMsg('KYC storage ready');
+                setMsg(json.message || 'KYC storage ready');
               } catch (e: any) { setMsg(e.message); }
             }}
             className="text-xs bg-secondary text-secondary-foreground px-3 py-1.5 rounded hover:opacity-90"

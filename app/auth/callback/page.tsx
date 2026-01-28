@@ -44,7 +44,7 @@ export default function AuthCallback() {
         }
       } else {
         // Wait for auth state change if session not immediately available
-        const { data: { subscription } } = supabase.auth.onAuthStateChange(async (event, session) => {
+        const { data: { subscription } } = supabase.auth.onAuthStateChange(async (event: string, session: any) => {
           if (event === 'SIGNED_IN' && session) {
              // Re-run sync logic
              await fetch('/api/auth/sync', {

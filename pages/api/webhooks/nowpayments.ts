@@ -2,6 +2,22 @@ import { NextApiRequest, NextApiResponse } from 'next';
 import crypto from 'crypto';
 import { v4 as uuidv4 } from 'uuid';
 import { supabaseServer } from '@/src/lib/supabaseServer';
+import { sendEmail, TEMPLATES } from '@/src/lib/email';
+
+type AnyRecord = Record<string, any>
+
+function sortObject(obj: any): any {
+  if (Array.isArray(obj)) return obj.map(sortObject)
+  if (obj && typeof obj === 'object') {
+    return Object.keys(obj)
+      .sort()
+      .reduce((result: AnyRecord, key: string) => {
+        result[key] = sortObject(obj[key])
+        return result
+      }, {})
+  }
+  return obj
+}
 
 export default async function handler(req: NextApiRequest, res: NextApiResponse) {
   if (req.method !== 'POST') return res.status(405).send('Method not allowed');
@@ -9,108 +25,208 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
   const ipnSecret = process.env.NOWPAYMENTS_IPN_SECRET;
   if (!ipnSecret) return res.status(500).send('NOWPayments IPN secret not configured');
 
-  const sig = req.headers['x-nowpayments-sig'];
+  const sigHeader = req.headers['x-nowpayments-sig'];
+  const sig = Array.isArray(sigHeader) ? sigHeader[0] : String(sigHeader || '').trim();
   if (!sig) return res.status(401).send('Missing signature');
 
-  // Sort keys alphabetically and join values
-  const sortedKeys = Object.keys(req.body).sort();
-  const stringToSign = sortedKeys.map(key => `${key}=${req.body[key]}`).join('&'); // NOWPayments format is slightly different usually?
-  // Wait, docs say: JSON stringify sorted keys? Or standard HMAC of body?
-  // Official docs: "Sort all the parameters in alphabetical order... join with & ... sign with HMAC-SHA512"
-  // Wait, Next.js parses body automatically.
-  // I should reconstruct the string.
-  
-  // Actually, let's use a simpler approach if possible or stick to standard.
-  // Assuming standard body parsing:
-  // "The string to sign is the sorted query string of the request body."
-  
-  const hmac = crypto.createHmac('sha512', ipnSecret);
-  hmac.update(JSON.stringify(req.body)); // Wait, checking docs...
-  // Docs: "Sort the POST parameters alphabetically... key=value joined by &"
-  // Example: amount=100&currency=usd...
-  
-  // Let's implement sorting
-  const params = req.body;
-  const sortedString = Object.keys(params)
-    .sort()
-    .map(key => `${key}=${params[key]}`)
-    .join('&');
-    
-  const mySig = crypto.createHmac('sha512', ipnSecret).update(sortedString).digest('hex');
-  
-  // Note: There might be issues with nested objects or arrays if present, but IPN usually flat.
-  // Also signature validation is tricky without raw body. 
-  // For now, let's assume validation passes or if I can't easily validate, I might skip strict check if in dev mode?
-  // But for production, validation is critical.
-  
+  const params = (req.body || {}) as AnyRecord;
+  const sortedParams = sortObject(params);
+  const mySig = crypto.createHmac('sha512', ipnSecret).update(JSON.stringify(sortedParams)).digest('hex');
+
   if (mySig !== sig) {
-      // Allow bypass if secret is 'test' or similar?
-      // Or just log error and return 401.
-      // console.error('Sig mismatch', mySig, sig);
-      // return res.status(401).send('Invalid signature');
+    return res.status(401).send('Invalid signature');
   }
 
-  const { payment_status, order_id, pay_amount, pay_currency } = params;
+  const { payment_status, order_id, pay_amount, price_amount, price_currency } = params;
 
   if (payment_status === 'finished') {
       if (!supabaseServer) return res.status(500).send('Supabase not configured');
 
       try {
-          // 1. Find Transaction (order_id is usually our tx ID)
-          let tx = null;
-          
-          // order_id might be "TX123"
-          let { data: t1, error: e1 } = await supabaseServer.from('Transaction').select('*').eq('id', order_id).single();
+          const txId = String(order_id || '').trim();
+          if (!txId) return res.status(200).send('Missing order_id');
 
-          if (e1) {
-              console.error('Tx error:', e1);
-              return res.status(200).send('Tx not found or error');
+          // 1. Find Transaction (order_id is our tx ID)
+          let tx: any = null;
+          const { data: t1 } = await supabaseServer.from('Transaction').select('*').eq('id', txId).maybeSingle();
+          if (t1) {
+            tx = t1;
+          } else {
+            const { data: t2 } = await supabaseServer.from('transactions').select('*').eq('id', txId).maybeSingle();
+            tx = t2;
           }
-          tx = t1;
 
-          if (tx.status === 'COMPLETED') {
-              return res.status(200).send('Already processed');
+          if (!tx) {
+            return res.status(200).send('Tx not found');
+          }
+
+          let meta: any = {}
+          try {
+            meta = tx.reference ? JSON.parse(String(tx.reference)) : {}
+          } catch {
+            meta = {}
+          }
+
+          if (meta?.nowpaymentsProcessed === true) {
+            return res.status(200).send('Already processed');
           }
 
           // 2. Update Transaction
-          await supabaseServer.from('Transaction').update({ 
-              status: 'COMPLETED',
-              provider: 'NOWPAYMENTS',
-              updatedAt: new Date().toISOString()
-          }).eq('id', tx.id);
+          const nowIso = new Date().toISOString();
+
+          if (String(tx.status || '').toUpperCase() !== 'COMPLETED') {
+            await supabaseServer.from('Transaction').update({ status: 'COMPLETED', provider: 'NOWPAYMENTS', updatedAt: nowIso }).eq('id', tx.id);
+            await supabaseServer.from('transactions').update({ status: 'COMPLETED', provider: 'NOWPAYMENTS', updated_at: nowIso }).eq('id', tx.id);
+          }
 
           // 3. Credit Wallet
-          const userId = tx.userId;
-          // params.pay_currency might be 'btc', but we want 'USD' or wallet currency?
-          // Usually we credit in the currency of the transaction.
-          // If transaction was initiated as USD, we credit USD.
-          const txCurrency = tx.currency || 'USD'; 
+          const userId = tx.userId || tx.user_id;
+          const txCurrency = String((tx.currency || price_currency || 'USD')).toUpperCase();
+          const creditAmount = Number(tx.amount ?? tx.amount_usd ?? price_amount ?? pay_amount ?? 0);
+          if (!userId || !creditAmount) return res.status(200).send('Missing user or amount');
 
-          let { data: w1, error: we1 } = await supabaseServer.from('Wallet').select('*').eq('userId', userId).eq('currency', txCurrency).maybeSingle();
-          
-          if (w1) {
-              const newBal = Number(w1.balance || 0) + Number(pay_amount); // pay_amount is usually in crypto if crypto payment?
-              // Wait, pay_amount is what user paid. outcome_amount is what we get?
-              // Or if we fixed the amount in USD during init, we should use that?
-              // If tx.amount exists, use that?
-              const creditAmount = tx.amount || Number(pay_amount);
-              
-              const { error: wUpdateErr } = await supabaseServer.from('Wallet').update({ balance: Number(w1.balance || 0) + creditAmount }).eq('id', w1.id);
-              if (wUpdateErr) console.error('Wallet update error:', wUpdateErr);
-          } else {
-              // Create wallet
-              const creditAmount = tx.amount || Number(pay_amount);
-              const walletPayload = {
-                  id: uuidv4(),
-                  userId: userId,
+          let newBalance = 0;
+          if (meta?.walletCredited !== true) {
+            const { data: w1 } = await supabaseServer.from('Wallet').select('*').eq('userId', userId).eq('currency', txCurrency).maybeSingle();
+            if (w1) {
+              newBalance = Number(w1.balance || 0) + creditAmount;
+              await supabaseServer.from('Wallet').update({ balance: newBalance, updatedAt: nowIso }).eq('id', w1.id);
+            } else {
+              const { data: w2 } = await supabaseServer.from('wallets').select('*').eq('user_id', userId).eq('currency', txCurrency).maybeSingle();
+              if (w2) {
+                newBalance = Number(w2.balance || 0) + creditAmount;
+                await supabaseServer.from('wallets').update({ balance: newBalance, updated_at: nowIso }).eq('id', w2.id);
+              } else {
+                const walletId = uuidv4();
+                newBalance = creditAmount;
+                const { error: wInsertErr } = await supabaseServer.from('Wallet').insert({
+                  id: walletId,
+                  userId,
                   currency: txCurrency,
                   balance: creditAmount,
-                  createdAt: new Date().toISOString(),
-                  updatedAt: new Date().toISOString()
-              };
+                  createdAt: nowIso,
+                  updatedAt: nowIso,
+                });
+                if (wInsertErr) {
+                  await supabaseServer.from('wallets').insert({
+                    id: walletId,
+                    user_id: userId,
+                    currency: txCurrency,
+                    balance: creditAmount,
+                    created_at: nowIso,
+                    updated_at: nowIso,
+                  });
+                }
+              }
+            }
 
-              const { error: wInsertErr } = await supabaseServer.from('Wallet').insert(walletPayload);
-              if (wInsertErr) console.error('Wallet insert error:', wInsertErr);
+            meta.walletCredited = true
+            meta.walletCreditedAt = nowIso
+          }
+
+          meta.nowpaymentsProcessed = true
+          meta.nowpaymentsProcessedAt = nowIso
+
+          await supabaseServer.from('Transaction').update({ reference: JSON.stringify(meta), updatedAt: nowIso }).eq('id', tx.id)
+
+          const shouldAutoActivate = Boolean(meta?.autoActivate) && Boolean(meta?.planId)
+          if (shouldAutoActivate && meta?.autoInvested !== true && txCurrency === 'USD') {
+            const slug = String(meta.planId || '').toLowerCase()
+            const slugToName: Record<string, string> = {
+              starter: 'Starter Plan',
+              pro: 'Pro Plan',
+              elite: 'Elite Plan',
+            }
+            const mappedName = slugToName[slug]
+            let plan: any = null
+            if (mappedName) {
+              const { data: byName } = await supabaseServer.from('InvestmentPlan').select('*').eq('name', mappedName).maybeSingle()
+              if (byName) plan = byName
+            }
+
+            if (!plan && mappedName) {
+              const fallback = {
+                starter: { minAmount: 100, maxAmount: 500, duration: 7, roiMinPct: 10 },
+                pro: { minAmount: 501, maxAmount: 2000, duration: 14, roiMinPct: 15 },
+                elite: { minAmount: 2001, maxAmount: 100000, duration: 30, roiMinPct: 25 },
+              } as any
+              const f = fallback[slug]
+              if (f) {
+                const newPlanId = uuidv4()
+                const { data: seeded } = await supabaseServer
+                  .from('InvestmentPlan')
+                  .insert({
+                    id: newPlanId,
+                    name: mappedName,
+                    minAmount: f.minAmount,
+                    maxAmount: f.maxAmount,
+                    duration: f.duration,
+                    returnPercentage: f.roiMinPct,
+                    createdAt: nowIso,
+                    updatedAt: nowIso,
+                  })
+                  .select()
+                  .single()
+                if (seeded) plan = seeded
+              }
+            }
+
+            if (plan?.id) {
+              const { data: w } = await supabaseServer.from('Wallet').select('*').eq('userId', userId).eq('currency', 'USD').maybeSingle()
+              const bal = Number(w?.balance || 0)
+              if (w?.id && bal + 1e-9 >= creditAmount) {
+                const invId = uuidv4()
+                const startDate = new Date()
+                const endDate = new Date(startDate)
+                endDate.setDate(endDate.getDate() + Number(plan.duration || 30))
+
+                const { data: inv, error: invErr } = await supabaseServer
+                  .from('Investment')
+                  .insert({
+                    id: invId,
+                    userId,
+                    planId: plan.id,
+                    principal: creditAmount,
+                    status: 'ACTIVE',
+                    startDate: startDate.toISOString(),
+                    endDate: endDate.toISOString(),
+                    createdAt: nowIso,
+                    updatedAt: nowIso,
+                  })
+                  .select()
+                  .single()
+
+                if (!invErr && inv?.id) {
+                  const newUsdBalance = bal - creditAmount
+                  await supabaseServer.from('Wallet').update({ balance: Math.max(0, newUsdBalance), updatedAt: nowIso }).eq('id', w.id)
+
+                  const transferId = uuidv4()
+                  await supabaseServer.from('Transaction').insert({
+                    id: transferId,
+                    userId,
+                    investmentId: inv.id,
+                    type: 'TRANSFER',
+                    amount: creditAmount,
+                    currency: 'USD',
+                    provider: 'investment',
+                    status: 'COMPLETED',
+                    reference: JSON.stringify({ source: 'deposit', depositId: tx.id, plan: slug }),
+                    createdAt: nowIso,
+                    updatedAt: nowIso,
+                  })
+
+                  meta.autoInvested = true
+                  meta.investmentId = inv.id
+                  await supabaseServer.from('Transaction').update({ investmentId: inv.id, reference: JSON.stringify(meta), updatedAt: nowIso }).eq('id', tx.id)
+                }
+              }
+            }
+          }
+
+          // 4. Send Confirmation Email
+          const { data: user } = await supabaseServer.auth.admin.getUserById(userId);
+          if (user?.user?.email) {
+            await sendEmail(user.user.email, TEMPLATES.depositConfirmed(creditAmount, txCurrency, newBalance));
           }
 
       } catch (e) {

@@ -41,7 +41,7 @@ export default function Navbar ()
   if (pathname === '/') return null;
 
   return (
-    <nav className="w-full sticky top-0 z-50 bg-black/10 backdrop-blur-xl border-b border-white/5 transition-colors shadow-2xl">
+    <nav className="w-full sticky top-0 z-50 bg-card/70 backdrop-blur-xl border-b border-border/40 transition-colors shadow-2xl">
       <div className="container-xl px-6 py-4 flex items-center justify-between">
         <Link href="/" className="flex items-center gap-3 group">
           <div className="relative">
@@ -55,15 +55,15 @@ export default function Navbar ()
         </Link>
 
         <div className="hidden md:flex items-center gap-8">
-          <Link href="/plans" className="text-sm font-medium text-muted-foreground hover:text-white transition-colors">Plans</Link>
-          <Link href="/dashboard" className="text-sm font-medium text-muted-foreground hover:text-white transition-colors">Dashboard</Link>
+          <Link href="/plans" className="text-sm font-medium text-muted-foreground hover:text-foreground transition-colors">Plans</Link>
+          <Link href="/dashboard" className="text-sm font-medium text-muted-foreground hover:text-foreground transition-colors">Dashboard</Link>
           
-          <div className="h-6 w-[1px] bg-white/10" />
+          <div className="h-6 w-[1px] bg-border/60" />
           
-          <Link href="/deposit" className="px-5 py-2 rounded-full text-sm font-semibold text-white bg-white/5 border border-white/10 hover:bg-primary/20 hover:border-primary/50 transition-all">Deposit</Link>
-          <Link href="/withdraw" className="text-sm font-medium text-muted-foreground hover:text-white transition-colors">Withdraw</Link>
+          <Link href="/deposit" className="px-5 py-2 rounded-full text-sm font-semibold text-foreground bg-muted/10 border border-border/40 hover:bg-muted/20 hover:border-border transition-all">Deposit</Link>
+          <Link href="/withdraw" className="text-sm font-medium text-muted-foreground hover:text-foreground transition-colors">Withdraw</Link>
           
-          <Link href="/kyc" className="relative inline-flex items-center justify-center w-10 h-10 rounded-full bg-secondary/50 border border-white/5 hover:bg-secondary/80 transition-colors" title="KYC" aria-label="KYC">
+          <Link href="/kyc" className="relative inline-flex items-center justify-center w-10 h-10 rounded-full bg-secondary/50 border border-border/40 hover:bg-secondary/80 transition-colors" title="KYC" aria-label="KYC">
             { kyc === 'approved' ? <ShieldCheck className={ `w-5 h-5 ${ kycColor }` } /> : kyc === 'rejected' ? <ShieldX className={ `w-5 h-5 ${ kycColor }` } /> : kyc === 'pending' ? <ShieldAlert className={ `w-5 h-5 ${ kycColor }` } /> : <IdCard className={ `w-5 h-5 ${ kycColor }` } /> }
           </Link>
           <NotificationBell />

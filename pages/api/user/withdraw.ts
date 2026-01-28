@@ -30,7 +30,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
       return res.status(403).json({ error: 'kyc_required', message: 'Identity verification required' });
   }
 
-  const { amount, currency = 'USD', address, network } = req.body;
+  const { amount, currency = 'USD', address, network, provider } = req.body;
   const amt = Number(amount);
 
   if (!amt || amt <= 0) return res.status(400).json({ error: 'Invalid amount' });
@@ -82,28 +82,40 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
     if (upErr) throw upErr;
 
     // 3. Create Transaction Record
+    // Fallback Logic for Transactions
     const txPayload = {
         id: uuidv4(),
-        userId: user.id, // Explicitly try camelCase first
+        userId: user.id,
         type: 'WITHDRAWAL',
         amount: amt,
         currency,
         status: 'PENDING',
-        provider: provider === 'simulation' ? 'simulation' : 'manual', // or crypto
-        // metadata: { address, network }, // not supported in schema usually, unless JSON column
+        provider: provider === 'simulation' ? 'simulation' : 'manual',
         createdAt: new Date().toISOString(),
         updatedAt: new Date().toISOString()
     };
 
-    // Try 'Transaction'
     const { error: tErr1 } = await supabaseServer.from('Transaction').insert(txPayload);
-    
+
     if (tErr1) {
-         // Fallback logic if needed, but 'Transaction' should exist
-         console.error('Withdraw Transaction Error:', tErr1);
-         // If transaction creation fails, we technically should rollback balance.
-         // But for this simple app, we log error.
-         throw tErr1;
+         const snakePayload = {
+            id: txPayload.id,
+            user_id: user.id,
+            type: 'WITHDRAWAL',
+            amount: amt,
+            currency,
+            status: 'PENDING',
+            provider: txPayload.provider,
+            created_at: new Date().toISOString(),
+            updated_at: new Date().toISOString()
+         };
+         const { error: tErr2 } = await supabaseServer.from('transactions').insert(snakePayload);
+         
+         if (tErr2) {
+             // Rollback Balance
+             await supabaseServer.from(walletTable).update({ balance: currentBalance }).eq('id', wallet.id);
+             throw new Error(`Transaction creation failed: ${tErr1.message} | ${tErr2.message}`);
+         }
     }
 
     return res.status(200).json({ 

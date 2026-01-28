@@ -15,15 +15,12 @@ export default function Plans() {
   const { t } = useI18n()
   const router = useRouter()
   
-  function track(event: string, payload: any) {
-    try { console.log('analytics', event, payload) } catch {}
-  }
-
   const invest = async (planId: string, amount: number) => {
     try {
       const userId = await getCurrentUserId();
       if (!userId) {
-        alert(t('please_login_first'));
+        // Redirect to login if not logged in
+        router.push(`/auth/login?redirect=/plans`);
         return;
       }
       const { data: session } = await supabase.auth.getSession()
@@ -45,7 +42,7 @@ export default function Plans() {
       try { data = await res.json(); } catch {}
       
       if (res.status === 401) {
-        alert(t('please_login_first'));
+        router.push(`/auth/login?redirect=/plans`);
         return;
       }
       if (data?.message === 'insufficient_funds') {
@@ -59,8 +56,6 @@ export default function Plans() {
         return;
       }
       if (res.ok) {
-        alert(String((data && data.message) || t('deposit_recorded')));
-        track('plan_select', { planId, amount })
         router.push('/dashboard') 
         return;
       }
@@ -69,10 +64,10 @@ export default function Plans() {
       if (errorMsg === 'amount_out_of_range') {
         alert(`Amount must be between ${data?.details || 'min and max'}`);
       } else {
-        alert(`Error: ${errorMsg}`);
+        alert(`${errorMsg}`);
       }
     } catch (e: any) {
-      console.error('Investment error:', e);
+      // Silent error or toast
       alert('An unexpected error occurred. Please check your connection and try again.');
     }
   };
@@ -177,20 +172,20 @@ export default function Plans() {
                 <div className="space-y-2">
                   <div className="font-semibold text-foreground">{t('allocation_label')}</div>
                   <ul className="space-y-1">
-                    <li className="flex items-start gap-2"><div className="w-1.5 h-1.5 rounded-full bg-primary mt-1.5" /> 60% Algorithmic Trading</li>
-                    <li className="flex items-start gap-2"><div className="w-1.5 h-1.5 rounded-full bg-primary mt-1.5" /> 25% Copy‑Trading</li>
-                    <li className="flex items-start gap-2"><div className="w-1.5 h-1.5 rounded-full bg-primary mt-1.5" /> 15% Ads & Tasks</li>
+                    <li className="flex items-start gap-2"><div className="w-1.5 h-1.5 rounded-full bg-primary mt-1.5" /> 50% Algorithmic Trading</li>
+                    <li className="flex items-start gap-2"><div className="w-1.5 h-1.5 rounded-full bg-primary mt-1.5" /> 30% Staking & Yield Farming</li>
+                    <li className="flex items-start gap-2"><div className="w-1.5 h-1.5 rounded-full bg-primary mt-1.5" /> 20% AI Allocator & Copy‑Trading</li>
                   </ul>
                 </div>
                 
                 <div className="space-y-2 pt-4 border-t border-border/5">
                   <div className="font-semibold text-foreground">{t('expected_weekly_label')}</div>
-                  <div className="text-lg font-bold text-green-500">{t('projected_weekly_range', { range: '15–30%' })}</div>
+                  <div className="text-lg font-bold text-green-500">{t('projected_weekly_range', { range: '25–45%' })}</div>
                 </div>
 
                 <div className="pt-4 border-t border-border/5">
                   <div className="font-semibold text-foreground mb-1">{t('benefits_label')}</div>
-                  <p className="text-xs text-muted-foreground/80 leading-relaxed">Balanced risk, access to verified traders, higher potential returns.</p>
+                  <p className="text-xs text-muted-foreground/80 leading-relaxed">Balanced risk, strong diversification, access to mid-level investment tools, monthly performance reports.</p>
                 </div>
               </div>
 
@@ -226,20 +221,20 @@ export default function Plans() {
                 <div className="space-y-2">
                   <div className="font-semibold text-foreground">{t('allocation_label')}</div>
                   <ul className="space-y-1">
-                    <li className="flex items-start gap-2"><div className="w-1.5 h-1.5 rounded-full bg-purple-500 mt-1.5" /> 50% Algorithmic Trading</li>
-                    <li className="flex items-start gap-2"><div className="w-1.5 h-1.5 rounded-full bg-purple-500 mt-1.5" /> 30% Crypto Staking & Yield</li>
-                    <li className="flex items-start gap-2"><div className="w-1.5 h-1.5 rounded-full bg-purple-500 mt-1.5" /> 20% AI Allocator & Copy‑Trading</li>
+                    <li className="flex items-start gap-2"><div className="w-1.5 h-1.5 rounded-full bg-purple-500 mt-1.5" /> 60% Algorithmic Trading</li>
+                    <li className="flex items-start gap-2"><div className="w-1.5 h-1.5 rounded-full bg-purple-500 mt-1.5" /> 25% Copy-Trading</li>
+                    <li className="flex items-start gap-2"><div className="w-1.5 h-1.5 rounded-full bg-purple-500 mt-1.5" /> 15% Ads & Tasks</li>
                   </ul>
                 </div>
                 
                 <div className="space-y-2 pt-4 border-t border-border/5">
                   <div className="font-semibold text-foreground">{t('expected_weekly_label')}</div>
-                  <div className="text-lg font-bold text-green-500">{t('projected_weekly_range', { range: '25–45%' })}</div>
+                  <div className="text-lg font-bold text-green-500">{t('projected_weekly_range', { range: '15–30%' })}</div>
                 </div>
 
                 <div className="pt-4 border-t border-border/5">
                   <div className="font-semibold text-foreground mb-1">{t('benefits_label')}</div>
-                  <p className="text-xs text-muted-foreground/80 leading-relaxed">Highest return potential, premium support, monthly audit summaries, tailored allocations.</p>
+                  <p className="text-xs text-muted-foreground/80 leading-relaxed">Highest return potential, access to expert trader networks, priority support, fast withdrawals.</p>
                 </div>
               </div>
 

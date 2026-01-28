@@ -1,146 +1,98 @@
-'use client';
+'use client'
 
-export const dynamic = "force-dynamic";
+import { useMemo, useState } from 'react'
+import { useTheme } from '@/components/ThemeProvider'
+import { useI18n } from '@/hooks/useI18n'
+import { supportedLocales } from '@/src/utils/locales'
 
-import RequireAuth from '@/components/RequireAuth';
-import { useState } from 'react';
-import { supabase } from '@/lib/supabase';
-import { useI18n } from '@/hooks/useI18n';
-import Link from 'next/link';
-import { motion } from 'framer-motion';
-import FuturisticBackground from '@/components/ui/FuturisticBackground';
-import { ArrowLeft, Lock, Bell, Moon, Sun, Globe } from 'lucide-react';
+function tzDefault() {
+  try {
+    return Intl.DateTimeFormat().resolvedOptions().timeZone || 'UTC'
+  } catch {
+    return 'UTC'
+  }
+}
 
 export default function SettingsPage() {
-  const { t } = useI18n();
-  const [loading, setLoading] = useState(false);
-  const [msg, setMsg] = useState('');
-  const [error, setError] = useState('');
-  
-  // Password change state
-  const [currentPassword, setCurrentPassword] = useState('');
-  const [newPassword, setNewPassword] = useState('');
-  const [confirmPassword, setConfirmPassword] = useState('');
+  const { preference, setMode, setManualTheme, setSchedule, theme } = useTheme()
+  const { lang, setLang, t } = useI18n()
 
-  const handlePasswordChange = async (e: React.FormEvent) => {
-    e.preventDefault();
-    setMsg('');
-    setError('');
-    
-    if (newPassword !== confirmPassword) {
-      setError("New passwords don't match");
-      return;
-    }
-    
-    if (newPassword.length < 6) {
-      setError("Password must be at least 6 characters");
-      return;
-    }
+  const [start, setStart] = useState(preference.schedule?.startLocalTime || '19:00')
+  const [end, setEnd] = useState(preference.schedule?.endLocalTime || '07:00')
+  const [timeZone, setTimeZone] = useState(preference.schedule?.timeZone || tzDefault())
 
-    setLoading(true);
-    try {
-      const { error } = await supabase.auth.updateUser({ password: newPassword });
-      if (error) throw error;
-      setMsg('Password updated successfully');
-      setCurrentPassword('');
-      setNewPassword('');
-      setConfirmPassword('');
-    } catch (e: any) {
-      setError(e.message || 'Failed to update password');
-    } finally {
-      setLoading(false);
-    }
-  };
+  const locales = useMemo(() => supportedLocales, [])
 
   return (
-    <RequireAuth>
-      <FuturisticBackground />
-      <div className="relative min-h-screen pt-24 pb-12 px-4 sm:px-6">
-        <div className="max-w-2xl mx-auto space-y-8">
-          
-          <motion.div 
-            initial={{ opacity: 0, x: -20 }}
-            animate={{ opacity: 1, x: 0 }}
-            className="flex items-center gap-4"
-          >
-            <Link href="/profile" className="p-2 rounded-xl bg-card/40 border border-border/10 hover:bg-accent/10 transition-all text-muted-foreground hover:text-foreground backdrop-blur-md group">
-              <ArrowLeft size={20} className="group-hover:-translate-x-1 transition-transform" />
-            </Link>
-            <div>
-              <h1 className="text-3xl font-bold text-foreground">
-                Settings
-              </h1>
-              <p className="text-muted-foreground mt-1">Manage your preferences and security</p>
-            </div>
-          </motion.div>
+    <div className="min-h-screen bg-background text-foreground">
+      <div className="container-xl px-4 py-8">
+        <h1 className="text-2xl font-bold">{t('settings_title')}</h1>
+        <p className="mt-1 text-sm text-muted-foreground">{t('settings_subtitle')}</p>
 
-          <motion.div 
-            initial={{ opacity: 0, y: 20 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ delay: 0.1 }}
-            className="bg-card/40 backdrop-blur-xl border border-border/10 rounded-3xl p-8 shadow-xl space-y-8"
-          >
-            {/* Password Section */}
-            <div className="space-y-4">
-              <div className="flex items-center gap-3 pb-2 border-b border-border/10">
-                <Lock className="text-primary" size={20} />
-                <h2 className="text-lg font-medium text-foreground">Security</h2>
-              </div>
-              
-              <form onSubmit={handlePasswordChange} className="space-y-4">
-                {msg && <div className="p-3 rounded-xl bg-green-500/10 text-green-500 border border-green-500/20 text-sm">{msg}</div>}
-                {error && <div className="p-3 rounded-xl bg-red-500/10 text-red-500 border border-red-500/20 text-sm">{error}</div>}
-                
-                <div className="space-y-2">
-                  <label className="text-sm text-muted-foreground">New Password</label>
-                  <input 
-                    type="password" 
-                    value={newPassword}
-                    onChange={(e) => setNewPassword(e.target.value)}
-                    className="w-full bg-muted/10 border border-border/10 rounded-xl px-4 py-3 text-foreground focus:border-primary/50 focus:ring-1 focus:ring-primary/50 transition-all outline-none"
-                    placeholder="Enter new password"
-                    required
-                  />
-                </div>
-                <div className="space-y-2">
-                  <label className="text-sm text-muted-foreground">Confirm New Password</label>
-                  <input 
-                    type="password" 
-                    value={confirmPassword}
-                    onChange={(e) => setConfirmPassword(e.target.value)}
-                    className="w-full bg-muted/10 border border-border/10 rounded-xl px-4 py-3 text-foreground focus:border-primary/50 focus:ring-1 focus:ring-primary/50 transition-all outline-none"
-                    placeholder="Confirm new password"
-                    required
-                  />
-                </div>
-                
-                <button 
-                  type="submit" 
-                  disabled={loading}
-                  className="px-6 py-2 rounded-xl bg-primary hover:bg-primary/90 text-primary-foreground font-medium transition-all disabled:opacity-50"
-                >
-                  {loading ? 'Updating...' : 'Update Password'}
-                </button>
-              </form>
+        <div className="mt-6 grid grid-cols-1 lg:grid-cols-2 gap-6">
+          <div className="rounded-3xl border border-border/40 bg-card/40 backdrop-blur-xl p-6">
+            <h2 className="text-sm font-semibold">{t('theme_label')}</h2>
+            <div className="mt-4 grid grid-cols-3 gap-2">
+              <button onClick={() => setMode('device')} className={`rounded-xl border px-4 py-3 text-xs ${preference.mode === 'device' ? 'border-primary text-primary' : 'border-border text-foreground hover:bg-muted/20'}`}>
+                {t('theme_mode_device')}
+              </button>
+              <button onClick={() => setMode('time')} className={`rounded-xl border px-4 py-3 text-xs ${preference.mode === 'time' ? 'border-primary text-primary' : 'border-border text-foreground hover:bg-muted/20'}`}>
+                {t('theme_mode_time')}
+              </button>
+              <button onClick={() => setMode('manual')} className={`rounded-xl border px-4 py-3 text-xs ${preference.mode === 'manual' ? 'border-primary text-primary' : 'border-border text-foreground hover:bg-muted/20'}`}>
+                {t('theme_mode_manual')}
+              </button>
             </div>
 
-            {/* Preferences Section (Placeholder) */}
-            <div className="space-y-4 pt-4">
-              <div className="flex items-center gap-3 pb-2 border-b border-border/10">
-                <Bell className="text-primary" size={20} />
-                <h2 className="text-lg font-medium text-foreground">Notifications</h2>
-              </div>
-              <div className="flex items-center justify-between p-4 rounded-xl bg-muted/5 border border-border/10">
-                <span className="text-sm text-foreground">Email Notifications</span>
-                <div className="h-6 w-10 rounded-full bg-primary/20 flex items-center justify-end px-1 cursor-pointer">
-                  <div className="h-4 w-4 rounded-full bg-primary shadow-sm" />
-                </div>
-              </div>
+            <div className="mt-4 text-xs text-muted-foreground">{t('current')}: {theme}</div>
+
+            <div className="mt-4 grid grid-cols-2 gap-2">
+              <button onClick={() => setManualTheme('light')} className={`rounded-xl border px-4 py-3 text-xs ${preference.mode === 'manual' && theme === 'light' ? 'border-primary text-primary' : 'border-border text-foreground hover:bg-muted/20'}`}>
+                {t('theme_light')}
+              </button>
+              <button onClick={() => setManualTheme('dark')} className={`rounded-xl border px-4 py-3 text-xs ${preference.mode === 'manual' && theme === 'dark' ? 'border-primary text-primary' : 'border-border text-foreground hover:bg-muted/20'}`}>
+                {t('theme_dark')}
+              </button>
             </div>
 
-          </motion.div>
+            <div className="mt-6 rounded-2xl border border-border/40 bg-muted/10 p-4">
+              <div className="text-xs font-semibold">{t('time_schedule')}</div>
+              <div className="mt-3 grid grid-cols-1 sm:grid-cols-3 gap-3">
+                <div>
+                  <div className="text-[11px] text-muted-foreground">{t('start')}</div>
+                  <input value={start} onChange={(e) => setStart(e.target.value)} className="mt-1 w-full rounded-xl border border-border bg-background px-3 py-2 text-xs" placeholder="19:00" />
+                </div>
+                <div>
+                  <div className="text-[11px] text-muted-foreground">{t('end')}</div>
+                  <input value={end} onChange={(e) => setEnd(e.target.value)} className="mt-1 w-full rounded-xl border border-border bg-background px-3 py-2 text-xs" placeholder="07:00" />
+                </div>
+                <div>
+                  <div className="text-[11px] text-muted-foreground">{t('time_zone')}</div>
+                  <input value={timeZone} onChange={(e) => setTimeZone(e.target.value)} className="mt-1 w-full rounded-xl border border-border bg-background px-3 py-2 text-xs" placeholder="UTC" />
+                </div>
+              </div>
+              <button
+                onClick={() => setSchedule({ startLocalTime: start, endLocalTime: end, timeZone })}
+                className="mt-4 rounded-xl bg-primary px-4 py-2 text-xs font-semibold text-primary-foreground"
+              >
+                {t('save')}
+              </button>
+            </div>
+          </div>
+
+          <div className="rounded-3xl border border-border/40 bg-card/40 backdrop-blur-xl p-6">
+            <h2 className="text-sm font-semibold">{t('language_label')}</h2>
+            <p className="mt-2 text-xs text-muted-foreground">{t('select_language_hint')}</p>
+            <div className="mt-4">
+              <select value={lang} onChange={(e) => setLang(e.target.value)} className="w-full rounded-xl border border-border bg-background px-3 py-2 text-xs">
+                {locales.map((l) => (
+                  <option key={l.locale} value={l.locale}>{l.label} ({l.locale})</option>
+                ))}
+              </select>
+            </div>
+          </div>
         </div>
       </div>
-    </RequireAuth>
-  );
+    </div>
+  )
 }

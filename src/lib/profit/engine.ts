@@ -3,6 +3,7 @@ import { publish } from '@lib/sse'
 import * as Sentry from '@sentry/node'
 import { logInfo, logError } from '@/src/lib/observability/logger'
 import crypto from 'crypto'
+import { planConfig } from '@/config/planConfig'
 
 type BaselineInput = { weekEnding: string | Date; dryRun?: boolean }
 type StreamInput = { weekEnding: string | Date; performance?: Record<string, number>; dryRun?: boolean }
@@ -12,14 +13,14 @@ function toDate(value: string | Date) {
 }
 
 function feePct() {
-  const v = Number(process.env.SERVICE_FEE_PCT || process.env.SERVICE_FEE_PCT?.toString() || '0')
+  const v = Number(process.env.SERVICE_FEE_PCT || process.env.SERVICE_FEE_PCT?.toString() || '10')
   return Math.max(0, v)
 }
 
 const DEFAULT_ALLOCATIONS: Record<string, Record<string, number>> = {
-  starter: { ads_tasks: 70, trading: 30 },
-  pro: { trading: 60, copy_trading: 25, ads_tasks: 15 },
-  elite: { trading: 50, staking_yield: 30, ai: 20 }
+  starter: planConfig.starter.allocations,
+  pro: planConfig.pro.allocations,
+  elite: planConfig.elite.allocations
 };
 
 function normalizeJson<T = Record<string, any>>(obj: T | string | null | undefined): T {
@@ -499,10 +500,10 @@ async function processReferral(inv: any, net: number, dryRun: boolean) {
   const supabase = supabaseServer
   const referrerId = String(inv.user?.referrerId || '')
   if (!referrerId) return
-  const slug = getSlug(inv.plan?.name || '')
-  const rate = slug === 'elite' ? 0.10 : slug === 'pro' ? 0.07 : 0.05
-  const bonus = Math.max(0, net * rate)
-  if (dryRun || bonus <= 0) return
+    const slug = getSlug(inv.plan?.name || '')
+    const rate = slug === 'elite' ? planConfig.elite.referralRate : slug === 'pro' ? planConfig.pro.referralRate : planConfig.starter.referralRate
+    const bonus = Math.max(0, net * (rate / 100))
+    if (dryRun || bonus <= 0) return
   const currency = 'USD'
   
   // Upsert wallet for referrer

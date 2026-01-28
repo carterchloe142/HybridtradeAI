@@ -5,7 +5,7 @@ export const dynamic = "force-dynamic";
 import { useEffect, useState } from 'react'
 import RequireAuth from '@/components/RequireAuth'
 import { supabase } from '@/lib/supabase'
-import { User as UserIcon, IdCard, Camera, CheckCircle, ArrowLeft } from 'lucide-react'
+import { User as UserIcon, IdCard, Camera, CheckCircle, ArrowLeft, ArrowRight } from 'lucide-react'
 import { useI18n } from '@/hooks/useI18n'
 import FuturisticBackground from '@/components/ui/FuturisticBackground'
 import { motion } from 'framer-motion'
@@ -39,6 +39,7 @@ export default function KycPage() {
   const [loading, setLoading] = useState(false)
   const [msg, setMsg] = useState('')
   const [isSubmitted, setIsSubmitted] = useState(false)
+  const [agreedToTerms, setAgreedToTerms] = useState(false)
 
   const countrySchemas: Record<string, { name: string; idTypes: { value: string; label: string; pattern?: RegExp }[] }> = {
     NG: { name: 'Nigeria', idTypes: [
@@ -120,18 +121,30 @@ export default function KycPage() {
     ]},
   }
 
+  const [status, setStatus] = useState('pending')
+  const [kycLevel, setKycLevel] = useState(1)
+  const [rejectReason, setRejectReason] = useState<string|null>(null)
+  const [submittedAt, setSubmittedAt] = useState<string|null>(null)
+
   async function load() {
     try {
-      const { data: user } = await supabase.auth.getUser()
-      const uid = user.user?.id
-      if (!uid) return
-      const { data } = await supabase
-        .from('profiles')
-        .select('user_id,email,kyc_status,kyc_level,kyc_submitted_at')
-        .eq('user_id', uid)
-        .maybeSingle()
-      setProfile((data as any) || null)
-      if (typeof (data as any)?.kyc_level === 'number') setLevel(Number((data as any).kyc_level))
+      const { data: session } = await supabase.auth.getSession()
+      const token = session.session?.access_token
+      if (!token) return
+
+      const res = await fetch('/api/user/kyc/status', {
+        headers: { Authorization: `Bearer ${token}` }
+      });
+      const json = await res.json();
+      
+      if (res.ok) {
+         setStatus(String(json.status || 'pending').toLowerCase());
+         setKycLevel(json.level || 1);
+         setRejectReason(json.rejectReason);
+         if (json.submittedAt) {
+             setSubmittedAt(new Date(json.submittedAt).toLocaleString());
+         }
+      }
     } catch {}
   }
 
@@ -275,6 +288,7 @@ export default function KycPage() {
       if (!fullName || !dob || !address || !idType || !idNumber || !idFile) throw new Error('Fill all fields and attach files')
       if (idPattern && !idPattern.test(idNumber)) throw new Error('ID number format invalid for selected country/type')
       if (!selfieNeutral || !selfieSmile || !selfieLeft || !selfieRight) throw new Error('Capture all selfie steps (neutral, smile, left, right)')
+      if (!agreedToTerms) throw new Error('You must agree to the Terms of Service and Privacy Policy')
       if (idFile.size > 6_000_000) throw new Error('ID file too large')
       const idOk = ['image/jpeg','image/png','application/pdf'].includes(idFile.type)
       if (!idOk) throw new Error('Invalid ID file type')
@@ -315,16 +329,16 @@ export default function KycPage() {
         method: 'POST',
         headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` },
         body: JSON.stringify({ 
-          level,
-          documentUrl: upJson.documentUrl,
-          selfieUrl: upJson.selfieUrl,
-          details: body.payload 
+          applicationId: upJson.applicationId,
+          files: upJson.files,
+          details: body.payload,
         }),
       })
       const json = await res.json()
       if (!res.ok) throw new Error(json.error || 'Submit failed')
       setMsg(t('kyc_submitted_msg'))
       setIsSubmitted(true)
+      localStorage.removeItem('kyc_draft') // Clear draft on success
       setFullName('')
       setDob('')
       setAddress('')
@@ -344,9 +358,6 @@ export default function KycPage() {
       setLoading(false)
     }
   }
-
-  const status = String(profile?.kyc_status || 'pending').toLowerCase()
-  const submittedAt = profile?.kyc_submitted_at ? new Date(profile.kyc_submitted_at).toLocaleString() : null
 
   return (
     <RequireAuth>
@@ -387,14 +398,27 @@ export default function KycPage() {
           >
             <div className="text-sm flex flex-wrap items-center gap-3 pb-6 border-b border-border/10">
               <span className="text-muted-foreground font-medium">{t('status_label')}</span>
-              <span className={`px-3 py-1 rounded-full text-xs font-semibold capitalize ${status==='approved'?'bg-emerald-500/10 text-emerald-500 border border-emerald-500/20':status==='rejected'?'bg-destructive/10 text-destructive border border-destructive/20':'bg-yellow-500/10 text-yellow-500 border border-yellow-500/20'}`}>{status}</span>
-              {typeof profile?.kyc_level === 'number' && (
+              <span className={`px-3 py-1 rounded-full text-xs font-semibold capitalize ${status==='approved'?'bg-emerald-500/10 text-emerald-500 border border-emerald-500/20':status==='rejected'?'bg-destructive/10 text-destructive border border-destructive/20':'bg-yellow-500/10 text-yellow-500 border border-yellow-500/20'}`}>{status.replace('_', ' ')}</span>
+              {kycLevel > 0 && (
                 <span className="text-xs text-muted-foreground ml-auto bg-muted/50 px-3 py-1 rounded-full border border-border/10">
-                  {t('kyc_level_label')} {profile.kyc_level}
+                  {t('kyc_level_label')} {kycLevel}
                 </span>
               )}
             </div>
             {submittedAt && <p className="text-sm text-muted-foreground">{t('submitted_label')} {submittedAt}</p>}
+            {rejectReason && status === 'rejected' && (
+                <div className="bg-red-500/10 border border-red-500/20 p-4 rounded-xl text-sm text-red-400">
+                    <p className="font-bold mb-1">Application Rejected</p>
+                    <p>{rejectReason}</p>
+                    <button onClick={() => {
+                        // Reset form to allow retry
+                        setStep(1);
+                        setMsg('');
+                    }} className="mt-3 text-xs bg-red-500 text-white px-3 py-1.5 rounded-lg hover:bg-red-600 transition">
+                        Retry Application
+                    </button>
+                </div>
+            )}
           
           <div className="flex items-center justify-between px-2">
             <div className="flex items-center gap-3 w-full max-w-md justify-between">
@@ -469,13 +493,59 @@ export default function KycPage() {
                 </div>
               </div>
               <label className="block text-sm font-medium text-foreground">{t('gov_id_number_label')}</label>
-              <input value={idNumber} onChange={(e) => setIdNumber(e.target.value)} className="border border-border/10 rounded-xl px-4 py-3 w-full bg-background/50 text-foreground placeholder-muted-foreground focus:outline-none focus:ring-2 focus:ring-primary/50 transition-all" placeholder="ID Number" />
+              <div className="relative">
+                <input 
+                  value={idNumber} 
+                  onChange={(e) => setIdNumber(e.target.value)} 
+                  className={`border ${
+                    idNumber && countrySchemas[country]?.idTypes.find(t => t.value === idType)?.pattern?.test(idNumber) 
+                      ? 'border-green-500/50 focus:ring-green-500/20' 
+                      : idNumber && countrySchemas[country]?.idTypes.find(t => t.value === idType)?.pattern 
+                        ? 'border-red-500/50 focus:ring-red-500/20' 
+                        : 'border-border/10 focus:ring-primary/50'
+                  } rounded-xl px-4 py-3 w-full bg-background/50 text-foreground placeholder-muted-foreground focus:outline-none focus:ring-2 transition-all`} 
+                  placeholder="ID Number" 
+                />
+                {idNumber && countrySchemas[country]?.idTypes.find(t => t.value === idType)?.pattern && (
+                   <div className="absolute right-3 top-1/2 -translate-y-1/2 pointer-events-none">
+                      {countrySchemas[country]?.idTypes.find(t => t.value === idType)?.pattern?.test(idNumber) ? (
+                        <CheckCircle size={18} className="text-green-500" />
+                      ) : (
+                        <div className="text-xs text-red-500 font-medium">Invalid Format</div>
+                      )}
+                   </div>
+                )}
+              </div>
               <label className="block text-sm font-medium text-foreground">{t('id_expiry_label')}</label>
               <input value={idExpiry} onChange={(e) => setIdExpiry(e.target.value)} className="border border-border/10 rounded-xl px-4 py-3 w-full bg-background/50 text-foreground focus:outline-none focus:ring-2 focus:ring-primary/50 transition-all" type="date" />
               <label className="block text-sm font-medium text-foreground">{t('upload_gov_id_label')}</label>
-              <div className="border-2 border-dashed border-border/20 rounded-xl p-8 text-center hover:bg-accent/5 transition-all">
-                <input onChange={(e) => setIdFile(e.target.files?.[0] || null)} className="w-full text-foreground file:mr-4 file:py-2 file:px-4 file:rounded-full file:border-0 file:text-sm file:font-semibold file:bg-primary/10 file:text-primary hover:file:bg-primary/20" type="file" accept="image/*,application/pdf" />
+              <div className="border-2 border-dashed border-border/20 rounded-xl p-8 text-center hover:bg-accent/5 transition-all relative">
+                <input 
+                  onChange={(e) => setIdFile(e.target.files?.[0] || null)} 
+                  className="w-full text-foreground file:mr-4 file:py-2 file:px-4 file:rounded-full file:border-0 file:text-sm file:font-semibold file:bg-primary/10 file:text-primary hover:file:bg-primary/20" 
+                  type="file" 
+                  accept="image/*,application/pdf" 
+                />
                 <p className="text-xs text-muted-foreground mt-2">{t('accepted_files_note')}</p>
+                
+                {idFile && (
+                  <div className="mt-4 p-2 bg-muted/20 rounded-lg flex items-center gap-3">
+                    {idFile.type.startsWith('image/') ? (
+                      <img src={URL.createObjectURL(idFile)} alt="Preview" className="h-16 w-16 object-cover rounded-md border border-border/20" />
+                    ) : (
+                      <div className="h-16 w-16 flex items-center justify-center bg-muted/50 rounded-md border border-border/20">
+                        <span className="text-xs font-bold uppercase">{idFile.name.split('.').pop()}</span>
+                      </div>
+                    )}
+                    <div className="text-left overflow-hidden">
+                      <p className="text-sm font-medium truncate max-w-[200px]">{idFile.name}</p>
+                      <p className="text-xs text-muted-foreground">{(idFile.size / 1024 / 1024).toFixed(2)} MB</p>
+                    </div>
+                    <button onClick={() => setIdFile(null)} className="ml-auto text-destructive hover:text-destructive/80 p-1">
+                        <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><line x1="18" y1="6" x2="6" y2="18"></line><line x1="6" y1="6" x2="18" y2="18"></line></svg>
+                    </button>
+                  </div>
+                )}
               </div>
               <div className="flex gap-2 pt-4">
                 <button onClick={() => setStep(1)} className="border border-border/10 bg-muted/50 text-muted-foreground rounded-xl px-6 py-3 font-medium hover:bg-accent/50 hover:text-foreground transition-all">{t('back')}</button>
@@ -503,13 +573,30 @@ export default function KycPage() {
                       {cameraOn ? t('camera_on') : t('camera_off')}
                     </span>
                   </div>
-                  <video
-                    id="kyc-selfie-video"
-                    className="w-full rounded-xl border border-border/20 shadow-lg bg-black/40 aspect-video object-cover"
-                    autoPlay
-                    muted
-                    playsInline
-                  />
+                  <div className="relative rounded-xl overflow-hidden border border-border/20 shadow-lg bg-black/40 aspect-video">
+                     <video
+                      id="kyc-selfie-video"
+                      className="w-full h-full object-cover"
+                      autoPlay
+                      muted
+                      playsInline
+                    />
+                    {cameraOn && (
+                      <div className="absolute inset-0 pointer-events-none flex items-center justify-center">
+                        {/* Face Guide Overlay */}
+                        <svg viewBox="0 0 100 100" className="w-full h-full opacity-30 text-primary">
+                          <defs>
+                            <mask id="face-mask">
+                              <rect width="100%" height="100%" fill="white"/>
+                              <ellipse cx="50" cy="45" rx="22" ry="30" fill="black"/>
+                            </mask>
+                          </defs>
+                          <rect width="100%" height="100%" fill="currentColor" mask="url(#face-mask)"/>
+                          <ellipse cx="50" cy="45" rx="22" ry="30" fill="none" stroke="currentColor" strokeWidth="0.5" strokeDasharray="2 1"/>
+                        </svg>
+                      </div>
+                    )}
+                  </div>
                   <div className="flex items-center justify-between gap-2">
                     <button
                       type="button"
@@ -621,18 +708,52 @@ export default function KycPage() {
           )}
           {step===4 && (
             <motion.div initial={{ opacity: 0, x: 20 }} animate={{ opacity: 1, x: 0 }} className="space-y-6">
-              <div className="text-lg font-medium text-foreground text-center py-4">{t('review_and_submit')}</div>
-              <div className="flex flex-col gap-4 max-w-sm mx-auto">
-                <button disabled={loading || status==='approved'} onClick={submit} className="bg-primary hover:bg-primary/90 transition text-primary-foreground rounded-xl px-6 py-4 font-bold shadow-lg hover:shadow-primary/20 disabled:opacity-50 disabled:cursor-not-allowed w-full text-lg">
-                    {loading ? (
-                        <span className="flex items-center justify-center gap-2">
-                            <span className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin" />
-                            {t('submitting')}
-                        </span>
-                    ) : (status==='approved' ? t('already_approved') : t('submit_kyc'))}
-                </button>
-                <button onClick={() => setStep(3)} className="border border-border/10 bg-muted/50 text-muted-foreground rounded-xl px-6 py-3 font-medium hover:bg-accent/50 hover:text-foreground transition-all w-full">{t('back')}</button>
-              </div>
+              {isSubmitted ? (
+                <div className="text-center py-8 space-y-6">
+                   <div className="w-20 h-20 bg-green-500/20 text-green-500 rounded-full flex items-center justify-center mx-auto animate-bounce">
+                      <CheckCircle className="w-10 h-10" />
+                   </div>
+                   <div>
+                       <h3 className="text-2xl font-bold text-foreground">Application Received</h3>
+                       <p className="text-muted-foreground mt-2 max-w-md mx-auto">
+                           Your KYC documents have been securely transmitted. Our team will review them shortly (usually within 24 hours).
+                       </p>
+                   </div>
+                   <Link href="/dashboard" className="inline-flex items-center gap-2 bg-primary text-primary-foreground px-8 py-3 rounded-xl font-bold shadow-lg hover:scale-105 transition-transform">
+                      Go to Dashboard <ArrowRight size={18} />
+                   </Link>
+                </div>
+              ) : (
+                <>
+                    <div className="text-lg font-medium text-foreground text-center py-4">{t('review_and_submit')}</div>
+                    
+                    <div className="max-w-sm mx-auto mb-6 bg-muted/10 p-4 rounded-xl border border-border/10">
+                       <label className="flex items-start gap-3 cursor-pointer group">
+                          <input 
+                            type="checkbox" 
+                            checked={agreedToTerms} 
+                            onChange={(e) => setAgreedToTerms(e.target.checked)}
+                            className="mt-1 w-4 h-4 rounded border-border/50 bg-background text-primary focus:ring-primary/50"
+                          />
+                          <span className="text-xs text-muted-foreground leading-relaxed group-hover:text-foreground transition-colors">
+                             I certify that the information provided is true and accurate. I agree to the processing of my personal data for identity verification purposes in accordance with the <Link href="/privacy" className="text-primary hover:underline">Privacy Policy</Link>.
+                          </span>
+                       </label>
+                    </div>
+
+                    <div className="flex flex-col gap-4 max-w-sm mx-auto">
+                        <button disabled={loading || status==='approved' || !agreedToTerms} onClick={submit} className="bg-primary hover:bg-primary/90 transition text-primary-foreground rounded-xl px-6 py-4 font-bold shadow-lg hover:shadow-primary/20 disabled:opacity-50 disabled:cursor-not-allowed w-full text-lg">
+                            {loading ? (
+                                <span className="flex items-center justify-center gap-2">
+                                    <span className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin" />
+                                    {t('submitting')}
+                                </span>
+                            ) : (status==='approved' ? t('already_approved') : t('submit_kyc'))}
+                        </button>
+                        <button onClick={() => setStep(3)} className="border border-border/10 bg-muted/50 text-muted-foreground rounded-xl px-6 py-3 font-medium hover:bg-accent/50 hover:text-foreground transition-all w-full">{t('back')}</button>
+                    </div>
+                </>
+              )}
             </motion.div>
           )}
           </div>

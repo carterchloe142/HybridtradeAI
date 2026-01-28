@@ -1,0 +1,7 @@
+{
+  "name": "HybridTradeAI",
+  "integrations": {
+    "capacitor": {}
+  },
+  "type": "react"
+}

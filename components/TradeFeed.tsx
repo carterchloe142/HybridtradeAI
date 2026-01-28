@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react'
 import { supabase } from '@/lib/supabase'
 import { ArrowUpRight, ArrowDownRight, RefreshCcw } from 'lucide-react'
+import { useI18n } from '@/hooks/useI18n'
 
 type TradeLog = {
   id: string
@@ -14,8 +15,10 @@ type TradeLog = {
 }
 
 export default function TradeFeed() {
+  const { t, nf, df } = useI18n()
   const [trades, setTrades] = useState<TradeLog[]>([])
   const [loading, setLoading] = useState(true)
+  const [stats, setStats] = useState<{ total: number; wins: number; avgPnl: number }>(() => ({ total: 0, wins: 0, avgPnl: 0 }))
 
   const fetchTrades = async () => {
     const { data } = await supabase
@@ -24,7 +27,14 @@ export default function TradeFeed() {
       .order('simulatedAt', { ascending: false })
       .limit(10)
     
-    if (data) setTrades(data as TradeLog[])
+    if (data) {
+      const list = data as TradeLog[]
+      setTrades(list)
+      const total = list.length
+      const wins = list.filter((x) => Number(x.profitPct || 0) > 0).length
+      const avg = total ? list.reduce((s, x) => s + Number(x.profitPct || 0), 0) / total : 0
+      setStats({ total, wins, avgPnl: avg })
+    }
     setLoading(false)
   }
 
@@ -38,15 +48,20 @@ export default function TradeFeed() {
   if (loading && trades.length === 0) return <div className="animate-pulse h-40 bg-muted/10 rounded-xl" />
 
   return (
-    <div className="glass p-4 rounded-2xl h-full flex flex-col">
-      <div className="flex items-center justify-between mb-4">
-        <h3 className="font-bold text-lg flex items-center gap-2">
-          <RefreshCcw className="w-4 h-4 animate-spin-slow" />
-          Live Market Feed
-        </h3>
-        <span className="text-xs text-muted-foreground px-2 py-1 bg-muted/20 rounded-full">
-          Real-time
-        </span>
+    <div className="h-full flex flex-col">
+      <div className="mb-3 flex flex-wrap items-center gap-2">
+        <div className="inline-flex items-center gap-2 rounded-full border border-border bg-muted/10 px-3 py-1 text-[11px] text-muted-foreground">
+          <RefreshCcw className="w-3.5 h-3.5 animate-spin-slow" />
+          <span className="text-foreground/90">{t('live_market_feed')}</span>
+        </div>
+        <div className="inline-flex items-center gap-2 rounded-full border border-border bg-muted/10 px-3 py-1 text-[11px] text-muted-foreground">
+          <span className="text-foreground/90">{t('total_trades')}:</span>
+          <span className="font-mono text-foreground">{stats.total}</span>
+        </div>
+        <div className="inline-flex items-center gap-2 rounded-full border border-border bg-muted/10 px-3 py-1 text-[11px] text-muted-foreground">
+          <span className="text-foreground/90">{t('win_rate')}:</span>
+          <span className="font-mono text-foreground">{stats.total ? nf((stats.wins / stats.total) * 100, { maximumFractionDigits: 1 }) : '0'}%</span>
+        </div>
       </div>
 
       <div className="flex-1 overflow-y-auto space-y-3 pr-2 scrollbar-hide">
@@ -60,7 +75,7 @@ export default function TradeFeed() {
                 <div className="font-bold text-sm">{trade.symbol} <span className="text-xs text-muted-foreground opacity-70">/ USD</span></div>
                 <div className="text-xs text-muted-foreground capitalize flex items-center gap-1">
                   <span className={`w-1.5 h-1.5 rounded-full ${trade.type === 'BUY' ? 'bg-blue-500' : 'bg-orange-500'}`} />
-                  {trade.type} @ {trade.entryPrice.toLocaleString()}
+                  {trade.type} @ {nf(trade.entryPrice)}
                 </div>
               </div>
             </div>
@@ -69,14 +84,14 @@ export default function TradeFeed() {
                 {trade.profitPct && trade.profitPct > 0 ? '+' : ''}{trade.profitPct}%
               </div>
               <div className="text-xs text-muted-foreground">
-                {new Date(trade.simulatedAt).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
+                {df(new Date(trade.simulatedAt), { hour: '2-digit', minute: '2-digit' } as any)}
               </div>
             </div>
           </div>
         ))}
         {trades.length === 0 && (
           <div className="text-center text-muted-foreground py-8">
-            Waiting for market data...
+            {t('waiting_for_market_data')}
           </div>
         )}
       </div>

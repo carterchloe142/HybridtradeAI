@@ -1,6 +1,9 @@
 import { NextApiRequest, NextApiResponse } from 'next';
 import { supabaseServer } from '@/src/lib/supabaseServer';
 
+type ReplyRow = { id: string; ticket_id: string; body: string; is_admin: boolean; created_at: string };
+type TicketRow = { id: string; user_id: string; subject: string; status: string; created_at: string };
+
 export default async function handler(req: NextApiRequest, res: NextApiResponse) {
   const authHeader = req.headers.authorization || '';
   const token = authHeader.startsWith('Bearer ') ? authHeader.slice(7).trim() : '';
@@ -8,88 +11,107 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
   if (!token) return res.status(401).json({ error: 'Missing authorization token' });
   if (!supabaseServer) return res.status(500).json({ error: 'Supabase not configured' });
 
-  const { data: { user }, error: userErr } = await supabaseServer.auth.getUser(token);
+  const { data: auth, error: userErr } = await supabaseServer.auth.getUser(token);
+  const user = auth?.user;
   if (userErr || !user) return res.status(401).json({ error: 'Invalid or expired token' });
 
   if (req.method === 'GET') {
-      try {
-        // Try 'Ticket' with 'TicketReply'
-        let { data: d1, error: e1 } = await supabaseServer
-            .from('Ticket')
-            .select('*, replies:TicketReply(*)')
-            .eq('userId', user.id)
-            .order('createdAt', { ascending: false });
+    try {
+      const { data: tickets, error } = await supabaseServer
+        .from('support_tickets')
+        .select('id,user_id,subject,status,created_at')
+        .eq('user_id', user.id)
+        .order('created_at', { ascending: false });
 
-        if (e1 && (e1.message.includes('relation') || e1.code === '42P01')) {
-            // Fallback 'tickets' with 'ticket_replies'
-            const { data: d2, error: e2 } = await supabaseServer
-                .from('tickets')
-                .select('*, replies:ticket_replies(*)')
-                .eq('user_id', user.id)
-                .order('created_at', { ascending: false });
-            
-            if (e2) throw e2;
-            return res.status(200).json({ items: d2 || [] });
-        } else if (e1) {
-            throw e1;
-        }
+      if (error) throw error;
 
-        return res.status(200).json({ items: d1 || [] });
+      const ticketIds = (tickets as TicketRow[] | null)?.map((t) => t.id) || [];
+      const { data: replies } = ticketIds.length
+        ? await supabaseServer
+            .from('replies')
+            .select('id,ticket_id,body,is_admin,created_at')
+            .in('ticket_id', ticketIds)
+            .order('created_at', { ascending: true })
+        : { data: [] as ReplyRow[] };
 
-      } catch (e: any) {
-          return res.status(500).json({ error: e.message });
-      }
+      const repliesMap = new Map<string, ReplyRow[]>();
+      (replies || []).forEach((r: any) => {
+        const tid = String(r.ticket_id);
+        const arr = repliesMap.get(tid) || [];
+        arr.push(r as ReplyRow);
+        repliesMap.set(tid, arr);
+      });
+
+      const items = (tickets || []).map((t: any) => ({
+        id: t.id,
+        user_id: t.user_id,
+        subject: t.subject,
+        status: t.status,
+        created_at: t.created_at,
+        replies: repliesMap.get(String(t.id)) || [],
+      }));
+
+      return res.status(200).json({ items });
+    } catch (e: any) {
+      return res.status(500).json({ error: e.message });
+    }
   }
 
   if (req.method === 'POST') {
-      const { subject, message } = req.body;
-      if (!subject || !message) return res.status(400).json({ error: 'Subject and message required' });
+    const { subject, message, ticketId, body } = req.body || {};
 
+    if (ticketId && body) {
       try {
-          // Create Ticket
-          const payload = {
-              userId: user.id,
-              subject,
-              status: 'open',
-              createdAt: new Date().toISOString()
-              // Message? Usually the first message is a reply or part of ticket?
-              // Frontend sends { subject, message }.
-              // If ticket has 'description' or 'message' field.
-          };
+        const { data: t, error: tErr } = await supabaseServer
+          .from('support_tickets')
+          .select('id,user_id')
+          .eq('id', String(ticketId))
+          .maybeSingle();
 
-          // Let's assume Ticket has 'message' or we create a first reply.
-          // Check schema assumption: Ticket(id, subject, status, userId). Reply(ticketId, body, userId).
-          // But usually simple tickets have a body.
-          // Let's try adding 'message' to payload.
-          
-          let ticketId;
+        if (tErr) throw tErr;
+        if (!t) return res.status(404).json({ error: 'Ticket not found' });
+        if (String((t as any).user_id) !== user.id) return res.status(403).json({ error: 'Forbidden' });
 
-          // Try Ticket
-          const { data: t1, error: e1 } = await supabaseServer.from('Ticket').insert({ ...payload, message }).select().single();
-          
-          if (e1 && (e1.message.includes('relation') || e1.code === '42P01')) {
-              // Fallback tickets
-               const { data: t2, error: e2 } = await supabaseServer.from('tickets').insert({
-                   user_id: user.id,
-                   subject,
-                   message,
-                   status: 'open',
-                   created_at: new Date().toISOString()
-               }).select().single();
-               
-               if (e2) throw e2;
-               ticketId = t2.id;
-          } else if (e1) {
-              throw e1;
-          } else {
-              ticketId = t1.id;
-          }
+        const { error: insErr } = await supabaseServer.from('replies').insert({
+          ticket_id: String(ticketId),
+          body: String(body),
+          is_admin: false,
+        });
 
-          return res.status(200).json({ message: 'Ticket created', id: ticketId });
-
+        if (insErr) throw insErr;
+        return res.status(200).json({ success: true });
       } catch (e: any) {
-          return res.status(500).json({ error: e.message });
+        return res.status(500).json({ error: e.message });
       }
+    }
+
+    if (!subject || !message) return res.status(400).json({ error: 'Subject and message required' });
+
+    try {
+      const { data: newTicket, error: tErr } = await supabaseServer
+        .from('support_tickets')
+        .insert({
+          user_id: user.id,
+          subject: String(subject),
+          status: 'open',
+        })
+        .select('id')
+        .single();
+
+      if (tErr) throw tErr;
+
+      const { error: rErr } = await supabaseServer.from('replies').insert({
+        ticket_id: newTicket.id,
+        body: String(message),
+        is_admin: false,
+      });
+
+      if (rErr) throw rErr;
+
+      return res.status(200).json({ message: 'Ticket created', id: newTicket.id });
+    } catch (e: any) {
+      return res.status(500).json({ error: e.message });
+    }
   }
 
   return res.status(405).json({ error: 'Method not allowed' });

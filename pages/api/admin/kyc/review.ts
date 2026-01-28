@@ -1,5 +1,6 @@
 import { NextApiRequest, NextApiResponse } from 'next';
 import { supabaseServer } from '@/src/lib/supabaseServer';
+import { sendEmail, TEMPLATES } from '@/src/lib/email';
 
 export default async function handler(req: NextApiRequest, res: NextApiResponse) {
   if (req.method !== 'POST') {
@@ -57,6 +58,27 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
       .eq('user_id', userId);
     
     if (profileErr) console.warn('Profile update failed:', profileErr);
+
+    // 5. Send Email Notification
+    const { data: targetUser } = await supabaseServer.auth.admin.getUserById(userId);
+    if (targetUser?.user?.email) {
+       const subject = action === 'APPROVE' ? 'KYC Verification Approved' : 'KYC Verification Update';
+       const html = action === 'APPROVE' 
+        ? `<div style="font-family: sans-serif;">
+             <h1 style="color: #22c55e;">You are Verified!</h1>
+             <p>Congratulations, your KYC documents have been reviewed and approved.</p>
+             <p>You now have full access to all investment features and higher withdrawal limits.</p>
+             <p>Best,<br/>HybridTradeAI Admin</p>
+           </div>`
+        : `<div style="font-family: sans-serif;">
+             <h1 style="color: #ef4444;">Verification Update</h1>
+             <p>Unfortunately, your recent KYC submission could not be verified.</p>
+             <p>Please check your document clarity and try again.</p>
+             <p>Best,<br/>HybridTradeAI Admin</p>
+           </div>`;
+       
+       await sendEmail(targetUser.user.email, { subject, html });
+    }
 
     return res.status(200).json({ message: `User KYC ${newStatus.toLowerCase()} successfully` });
 

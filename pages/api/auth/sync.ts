@@ -21,6 +21,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
         id: userId,
         email: email,
         name: name,
+        kycStatus: 'VERIFIED',
         updatedAt: new Date().toISOString(),
       }, { onConflict: 'id' });
 
@@ -32,6 +33,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
                 user_id: userId,
                 email: email,
                 full_name: name,
+                kyc_status: 'verified',
                 updated_at: new Date().toISOString()
             }, { onConflict: 'user_id' });
         

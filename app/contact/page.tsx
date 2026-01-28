@@ -1,6 +1,7 @@
 'use client';
 
 import { motion } from 'framer-motion';
+import React from 'react';
 import { useI18n } from '@/hooks/useI18n';
 import FuturisticBackground from '@/components/ui/FuturisticBackground';
 import { Mail, Clock, MessageSquare, MapPin, Send, ArrowRight } from 'lucide-react';
@@ -8,6 +9,16 @@ import Link from 'next/link';
 
 export default function ContactPage() {
   const { t } = useI18n();
+  const [formState, setFormState] = React.useState<'idle' | 'loading' | 'success'>('idle');
+
+  const handleSubmit = (e: React.FormEvent) => {
+    e.preventDefault();
+    setFormState('loading');
+    setTimeout(() => {
+      setFormState('success');
+      setTimeout(() => setFormState('idle'), 3000);
+    }, 1500);
+  };
 
   return (
     <>
@@ -93,25 +104,35 @@ export default function ContactPage() {
             >
               <h3 className="text-xl font-bold text-foreground mb-6">Send us a message</h3>
               
-              <form className="space-y-4 flex-1 flex flex-col" onSubmit={(e) => e.preventDefault()}>
+              <form className="space-y-4 flex-1 flex flex-col" onSubmit={handleSubmit}>
                 <div className="space-y-2">
                   <label className="text-sm font-medium text-muted-foreground">Name</label>
-                  <input type="text" className="w-full bg-muted/20 border border-border/10 rounded-xl px-4 py-3 text-foreground focus:outline-none focus:border-primary/50 transition-colors" placeholder="Your name" />
+                  <input required type="text" className="w-full bg-muted/20 border border-border/10 rounded-xl px-4 py-3 text-foreground focus:outline-none focus:border-primary/50 transition-colors" placeholder="Your name" />
                 </div>
                 
                 <div className="space-y-2">
                   <label className="text-sm font-medium text-muted-foreground">Email</label>
-                  <input type="email" className="w-full bg-muted/20 border border-border/10 rounded-xl px-4 py-3 text-foreground focus:outline-none focus:border-primary/50 transition-colors" placeholder="your@email.com" />
+                  <input required type="email" className="w-full bg-muted/20 border border-border/10 rounded-xl px-4 py-3 text-foreground focus:outline-none focus:border-primary/50 transition-colors" placeholder="your@email.com" />
                 </div>
 
                 <div className="space-y-2 flex-1">
                   <label className="text-sm font-medium text-muted-foreground">Message</label>
-                  <textarea className="w-full h-full min-h-[120px] bg-muted/20 border border-border/10 rounded-xl px-4 py-3 text-foreground focus:outline-none focus:border-primary/50 transition-colors resize-none" placeholder="How can we help you?" />
+                  <textarea required className="w-full h-full min-h-[120px] bg-muted/20 border border-border/10 rounded-xl px-4 py-3 text-foreground focus:outline-none focus:border-primary/50 transition-colors resize-none" placeholder="How can we help you?" />
                 </div>
 
-                <button className="w-full bg-primary text-primary-foreground font-semibold py-4 rounded-xl hover:bg-primary/90 transition-all shadow-lg shadow-primary/20 hover:shadow-primary/40 flex items-center justify-center gap-2 group">
-                  Send Message
-                  <Send size={18} className="group-hover:translate-x-1 transition-transform" />
+                <button 
+                    disabled={formState !== 'idle'}
+                    className={`w-full font-semibold py-4 rounded-xl transition-all shadow-lg flex items-center justify-center gap-2 group ${
+                        formState === 'success' ? 'bg-green-500 hover:bg-green-600 text-white' : 'bg-primary text-primary-foreground hover:bg-primary/90 shadow-primary/20 hover:shadow-primary/40'
+                    }`}
+                >
+                  {formState === 'loading' ? (
+                     <span className="w-5 h-5 border-2 border-white/30 border-t-white rounded-full animate-spin" />
+                  ) : formState === 'success' ? (
+                     <>Message Sent!</>
+                  ) : (
+                     <>Send Message <Send size={18} className="group-hover:translate-x-1 transition-transform" /></>
+                  )}
                 </button>
               </form>
             </motion.div>

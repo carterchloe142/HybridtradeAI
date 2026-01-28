@@ -9,7 +9,7 @@ import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { motion } from 'framer-motion';
 import FuturisticBackground from '@/components/ui/FuturisticBackground';
-import { Lock, Mail, ArrowRight, Loader2 } from 'lucide-react';
+import { Lock, Mail, ArrowRight, Loader2, Eye, EyeOff } from 'lucide-react';
 
 const schema = z.object({
   email: z.string().email(),
@@ -20,6 +20,7 @@ export default function Login() {
   const [form, setForm] = useState({ email: '', password: '' });
   const [error, setError] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
+  const [showPassword, setShowPassword] = useState(false);
   const router = useRouter();
 
   const onSubmit = async (e: React.FormEvent) => {
@@ -126,18 +127,33 @@ export default function Login() {
             </div>
 
             <div className="space-y-1">
-              <label className="text-xs font-medium text-muted-foreground ml-1">Password</label>
+              <div className="flex items-center justify-between">
+                <label className="text-xs font-medium text-muted-foreground ml-1">Password</label>
+                <Link 
+                  href="/auth/forgot-password" 
+                  className="text-xs text-primary hover:text-primary/80 transition-colors hover:underline"
+                >
+                  Forgot password?
+                </Link>
+              </div>
               <div className="relative group">
                 <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none text-muted-foreground/50 group-focus-within:text-primary transition-colors">
                   <Lock size={18} />
                 </div>
                 <input 
-                  className="w-full bg-muted/20 border border-border/50 rounded-xl py-3 pl-10 pr-4 text-foreground placeholder:text-muted-foreground/50 focus:outline-none focus:border-primary/50 focus:bg-muted/30 focus:shadow-[0_0_15px_rgba(0,229,255,0.1)] transition-all"
-                  type="password" 
+                  className="w-full bg-muted/20 border border-border/50 rounded-xl py-3 pl-10 pr-10 text-foreground placeholder:text-muted-foreground/50 focus:outline-none focus:border-primary/50 focus:bg-muted/30 focus:shadow-[0_0_15px_rgba(0,229,255,0.1)] transition-all"
+                  type={showPassword ? "text" : "password"}
                   placeholder="••••••••"
                   value={form.password} 
                   onChange={(e) => setForm({ ...form, password: e.target.value })} 
                 />
+                <button
+                  type="button"
+                  onClick={() => setShowPassword(!showPassword)}
+                  className="absolute right-4 top-1/2 -translate-y-1/2 text-muted-foreground/50 hover:text-primary transition-colors z-10"
+                >
+                  {showPassword ? <EyeOff size={18} /> : <Eye size={18} />}
+                </button>
               </div>
             </div>
 

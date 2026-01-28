@@ -108,14 +108,15 @@ export function useCurrency(initial: Balance['currency'] = 'USD') {
   }, []);
 
   const rate = useMemo(() => rates[currency] || 1, [currency, rates]);
-  const format = (amount: number) => {
+  const format = (amount: number, currencyOverride?: string) => {
+    const targetCurrency = currencyOverride || currency;
     const syms: Record<string, string> = {
       USD: '$', EUR: '€', GBP: '£', JPY: '¥', CNY: '¥', AUD: '$', CAD: '$', CHF: '₣', SEK: 'kr', NOK: 'kr', DKK: 'kr', PLN: 'zł', CZK: 'Kč', HUF: 'Ft', RON: 'lei', BGN: 'лв', TRY: '₺', INR: '₹', IDR: 'Rp', MYR: 'RM', SGD: '$', HKD: '$', TWD: '$', KRW: '₩', SAR: '﷼', AED: 'د.إ', BRL: 'R$', MXN: '$', ARS: '$', CLP: '$', COP: '$', PEN: 'S/', ZAR: 'R', EGP: '£', KES: 'KSh', GHS: '₵', NGN: '₦', RUB: '₽', UAH: '₴', THB: '฿', VND: '₫', PHP: '₱', PKR: '₨', BTC: '₿', ETH: 'Ξ', USDT: '$', USDC: '$', BNB: 'Ⓑ', SOL: '◎', ADA: 'A', DOT: '•', MATIC: 'M'
     }
-    const symbol = syms[currency] || ''
-    const isFiat = !['BTC','ETH','BNB','SOL','ADA','DOT','MATIC','USDT','USDC'].includes(currency)
+    const symbol = syms[targetCurrency] || ''
+    const isFiat = !['BTC','ETH','BNB','SOL','ADA','DOT','MATIC','USDT','USDC'].includes(targetCurrency)
     const decimals = isFiat ? 2 : 6
-    return `${symbol}${amount.toFixed(decimals)}`
+    return `${symbol}${Number(amount).toFixed(decimals)}`
   }
   const convertFromUSD = (usdAmount: number) => usdAmount * rate;
   const convertToUSD = (amount: number, fromCurrency: Balance['currency']) => {

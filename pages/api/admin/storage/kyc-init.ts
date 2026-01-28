@@ -32,7 +32,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
     
     if (listErr) throw listErr;
     
-    const exists = buckets?.find(b => b.name === bucketName);
+    const exists = buckets?.find((b: any) => b.name === bucketName);
     
     if (!exists) {
       const { data, error: createErr } = await supabaseServer.storage.createBucket(bucketName, {

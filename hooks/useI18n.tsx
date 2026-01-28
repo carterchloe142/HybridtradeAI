@@ -1,5 +1,6 @@
 "use client"
 import { createContext, useContext, useEffect, useMemo, useState } from 'react'
+import { localeDir, normalizeLocale } from '@/src/utils/locales'
 
 type Dict = Record<string, any>
 
@@ -16,6 +17,22 @@ const baseDict: Record<string, Dict> = {
     admin_queue_filter_name: 'Search name', admin_queue_filter_queue: 'Queue',
     plans_title: 'Choose Your Investment Plan',
     nav_dashboard: 'Dashboard', nav_plans: 'Plans', nav_profile: 'Profile', nav_deposit: 'Deposit', nav_withdraw: 'Withdraw', nav_transactions: 'Transactions', nav_support: 'Support',
+    nav_settings: 'Settings',
+    user: 'User',
+    hello_user: 'Hello, {name}',
+    active_label: 'Active',
+    verified: 'Verified',
+    verify_kyc: 'Verify KYC',
+    earn: 'Earn',
+    free: 'Free',
+    settings_title: 'Settings',
+    settings_subtitle: 'Theme automation and language preferences.',
+    time_schedule: 'Time-based schedule',
+    start: 'Start',
+    end: 'End',
+    time_zone: 'Time zone',
+    save: 'Save',
+    select_language_hint: 'Select a language. Translations apply across the app.',
     plans_intro: 'Review allocations, streams, and projected weekly ranges. Profits are calculated automatically per plan.',
     plan_starter_title: 'STARTER PLAN — $100–$500 (Conservative)',
     plan_pro_title: 'PRO PLAN — $501–$2,000 (Balanced)',
@@ -35,7 +52,41 @@ const baseDict: Record<string, Dict> = {
     kyc_title: 'KYC Verification', kyc_subtitle: 'Securely verify your identity to unlock withdrawals and advanced features.', status_label: 'Status:', submitted_label: 'Submitted:', step_of: 'Step {step} of {total}', full_name_label: 'Full Name', dob_label: 'Date of Birth', address_label: 'Address', kyc_level_label: 'KYC Level', level_value: 'Level {l}', gov_id_type_label: 'Government ID Type', country_label: 'Country', id_type_label: 'ID Type', gov_id_number_label: 'Government ID Number', id_expiry_label: 'ID Expiry Date', upload_gov_id_label: 'Upload Government ID', accepted_files_note: 'Accepted: JPG, PNG, PDF up to 10MB', selfie_liveness_label: 'Selfie Liveness', start_camera: 'Start Camera', capture_neutral: 'Capture Neutral', capture_smile: 'Capture Smile', capture_left: 'Capture Left', capture_right: 'Capture Right', review_and_submit: 'Review and submit.', submit_kyc: 'Submit KYC', already_approved: 'Already Approved', submitting: 'Submitting…', kyc_submitted_msg: 'KYC submitted for review', selfie_instructions: 'Please capture the following in order: 1) Neutral face, 2) Smile, 3) Turn head left, 4) Turn head right. You can also upload photos instead of live capture.', use_camera: 'Use camera', captured: 'Captured', auto_capture: 'Auto capture all', capturing: 'Capturing...', camera_on: 'Camera active', camera_off: 'Camera off', auto_capture_hint: 'Auto mode captures Neutral, Smile, Left, Right with a 3‑second pose check', current: 'Current', countdown: 'Capturing in', pose_neutral: 'Look straight with a neutral face', pose_smile: 'Look straight and smile', pose_left: 'Turn your head slightly to the left', pose_right: 'Turn your head slightly to the right',
     admin_withdrawals_title: 'Withdrawals', loading_ellipsis: 'Loading…', table_user: 'User', table_amount: 'Amount', table_currency: 'Currency', table_to_address: 'To Address', table_status: 'Status', table_created: 'Created', table_actions: 'Actions', confirm: 'Confirm', reject: 'Reject', withdrawal_status_confirmed: 'Withdrawal confirmed', withdrawal_status_rejected: 'Withdrawal rejected',
     toggle_theme: 'Toggle theme', theme_label: 'Theme', theme_light: 'Light', theme_dark: 'Dark', language_label: 'Language',
+    search_language: 'Search language',
+    theme_mode_device: 'Device',
+    theme_mode_time: 'Time',
+    theme_mode_manual: 'Manual',
+    source: 'Source',
+    verify: 'Verify',
+    updating: 'Updating',
+    refresh: 'Refresh',
+    market_insights: 'Market Insights',
+    insights_and_news: 'Insights & News',
+    updated: 'Updated',
+    live_performance: 'Live Performance',
+    realtime_cumulative_profit: 'Real-time cumulative profit',
+    market_open: 'MARKET OPEN',
+    total_trades: 'Total trades',
+    win_rate: 'Win rate',
+    last_trade: 'Last trade',
+    live_market_feed: 'Live Market Feed',
+    waiting_for_market_data: 'Waiting for market data…',
     filter_currency: 'Currency', filter_date_from: 'From date', filter_date_to: 'To date', export_csv: 'Export CSV', empty_rows: 'No rows'
+    , strategy_title: 'AI Strategy & Transparency'
+    , strategy_subtitle: 'See exactly how HybridTradeAI manages capital. Our AI continuously reallocates funds to the highest-performing streams.'
+    , strategy_current_allocation: 'Current Allocation'
+    , strategy_allocation_note: '*Allocations shift weekly based on AI analysis.'
+    , strategy_allocation_algo: 'Algo Trading'
+    , strategy_allocation_copy: 'Copy-Trading'
+    , strategy_allocation_staking: 'Staking'
+    , strategy_allocation_ads: 'Ads/Tasks'
+    , strategy_activity_title: 'Activity (Trades)'
+    , strategy_top_copy_network: 'Top Copy-Trading Network'
+    , strategy_reallocation_log: 'AI Reallocation Log'
+    , strategy_table_trader: 'Trader'
+    , strategy_table_strategy: 'Strategy'
+    , strategy_table_roi: 'Total ROI'
+    , strategy_table_risk: 'Risk'
     , homepage: {
       title: 'AI‑powered hybrid investing',
       subtitle: 'Diversify across trading, staking, copy‑trading, ads and tasks with automated profit allocation and real‑time transparency.',
@@ -99,44 +150,167 @@ function deepGet(obj: Dict, path: string) {
   return path.split('.').reduce((o, k) => (o && k in o ? o[k] : undefined), obj)
 }
 
+function isPlainObject(v: any): v is Record<string, any> {
+  return !!v && typeof v === 'object' && !Array.isArray(v)
+}
+
+function deepMerge<T extends Dict>(...parts: Array<T | null | undefined>): T {
+  const out: Dict = {}
+  for (const part of parts) {
+    if (!part) continue
+    for (const key of Object.keys(part)) {
+      const incoming = (part as any)[key]
+      const existing = (out as any)[key]
+      if (isPlainObject(existing) && isPlainObject(incoming)) {
+        ;(out as any)[key] = deepMerge(existing, incoming)
+      } else {
+        ;(out as any)[key] = incoming
+      }
+    }
+  }
+  return out as T
+}
+
+function deepSet(obj: Dict, path: string, value: any) {
+  const parts = String(path || '').split('.').filter(Boolean)
+  if (parts.length === 0) return
+  if (parts.length === 1) {
+    obj[parts[0]] = value
+    return
+  }
+  let cur: Dict = obj
+  for (let i = 0; i < parts.length - 1; i++) {
+    const k = parts[i]
+    const next = cur[k]
+    if (!isPlainObject(next)) cur[k] = {}
+    cur = cur[k]
+  }
+  cur[parts[parts.length - 1]] = value
+}
+
 export function formatStr(s: string, vars?: Record<string, any>) {
   if (!vars) return s
   return s.replace(/\{(\w+)\}/g, (_, k) => (k in vars ? String(vars[k]) : `{${k}}`))
 }
 
-const I18nContext = createContext<{ lang: string; setLang: (v: string) => void; t: (key: string, vars?: Record<string, any>) => string; nf: (n: number, opts?: Intl.NumberFormatOptions) => string; df: (d: Date, opts?: Intl.DateTimeFormatOptions) => string }>({ lang: 'en', setLang: () => {}, t: (k: string) => k, nf: (n: number) => String(n), df: (d: Date) => d.toISOString() })
+const I18nContext = createContext<{ lang: string; dir: 'ltr' | 'rtl'; setLang: (v: string) => void; t: (key: string, vars?: Record<string, any>) => string; nf: (n: number, opts?: Intl.NumberFormatOptions) => string; df: (d: Date, opts?: Intl.DateTimeFormatOptions) => string }>({ lang: 'en-US', dir: 'ltr', setLang: () => {}, t: (k: string) => k, nf: (n: number) => String(n), df: (d: Date) => d.toISOString() })
 const warnedKeys = new Set<string>()
 
+function langKey(locale: string) {
+  return String(locale || 'en').split('-')[0]
+}
+
+function storageKey(locale: string) {
+  return `htai:i18n:auto:${normalizeLocale(locale)}`
+}
+
 export function I18nProvider({ children, initialLang }: { children: React.ReactNode; initialLang?: string }) {
-  const [lang, setLang] = useState<string>(initialLang || 'en')
+  const [lang, setLang] = useState<string>(normalizeLocale(initialLang || 'en-US'))
   const [remoteDict, setRemoteDict] = useState<Dict | null>(null)
+  const [autoDict, setAutoDict] = useState<Dict | null>(null)
+  const pending = useMemo(() => new Set<string>(), [])
+  const translateDisabledUntil = useMemo(() => new Map<string, number>(), [])
   useEffect(() => {
     try {
       const cookieLang = (() => { try { const m = document.cookie.match(/(?:^|;\s*)lang=([^;]+)/); return m ? decodeURIComponent(m[1]) : '' } catch { return '' } })()
-      const raw = initialLang || cookieLang || document.documentElement.lang || localStorage.getItem('lang') || (navigator.language || 'en').split('-')[0]
-      setLang(raw)
-      document.documentElement.lang = raw
+      const raw = initialLang || cookieLang || document.documentElement.lang || localStorage.getItem('lang') || (navigator.language || 'en-US')
+      const normalized = normalizeLocale(raw)
+      setLang(normalized)
+      document.documentElement.lang = normalized
+      document.documentElement.dir = localeDir(normalized)
     } catch {}
   }, [initialLang])
   useEffect(() => {
     let active = true
     ;(async () => {
       try {
-        const res = await fetch(`/i18n/${lang}.json`, { cache: 'no-store' })
-        if (!res.ok) { setRemoteDict(null); return }
-        const json = await res.json()
-        if (active) setRemoteDict(json || null)
+        const k = langKey(lang)
+        const remoteAvailable = new Set(['en', 'es', 'fr'])
+        if (!remoteAvailable.has(k)) {
+          if (active) setRemoteDict(null)
+          return
+        }
+        const candidates = [k]
+        for (const c of candidates) {
+          const res = await fetch(`/i18n/${c}.json`, { cache: 'no-store' })
+          if (!res.ok) continue
+          const json = await res.json()
+          if (active) setRemoteDict(json || null)
+          return
+        }
+        setRemoteDict(null)
       } catch { setRemoteDict(null) }
     })()
     return () => { active = false }
   }, [lang])
-  const dict = useMemo(() => ({ ...(baseDict[lang] || baseDict.en), ...(remoteDict || {}) }), [lang, remoteDict])
+
+  useEffect(() => {
+    try {
+      const raw = localStorage.getItem(storageKey(lang))
+      const json = raw ? JSON.parse(raw) : null
+      setAutoDict(json && typeof json === 'object' ? json : null)
+    } catch {
+      setAutoDict(null)
+    }
+  }, [lang])
+
+  const dict = useMemo(() => {
+    const k = langKey(lang)
+    return deepMerge((baseDict[k] || baseDict.en) as Dict, remoteDict as Dict, autoDict as Dict)
+  }, [lang, remoteDict, autoDict])
+
+  const dir = useMemo(() => localeDir(lang), [lang])
+
+  const requestTranslate = async (key: string, englishText: string) => {
+    const k = langKey(lang)
+    if (k === 'en') return
+    const now = Date.now()
+    const disabledUntil = translateDisabledUntil.get(lang) || 0
+    if (disabledUntil > now) return
+    if (pending.has(key)) return
+    pending.add(key)
+    try {
+      const res = await fetch('/api/i18n/translate', {
+        method: 'POST',
+        headers: { 'content-type': 'application/json' },
+        body: JSON.stringify({ locale: lang, key, text: englishText }),
+      })
+      if (!res.ok) {
+        if (res.status === 503) {
+          translateDisabledUntil.set(lang, now + 5 * 60 * 1000)
+        }
+        return
+      }
+      const json: any = await res.json().catch(() => null)
+      const translated = String(json?.translation || '').trim()
+      if (!translated) return
+
+      setAutoDict((prev) => {
+        const next: Dict = deepMerge(prev || {})
+        deepSet(next, key, translated)
+        try { localStorage.setItem(storageKey(lang), JSON.stringify(next)) } catch {}
+        return next
+      })
+    } catch {}
+    finally {
+      pending.delete(key)
+    }
+  }
+
   const t = (key: string, vars?: Record<string, any>) => {
-    const resolved = deepGet(dict, key)
-    const found = resolved ?? deepGet(baseDict.en, key) ?? undefined
-    if (found === undefined && typeof window !== 'undefined' && process.env.NODE_ENV !== 'production') {
-      if (!warnedKeys.has(key)) { console.warn(`[i18n] missing key: ${key}`); warnedKeys.add(key) }
+    const resolvedDirect = (dict as any)?.[key]
+    const resolved = resolvedDirect !== undefined ? resolvedDirect : deepGet(dict, key)
+    const enDirect = (baseDict.en as any)?.[key]
+    const enValue = enDirect !== undefined ? enDirect : deepGet(baseDict.en, key)
+    const found = resolved ?? enValue ?? undefined
+    if (found === undefined) {
+      if (typeof window !== 'undefined' && process.env.NODE_ENV !== 'production') {
+        if (!warnedKeys.has(key)) { console.warn(`[i18n] missing key: ${key}`); warnedKeys.add(key) }
+      }
       return key
+    }
+    if (resolved === undefined && langKey(lang) !== 'en' && typeof enValue === 'string') {
+      requestTranslate(key, enValue)
     }
     return typeof found === 'string' ? formatStr(found, vars) : key
   }
@@ -148,12 +322,14 @@ export function I18nProvider({ children, initialLang }: { children: React.ReactN
     try { return new Intl.DateTimeFormat(lang, options).format(d) } catch { return d.toLocaleString() }
   }
   const setLangWrapped = (v: string) => {
-    setLang(v)
-    try { localStorage.setItem('lang', v) } catch {}
-    try { document.cookie = `lang=${encodeURIComponent(v)}; path=/; max-age=${60*60*24*365}` } catch {}
-    document.documentElement.lang = v
+    const normalized = normalizeLocale(v)
+    setLang(normalized)
+    try { localStorage.setItem('lang', normalized) } catch {}
+    try { document.cookie = `lang=${encodeURIComponent(normalized)}; path=/; max-age=${60*60*24*365}` } catch {}
+    document.documentElement.lang = normalized
+    document.documentElement.dir = localeDir(normalized)
   }
-  return <I18nContext.Provider value={{ lang, setLang: setLangWrapped, t, nf, df }}>{children}</I18nContext.Provider>
+  return <I18nContext.Provider value={{ lang, dir, setLang: setLangWrapped, t, nf, df }}>{children}</I18nContext.Provider>
 }
 
 export function useI18n() {

@@ -9,7 +9,7 @@ import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { motion } from 'framer-motion';
 import FuturisticBackground from '@/components/ui/FuturisticBackground';
-import { Lock, Mail, ArrowRight, Loader2, CheckCircle2 } from 'lucide-react';
+import { Lock, Mail, ArrowRight, Loader2, CheckCircle2, Eye, EyeOff } from 'lucide-react';
 
 const schema = z.object({
   email: z.string().email(),
@@ -22,6 +22,7 @@ export default function Register() {
   const [error, setError] = useState<string | null>(null);
   const [success, setSuccess] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
+  const [showPassword, setShowPassword] = useState(false);
 
   const onSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -122,12 +123,19 @@ export default function Register() {
                   <Lock size={18} />
                 </div>
                 <input 
-                  className="w-full bg-muted/20 border border-border/50 rounded-xl py-3 pl-10 pr-4 text-foreground placeholder:text-muted-foreground/50 focus:outline-none focus:border-primary/50 focus:bg-muted/30 focus:shadow-[0_0_15px_rgba(0,229,255,0.1)] transition-all"
-                  type="password" 
+                  className="w-full bg-muted/20 border border-border/50 rounded-xl py-3 pl-10 pr-10 text-foreground placeholder:text-muted-foreground/50 focus:outline-none focus:border-primary/50 focus:bg-muted/30 focus:shadow-[0_0_15px_rgba(0,229,255,0.1)] transition-all"
+                  type={showPassword ? "text" : "password"}
                   placeholder="Create a strong password"
                   value={form.password} 
                   onChange={(e) => setForm({ ...form, password: e.target.value })} 
                 />
+                <button
+                  type="button"
+                  onClick={() => setShowPassword(!showPassword)}
+                  className="absolute right-4 top-1/2 -translate-y-1/2 text-muted-foreground/50 hover:text-primary transition-colors z-10"
+                >
+                  {showPassword ? <EyeOff size={18} /> : <Eye size={18} />}
+                </button>
               </div>
             </div>
 

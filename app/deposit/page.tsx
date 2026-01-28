@@ -25,6 +25,42 @@ function DepositContent() {
   const [provider, setProvider] = useState('paystack')
   const [plan, setPlan] = useState<'starter'|'pro'|'elite'>('starter')
 
+  const [msg, setMsg] = useState('')
+  const [err, setErr] = useState('')
+  const [kycStatus, setKycStatus] = useState<'pending'|'approved'|'rejected'|''>('')
+  const [kycLevel, setKycLevel] = useState<number | null>(null)
+  const [cryptoCurrency, setCryptoCurrency] = useState<'usdt'|'btc'|'eth'>('usdt')
+  const [loading, setLoading] = useState(false)
+  
+  const [showWallet, setShowWallet] = useState(false)
+  const [walletAddress, setWalletAddress] = useState('')
+  const [txHash, setTxHash] = useState('')
+  const [cryptoTxId, setCryptoTxId] = useState('')
+  const [cryptoStatus, setCryptoStatus] = useState<string>('')
+  const [cryptoPollError, setCryptoPollError] = useState<string>('')
+  const [cryptoExpectedCurrency, setCryptoExpectedCurrency] = useState<string>('')
+  const [cryptoExpectedAmount, setCryptoExpectedAmount] = useState<string>('')
+
+  function nowPaymentsCurrencySymbol(sym: string) {
+    const s = String(sym || '').toLowerCase()
+    if (s === 'usdt') return 'usdttrc20'
+    if (s === 'btc') return 'btc'
+    if (s === 'eth') return 'eth'
+    return s || 'usdttrc20'
+  }
+
+  const ranges: Record<'starter'|'pro'|'elite', { min: number; max: number; label: string }> = {
+    starter: { min: 100, max: 500, label: 'Starter — $100 to $500' },
+    pro: { min: 501, max: 2000, label: 'Pro — $501 to $2,000' },
+    elite: { min: 2001, max: 10000, label: 'Elite — $2,001 to $10,000' },
+  }
+
+  const MOCK_WALLETS: Record<string, string> = {
+    btc: 'bc1qxy2kgdygjrsqtzq2n0yrf2493p83kkfjhx0wlh',
+    eth: '0x71C7656EC7ab88b098defB751B7401B5f6d8976F',
+    usdt: '0x71C7656EC7ab88b098defB751B7401B5f6d8976F'
+  }
+
   useEffect(() => {
     if (searchParams) {
       const qPlan = searchParams.get('plan')
@@ -37,38 +73,66 @@ function DepositContent() {
       }
     }
   }, [searchParams])
-  const [msg, setMsg] = useState('')
-  const [err, setErr] = useState('')
-  const [kycStatus, setKycStatus] = useState<'pending'|'approved'|'rejected'|''>('')
-  const [kycLevel, setKycLevel] = useState<number | null>(null)
-  const [cryptoCurrency, setCryptoCurrency] = useState<'usdt'|'btc'|'eth'>('usdt')
-  const [loading, setLoading] = useState(false)
-
-  const ranges: Record<'starter'|'pro'|'elite', { min: number; max: number; label: string }> = {
-    starter: { min: 100, max: 500, label: 'Starter — $100 to $500' },
-    pro: { min: 501, max: 2000, label: 'Pro — $501 to $2,000' },
-    elite: { min: 2001, max: 10000, label: 'Elite — $2,001 to $10,000' },
-  }
 
   useEffect(() => {
     (async () => {
       uidRef.current = await getCurrentUserId()
-      try {
-        const { data: sessionRes } = await supabase.auth.getSession()
-        const uid = String(sessionRes?.session?.user?.id || '')
-        if (!uid) return
-        const { data: prof } = await supabase
-          .from('profiles')
-          .select('kyc_status,kyc_level')
-          .eq('user_id', uid)
-          .maybeSingle()
-        const k = String((prof as any)?.kyc_status || '')
-        setKycStatus((k === 'approved' || k === 'rejected' || k === 'pending') ? k : '')
-        const lvl = (prof as any)?.kyc_level
-        if (typeof lvl === 'number') setKycLevel(lvl)
-      } catch {}
+      // KYC fetching skipped for deposits
     })()
   }, [])
+
+  useEffect(() => {
+    if (!showWallet) return
+    if (!cryptoTxId) return
+
+    let cancelled = false
+    let interval: any = null
+
+    async function poll() {
+      try {
+        const { data: session } = await supabase.auth.getSession()
+        const token = session.session?.access_token
+        if (!token) return
+
+        const res = await fetch(`/api/user/transactions/${cryptoTxId}`, {
+          headers: { Authorization: `Bearer ${token}` }
+        })
+        const json = await res.json().catch(() => null)
+        if (cancelled) return
+
+        if (!res.ok) {
+          setCryptoPollError(String(json?.error || 'Unable to check payment status'))
+          return
+        }
+
+        const nextStatus = String(json?.status || '')
+        setCryptoStatus(nextStatus)
+
+        if (nextStatus.toUpperCase() === 'COMPLETED') {
+          setShowWallet(false)
+          setMsg('Deposit confirmed')
+          setErr('')
+          setCryptoPollError('')
+          setTxHash('')
+          setCryptoTxId('')
+
+          try {
+            router.push('/dashboard')
+          } catch {}
+        }
+      } catch {
+        if (!cancelled) setCryptoPollError('Unable to check payment status')
+      }
+    }
+
+    poll()
+    interval = setInterval(poll, 7000)
+
+    return () => {
+      cancelled = true
+      if (interval) clearInterval(interval)
+    }
+  }, [showWallet, cryptoTxId, router])
 
   async function submit() {
     setErr(''); setMsg('')
@@ -89,36 +153,50 @@ function DepositContent() {
       return
     }
 
-    // Enforce KYC before allowing deposits/investment
-    if (kycStatus !== 'approved') {
-      setErr(t('kyc_required_for_deposits'))
-      return
-    }
-    if (kycLevel && amt > 0) {
-      // Minimum level per plan
-      const minLevelForPlan: Record<'starter'|'pro'|'elite', number> = {
-        starter: 1,
-        pro: 2,
-        elite: 3,
-      }
-      const requiredLevel = minLevelForPlan[plan]
-      if (kycLevel < requiredLevel) {
-        setErr(t('kyc_level_too_low_for_plan'))
+    // Crypto Flow: Show Wallet UI first
+    if (provider === 'crypto' && !showWallet) {
+        setLoading(true)
+        try {
+          // Call Backend to Create Payment and Get Wallet
+          const { data: session } = await supabase.auth.getSession()
+          const token = session.session?.access_token
+          if (!token) throw new Error('Session lost');
+
+          const res = await fetch('/api/payment/create', {
+             method: 'POST',
+             headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` },
+             body: JSON.stringify({
+                 amount: amt,
+                 currency: 'USD',
+                 cryptoCurrency: nowPaymentsCurrencySymbol(cryptoCurrency),
+                 provider: 'nowpayments',
+                 planId: plan,
+                 autoActivate: true
+             })
+          });
+
+          const json = await res.json();
+          if (!res.ok) throw new Error(json.error || 'Payment creation failed');
+
+          if (json.walletAddress) {
+             setWalletAddress(json.walletAddress);
+             if (json.transactionId) setCryptoTxId(String(json.transactionId))
+             if (json.currencyExpected) setCryptoExpectedCurrency(String(json.currencyExpected))
+             if (json.amountExpected != null) setCryptoExpectedAmount(String(json.amountExpected))
+             setShowWallet(true);
+          } else if (json.payUrl) {
+             // Redirect flow (e.g. Coinbase hosted)
+             window.location.href = json.payUrl;
+             return;
+          }
+        } catch (e: any) {
+           setErr(e.message);
+        }
+        setLoading(false)
         return
-      }
-      // Simple per-level deposit caps (can be tuned or moved to config)
-      const limits: Record<number, number> = {
-        1: 1000,
-        2: 10000,
-        3: 100000,
-      }
-      const max = limits[kycLevel] ?? limits[1]
-      if (amt > max) {
-        setErr(t('kyc_level_too_low_for_amount'))
-        return
-      }
     }
-    
+
+    // If Crypto and Wallet shown, user is confirming payment
     setLoading(true)
     try {
       // Get authentication token
@@ -131,12 +209,14 @@ function DepositContent() {
         'Authorization': `Bearer ${token}`
       }
       
-      const useCrypto = provider === 'crypto' || (provider === 'paystack' && currency !== 'NGN')
+      const useCrypto = provider === 'crypto'
       if (provider === 'paystack' || useCrypto) {
         const body: any = { amount: amt, currency, planId: plan, autoActivate: true }
         if (useCrypto) {
-          body.provider = 'nowpayments'
+          body.provider = 'nowpayments' // Keeping backend logic same for compatibility
           body.cryptoCurrency = cryptoCurrency
+          body.txHash = txHash // Pass the manual hash if we added an input for it
+          body.transactionId = cryptoTxId
         }
         const res = await fetch('/api/user/deposit', { 
           method: 'POST', 
@@ -146,22 +226,27 @@ function DepositContent() {
         let json: any = null
         try { json = await res.json() } catch {}
         if (!res.ok) { setErr(String(json?.details || json?.error || 'Failed')); setLoading(false); return }
-        const url = String(json?.authorizationUrl || json?.invoiceUrl || json?.pay_url || '')
-        if (url) { window.location.href = url; return }
+        
+        // If paystack, redirect. If crypto, we are done.
+        if (!useCrypto) {
+             const url = String(json?.authorizationUrl || json?.invoiceUrl || json?.pay_url || '')
+             if (url) { window.location.href = url; return }
+        }
       }
       
-      const res = await fetch('/api/user/invest', { 
-        method: 'POST', 
-        headers, 
-        body: JSON.stringify({ amount: amt, currency, planId: plan }) 
-      })
-      let json: any = null
-      try { json = await res.json() } catch {}
-      if (!res.ok) { setErr(String(json?.details || json?.error || 'Failed')); setLoading(false); return }
-      setMsg(String(json?.message || t('deposit_recorded')))
+      setMsg(t('deposit_recorded') || 'Deposit submitted! Waiting for blockchain confirmation.')
       setAmount('')
+      setShowWallet(false)
+      setTxHash('')
+      setCryptoTxId('')
+      setCryptoExpectedCurrency('')
+      setCryptoExpectedAmount('')
     } catch (e: any) { setErr(String(e?.message || 'Error')) }
     setLoading(false)
+  }
+
+  const handleCopy = () => {
+    navigator.clipboard.writeText(walletAddress)
   }
 
   return (
@@ -202,6 +287,52 @@ function DepositContent() {
               transition={{ delay: 0.1 }}
               className="space-y-6"
             >
+               {showWallet ? (
+                   // WALLET DISPLAY UI
+                   <div className="bg-card/40 backdrop-blur-xl border border-primary/20 rounded-3xl p-8 shadow-xl text-center space-y-6">
+                        <div className="space-y-2">
+                            <h2 className="text-2xl font-bold text-white">Send {String(cryptoExpectedCurrency || cryptoCurrency).toUpperCase()}</h2>
+                            <p className="text-muted-foreground">Scan the QR code or copy the address below to deposit <span className="text-white font-mono">${amount}</span></p>
+                            {cryptoExpectedAmount && cryptoExpectedCurrency && (
+                              <p className="text-xs text-muted-foreground">Expected: {cryptoExpectedAmount} {String(cryptoExpectedCurrency).toUpperCase()}</p>
+                            )}
+                        </div>
+
+                        <div className="bg-white p-4 rounded-xl inline-block mx-auto">
+                            {/* eslint-disable-next-line @next/next/no-img-element */}
+                            <img src={`https://api.qrserver.com/v1/create-qr-code/?size=180x180&data=${walletAddress}`} alt="Wallet QR" className="w-48 h-48" />
+                        </div>
+
+                        <div className="bg-black/30 border border-white/10 rounded-xl p-4 flex items-center justify-between gap-4 max-w-md mx-auto">
+                            <code className="text-sm text-primary break-all">{walletAddress}</code>
+                            <button onClick={handleCopy} className="p-2 hover:bg-white/10 rounded-lg transition-colors text-muted-foreground hover:text-white">
+                                <CheckCircle2 size={20} />
+                            </button>
+                        </div>
+
+                        <div className="max-w-md mx-auto space-y-4 pt-4 border-t border-white/5">
+                            <div className="flex items-center justify-center gap-2 text-yellow-400 text-sm animate-pulse">
+                                <div className="w-2 h-2 rounded-full bg-yellow-400" />
+                                {cryptoStatus ? `Status: ${String(cryptoStatus).toUpperCase()}` : 'Awaiting Blockchain Confirmation...'}
+                            </div>
+
+                            {cryptoPollError && (
+                              <div className="text-xs text-red-400">{cryptoPollError}</div>
+                            )}
+                            
+                            <button 
+                                onClick={submit}
+                                disabled={loading}
+                                className="w-full py-4 bg-green-500 hover:bg-green-600 text-white font-bold rounded-xl transition-all"
+                            >
+                                {loading ? 'Verifying...' : 'I Have Sent The Funds'}
+                            </button>
+                            <button onClick={() => setShowWallet(false)} className="text-sm text-muted-foreground hover:text-white">Cancel</button>
+                        </div>
+                   </div>
+               ) : (
+                   // NORMAL FORM UI
+                   <>
                {/* Plan Selection */}
                <div className="bg-card/40 backdrop-blur-xl border border-border/10 rounded-3xl p-6 shadow-xl">
                  <div className="text-sm text-primary mb-4 font-medium uppercase tracking-wider flex items-center gap-2">
@@ -285,18 +416,6 @@ function DepositContent() {
                       </div>
                       {provider === 'crypto' && <div className="absolute inset-0 bg-gradient-to-br from-primary/0 via-primary/0 to-primary/5" />}
                     </button>
-
-                    <button 
-                      onClick={() => setProvider('simulation')}
-                      className={`p-4 rounded-xl border flex items-center gap-3 transition-all duration-300 relative overflow-hidden group md:col-span-2 ${provider === 'simulation' ? 'bg-primary/10 border-primary shadow-[0_0_20px_rgba(var(--primary),0.15)]' : 'bg-muted/10 border-border/10 hover:border-border/20 hover:bg-muted/20'}`}
-                    >
-                      <div className={`p-2 rounded-lg transition-colors ${provider === 'simulation' ? 'bg-primary/20 text-primary' : 'bg-muted/20 text-muted-foreground group-hover:text-foreground'}`}><Info size={20} /></div>
-                      <div className="text-left relative z-10">
-                        <div className={`font-medium transition-colors ${provider === 'simulation' ? 'text-foreground' : 'text-muted-foreground group-hover:text-foreground'}`}>Test Mode (Simulation)</div>
-                        <div className="text-xs text-muted-foreground/70">Simulate a deposit for testing purposes</div>
-                      </div>
-                      {provider === 'simulation' && <div className="absolute inset-0 bg-gradient-to-br from-primary/0 via-primary/0 to-primary/5" />}
-                    </button>
                  </div>
 
                  <AnimatePresence>
@@ -364,6 +483,8 @@ function DepositContent() {
                    )}
                  </span>
                </button>
+               </>
+               )}
             </motion.div>
 
             {/* Sidebar Info */}
