@@ -10,6 +10,12 @@ const nextConfig = {
   output: 'standalone',
   reactStrictMode: true,
   images: { unoptimized: true },
+  webpack: (config, { dev }) => {
+    if (!dev) {
+      config.cache = false;
+    }
+    return config;
+  },
 };
 
 module.exports = withPWA(nextConfig);
