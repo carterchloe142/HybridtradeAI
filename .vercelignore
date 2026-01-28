@@ -1,8 +1,10 @@
+.next
 node_modules
+.git
+.env
+.env.*.local
+.DS_Store
+*.log
+coverage
 build
 dist
-.git
-.trae
-.log
-.figma
-middleware.ts
