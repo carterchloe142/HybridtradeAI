@@ -17,17 +17,18 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
   if (userErr || !user) return res.status(401).json({ error: 'Invalid or expired token' });
 
   // 0. KYC Check
-  let kycApproved = false;
+  let kycStatus = 'PENDING';
   const { data: u1 } = await supabaseServer.from('User').select('kycStatus').eq('id', user.id).maybeSingle();
-  if (u1 && (u1.kycStatus === 'VERIFIED' || u1.kycStatus === 'APPROVED')) kycApproved = true;
-  
-  if (!kycApproved) {
-        const { data: p2 } = await supabaseServer.from('profiles').select('kyc_status').eq('user_id', user.id).maybeSingle();
-        if (p2 && (p2.kyc_status === 'verified' || p2.kyc_status === 'approved')) kycApproved = true;
+  if (u1) {
+      kycStatus = u1.kycStatus || 'PENDING';
+  } else {
+      const { data: p2 } = await supabaseServer.from('profiles').select('kyc_status').eq('user_id', user.id).maybeSingle();
+      if (p2) kycStatus = p2.kyc_status || 'PENDING';
   }
-
-  if (!kycApproved) {
-      return res.status(403).json({ error: 'kyc_required', message: 'Identity verification required' });
+  
+  const normalizedStatus = String(kycStatus).toUpperCase();
+  if (normalizedStatus !== 'VERIFIED' && normalizedStatus !== 'APPROVED') {
+      return res.status(403).json({ error: 'kyc_required', message: 'Identity verification required', currentStatus: kycStatus });
   }
 
   const { amount, currency = 'USD', address, network, provider } = req.body;

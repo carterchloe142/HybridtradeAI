@@ -1,3 +1,4 @@
+
 import { NextApiRequest, NextApiResponse } from 'next';
 import { supabaseServer } from '@/src/lib/supabaseServer';
 import { v4 as uuidv4 } from 'uuid';
@@ -25,17 +26,32 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
     return res.status(401).json({ error: 'Invalid or expired token' });
   }
 
-  // 1.1 KYC Check Removed for Deposits
-  // let { data: profile } = await supabaseServer.from('User').select('kycStatus').eq('id', user.id).maybeSingle();
-  // if (!profile) {
-  //     // Try profiles
-  //     const { data: p2 } = await supabaseServer.from('profiles').select('kyc_status').eq('id', user.id).maybeSingle();
-  //     if (p2) profile = { kycStatus: p2.kyc_status };
-  // }
+  // 1.1 KYC Check (Enforced)
+  let kycStatus = 'PENDING'; // Default
   
-  // if (profile?.kycStatus !== 'VERIFIED' && profile?.kycStatus !== 'verified' && profile?.kycStatus !== 'APPROVED' && profile?.kycStatus !== 'approved') {
-  //     return res.status(403).json({ error: 'KYC Verification Required', code: 'KYC_REQUIRED' });
-  // }
+  // Check 'User' table
+  const { data: profile } = await supabaseServer.from('User').select('kycStatus').eq('id', user.id).maybeSingle();
+  
+  if (profile) {
+      kycStatus = profile.kycStatus || 'PENDING';
+  } else {
+      // Check 'profiles' table fallback
+      const { data: p2 } = await supabaseServer.from('profiles').select('kyc_status').eq('id', user.id).maybeSingle();
+      if (p2) {
+          kycStatus = p2.kyc_status || 'PENDING';
+      }
+  }
+  
+  // Normalize status
+  const normalizedStatus = String(kycStatus).toUpperCase();
+  
+  if (normalizedStatus !== 'VERIFIED' && normalizedStatus !== 'APPROVED') {
+      return res.status(403).json({ 
+          error: 'KYC Verification Required', 
+          code: 'KYC_REQUIRED',
+          currentStatus: kycStatus
+      });
+  }
 
   // 2. Parse Body
   const { amount, currency = 'USD', provider, planId, autoActivate, cryptoCurrency } = req.body;

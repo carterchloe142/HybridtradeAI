@@ -1,3 +1,4 @@
+
 import { NextApiRequest, NextApiResponse } from 'next';
 import { supabaseServer } from '@/src/lib/supabaseServer';
 import { v4 as uuidv4 } from 'uuid';
@@ -15,6 +16,32 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
 
   const { data: { user }, error: userErr } = await supabaseServer.auth.getUser(token);
   if (userErr || !user) return res.status(401).json({ error: 'Invalid or expired token' });
+
+  // 1.1 KYC Check (Enforced)
+  let kycStatus = 'PENDING';
+  
+  // Check 'User' table
+  const { data: profile } = await supabaseServer.from('User').select('kycStatus').eq('id', user.id).maybeSingle();
+  
+  if (profile) {
+      kycStatus = profile.kycStatus || 'PENDING';
+  } else {
+      // Check 'profiles' table fallback
+      const { data: p2 } = await supabaseServer.from('profiles').select('kyc_status').eq('id', user.id).maybeSingle();
+      if (p2) {
+          kycStatus = p2.kyc_status || 'PENDING';
+      }
+  }
+  
+  const normalizedStatus = String(kycStatus).toUpperCase();
+  
+  if (normalizedStatus !== 'VERIFIED' && normalizedStatus !== 'APPROVED') {
+      return res.status(403).json({ 
+          error: 'KYC Verification Required', 
+          code: 'KYC_REQUIRED',
+          currentStatus: kycStatus
+      });
+  }
 
   const { amount, planId, currency = 'USD' } = req.body;
   const amt = Number(amount);
@@ -61,9 +88,6 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
     let q1 = supabaseServer.from('Wallet').select('*').eq('userId', user.id).eq('currency', currency).maybeSingle();
     let { data: w1, error: e1 } = await q1;
 
-    // Check snake_case if:
-    // 1. Error indicates table missing
-    // 2. OR No data found (w1 is null) - might be in other table
     if ((!w1 && !e1) || (e1 && (e1.message.includes('relation') || e1.code === '42P01'))) {
        // Try snake_case
        let q2 = supabaseServer.from('wallets').select('*').eq('user_id', user.id).eq('currency', currency).maybeSingle();
@@ -77,7 +101,6 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
            if (e1) throw e1;
            throw e2;
        }
-       // If w2 is also null, wallet remains null (insufficient funds)
     } else if (e1) {
        throw e1;
     } else {
@@ -98,7 +121,6 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
     const newBalance = currentBalance - amt;
     const updatePayload = { balance: newBalance };
     
-    // Optimistic locking? For now simple update.
     const { error: upErr } = await supabaseServer
         .from(walletTable)
         .update(updatePayload)
@@ -107,7 +129,6 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
     if (upErr) throw upErr;
 
     // 3. Create Investment
-    // Try 'Investment' (PascalCase) first with camelCase columns
     let investTable = 'Investment';
     
     const investPayload = {
@@ -133,9 +154,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
         const snakePayload = {
             user_id: user.id,
             plan_id: planId,
-            principal: amt, // Assuming 'principal' column exists in snake_case too, or map to 'amount'?
-            // If fallback table is 'investments', it likely has 'principal' or 'amount'.
-            // Based on Prisma schema, it should be 'principal'.
+            principal: amt, 
             status: 'ACTIVE',
             start_date: new Date().toISOString(),
         };
@@ -146,16 +165,14 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
     }
 
     // 4. Record Transaction
-    // Use TRANSFER type since INVESTMENT is not in Enum
     const txPayload = {
         id: uuidv4(),
-        userId: user.id, // Explicitly try camelCase first for PascalCase table
+        userId: user.id, 
         investmentId: investPayload.id,
         type: 'TRANSFER',
         amount: -amt, 
         currency,
         status: 'COMPLETED',
-        // metadata: { description: `Investment in ${planId} plan` }, // Column missing
         createdAt: new Date().toISOString(),
         updatedAt: new Date().toISOString()
     };
@@ -168,12 +185,11 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
          const snakeTxPayload = {
              id: txPayload.id,
              user_id: user.id,
-             investment_id: investPayload.id, // If column exists
+             investment_id: investPayload.id, 
              type: 'TRANSFER',
              amount: -amt,
              currency,
              status: 'COMPLETED',
-             // metadata: { description: `Investment in ${planId} plan` },
              created_at: new Date().toISOString(),
              updated_at: new Date().toISOString()
          };
