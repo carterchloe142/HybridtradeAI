@@ -134,21 +134,27 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
     // Log Transaction
     const txData = {
         userId: resolvedUserId,
-        type: 'CREDIT',
+        type: 'DEPOSIT', // Treat as real DEPOSIT so it counts for investment
         amount: Number(amount),
         currency: currency || 'USD',
         provider: 'manual_admin',
         status: 'COMPLETED',
-        description: description || 'Manual admin credit',
-        createdAt: new Date().toISOString()
+        // description: description || 'Manual admin credit', // Removed as column might not exist
+        createdAt: new Date().toISOString(),
+        updatedAt: new Date().toISOString()
     };
 
     const { error: txErr } = await supabaseServer.from('Transaction').insert(txData);
     if (txErr) {
         await supabaseServer.from('transactions').insert({
-            ...txData,
             user_id: txData.userId,
-            created_at: txData.createdAt
+            type: 'DEPOSIT',
+            amount: txData.amount,
+            currency: txData.currency,
+            provider: txData.provider,
+            status: 'COMPLETED',
+            created_at: txData.createdAt,
+            updated_at: txData.updatedAt
         });
     }
 
