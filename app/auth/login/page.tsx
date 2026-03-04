@@ -2,11 +2,11 @@
 
 export const dynamic = "force-dynamic";
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { z } from 'zod';
 import { supabase } from '@/lib/supabase';
 import Link from 'next/link';
-import { useRouter } from 'next/navigation';
+import { useRouter, useSearchParams } from 'next/navigation';
 import { motion } from 'framer-motion';
 import FuturisticBackground from '@/components/ui/FuturisticBackground';
 import { Lock, Mail, ArrowRight, Loader2, Eye, EyeOff } from 'lucide-react';
@@ -23,6 +23,17 @@ export default function Login() {
   const [loading, setLoading] = useState(false);
   const [showPassword, setShowPassword] = useState(false);
   const router = useRouter();
+  const searchParams = useSearchParams();
+
+  useEffect(() => {
+    if (searchParams) {
+        const err = searchParams.get('error');
+        const errDesc = searchParams.get('error_description');
+        if (err || errDesc) {
+            setError(errDesc || err);
+        }
+    }
+  }, [searchParams]);
 
   const onSubmit = async (e: React.FormEvent) => {
     e.preventDefault();

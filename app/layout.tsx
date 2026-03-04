@@ -42,6 +42,8 @@ export const metadata = {
   },
 }
 
+import AuthErrorListener from '@/components/AuthErrorListener'
+
 export default function RootLayout({ children }: { children: React.ReactNode }) {
   return (
     <html lang="en" suppressHydrationWarning>
@@ -67,6 +69,7 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
       <body className="min-h-screen bg-background text-foreground">
         <div className="min-h-screen">
           <Providers>
+            <AuthErrorListener />
             {children}
             <GlobalUIControls />
           </Providers>
