@@ -41,10 +41,10 @@ export async function GET(req: NextRequest) {
       // Map snake_case to standard
       const mappedSnake = (snakeItems || []).map((t: any) => ({
           id: t.id,
-          type: t.type,
+          type: t.type === 'ADMIN_CREDIT' ? 'DEPOSIT' : t.type,
           amount: t.amount,
           status: t.status,
-          date: t.created_at,
+          created_at: t.created_at,
           currency: t.currency
       }))
       return NextResponse.json({ items: mappedSnake, total: snakeCount || 0, page, limit })
@@ -53,10 +53,10 @@ export async function GET(req: NextRequest) {
   // Map PascalCase to standard
   const mappedItems = (items || []).map((t: any) => ({
       id: t.id,
-      type: t.type,
+      type: t.type === 'ADMIN_CREDIT' ? 'DEPOSIT' : t.type,
       amount: t.amount,
       status: t.status,
-      date: t.createdAt,
+      created_at: t.createdAt,
       currency: t.currency
   }))
 

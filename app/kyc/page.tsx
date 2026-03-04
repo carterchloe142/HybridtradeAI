@@ -308,7 +308,32 @@ export default function KycPage() {
         diff_left_vs_neutral: diffPercent(imgNeutral, imgLeft),
         diff_right_vs_neutral: diffPercent(imgNeutral, imgRight),
       }
-      const toDataUrl = (f: File) => new Promise<string>((resolve, reject) => { const r = new FileReader(); r.onload = () => resolve(String(r.result || '')); r.onerror = (e) => reject(e); r.readAsDataURL(f) })
+      const toDataUrl = (f: File) => new Promise<string>((resolve, reject) => { 
+        const r = new FileReader(); 
+        r.onload = (e) => {
+            const img = new Image();
+            img.onload = () => {
+                const cvs = document.createElement('canvas');
+                // Resize to max 1000px
+                const maxDim = 1000;
+                let w = img.width;
+                let h = img.height;
+                if (w > maxDim || h > maxDim) {
+                    if (w > h) { h = (h / w) * maxDim; w = maxDim; }
+                    else { w = (w / h) * maxDim; h = maxDim; }
+                }
+                cvs.width = w;
+                cvs.height = h;
+                const ctx = cvs.getContext('2d')!;
+                ctx.drawImage(img, 0, 0, w, h);
+                // Compress to JPEG 0.7
+                resolve(cvs.toDataURL('image/jpeg', 0.7));
+            };
+            img.src = String(e.target?.result || '');
+        }; 
+        r.onerror = (e) => reject(e); 
+        r.readAsDataURL(f) 
+      })
       const body = {
         idFileDataUrl: await toDataUrl(idFile!),
         selfieNeutralDataUrl: await toDataUrl(selfieNeutral!),

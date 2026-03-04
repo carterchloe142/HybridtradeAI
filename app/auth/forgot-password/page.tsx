@@ -37,7 +37,11 @@ export default function ForgotPassword() {
         redirectTo: `${window.location.origin}/auth/update-password`,
       });
       
-      if (error) throw error;
+      if (error) {
+         // Supabase Rate Limit or other error
+         if (error.message.includes('rate limit')) throw new Error('Too many requests. Please try again later.');
+         throw error;
+      }
       
       setSuccess('Password reset link has been sent to your email.');
     } catch (err: any) {

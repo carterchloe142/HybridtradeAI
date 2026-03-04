@@ -1,7 +1,8 @@
 'use client'
 
 import Link from 'next/link'
-import { Twitter, Linkedin, Github, Mail } from 'lucide-react'
+import { Instagram, Mail } from 'lucide-react'
+import TrustPilotWidget from '@/components/TrustPilotWidget'
 
 export default function Footer() {
   return (
@@ -15,10 +16,13 @@ export default function Footer() {
             <p className="text-muted-foreground text-sm leading-relaxed mb-6">
               Advanced algorithmic trading platform powered by institutional-grade AI models.
             </p>
-            <div className="flex gap-4">
-              <Link href="#" className="text-muted-foreground hover:text-primary transition-colors"><Twitter size={20} /></Link>
-              <Link href="#" className="text-muted-foreground hover:text-primary transition-colors"><Linkedin size={20} /></Link>
-              <Link href="#" className="text-muted-foreground hover:text-primary transition-colors"><Github size={20} /></Link>
+            <div className="flex gap-4 mb-6">
+              <Link href="https://www.instagram.com/hybridtradeai?igsh=OGpwanVuZm1rdTFx" target="_blank" rel="noopener noreferrer" className="text-muted-foreground hover:text-pink-500 transition-colors">
+                <Instagram size={24} />
+              </Link>
+            </div>
+            <div className="w-full max-w-[200px]">
+              <TrustPilotWidget />
             </div>
           </div>
           
@@ -57,8 +61,13 @@ export default function Footer() {
           <p className="text-xs text-muted-foreground">
             © {new Date().getFullYear()} Hybrid Trade AI. All rights reserved.
           </p>
-          <div className="flex items-center gap-2 text-xs text-muted-foreground">
-            <Mail size={14} /> support@hybridtrade.ai
+          <div className="flex flex-col md:flex-row items-center gap-4 text-xs text-muted-foreground">
+            <div className="flex items-center gap-2">
+              <Mail size={14} /> support@hybridtrade.ai
+            </div>
+            <div className="flex items-center gap-2">
+              <span>+1 213 397 6720</span>
+            </div>
           </div>
         </div>
       </div>

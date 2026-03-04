@@ -46,6 +46,11 @@ export default function RecentActivity() {
             Icon = DollarSign;
             color = 'text-emerald-500';
             text = text === 'PROFIT' ? `Profit Payout` : text;
+        } else if (type === 'ADMIN_CREDIT') {
+            // Show Admin Credit as Deposit to the user
+            Icon = ArrowDownLeft;
+            color = 'text-green-500';
+            text = 'Deposit';
         }
 
         return (

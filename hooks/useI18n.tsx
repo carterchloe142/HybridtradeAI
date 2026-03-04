@@ -37,6 +37,7 @@ const baseDict: Record<string, Dict> = {
     plan_starter_title: 'STARTER PLAN — $100–$500 (Conservative)',
     plan_pro_title: 'PRO PLAN — $501–$2,000 (Balanced)',
     plan_elite_title: 'ELITE PLAN — $2,001–$10,000 (Aggressive & Diversified)',
+    plan_big_title: 'HYDRA PLAN — $50,000–$200,000 (High Net‑worth)',
     allocation_label: 'Allocation', expected_weekly_label: 'Expected Weekly Contributions',
     projected_weekly_range: 'Projected Weekly Range: {range} (variable)', streams_label: 'Streams', benefits_label: 'Benefits', invest_with_plan: 'Invest with this Plan',
     returns_variable_disclaimer: 'All returns are variable.',

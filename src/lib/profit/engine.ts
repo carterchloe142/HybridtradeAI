@@ -20,7 +20,8 @@ function feePct() {
 const DEFAULT_ALLOCATIONS: Record<string, Record<string, number>> = {
   starter: planConfig.starter.allocations,
   pro: planConfig.pro.allocations,
-  elite: planConfig.elite.allocations
+  elite: planConfig.elite.allocations,
+  bigtime: planConfig.bigtime?.allocations || planConfig.elite.allocations
 };
 
 function normalizeJson<T = Record<string, any>>(obj: T | string | null | undefined): T {
@@ -82,6 +83,7 @@ function getSlug(name: string) {
     const n = (name || '').toLowerCase()
     if (n.includes('pro')) return 'pro'
     if (n.includes('elite') || n.includes('vip')) return 'elite'
+    if (n.includes('big') || n.includes('bigtime') || n.includes('hydra')) return 'bigtime'
     return 'starter'
 }
 
@@ -501,7 +503,7 @@ async function processReferral(inv: any, net: number, dryRun: boolean) {
   const referrerId = String(inv.user?.referrerId || '')
   if (!referrerId) return
     const slug = getSlug(inv.plan?.name || '')
-    const rate = slug === 'elite' ? planConfig.elite.referralRate : slug === 'pro' ? planConfig.pro.referralRate : planConfig.starter.referralRate
+    const rate = slug === 'bigtime' ? (planConfig.bigtime?.referralRate || 12) : slug === 'elite' ? planConfig.elite.referralRate : slug === 'pro' ? planConfig.pro.referralRate : planConfig.starter.referralRate
     const bonus = Math.max(0, net * (rate / 100))
     if (dryRun || bonus <= 0) return
   const currency = 'USD'

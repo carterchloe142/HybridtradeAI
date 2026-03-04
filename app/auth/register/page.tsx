@@ -10,6 +10,7 @@ import { useRouter } from 'next/navigation';
 import { motion } from 'framer-motion';
 import FuturisticBackground from '@/components/ui/FuturisticBackground';
 import { Lock, Mail, ArrowRight, Loader2, CheckCircle2, Eye, EyeOff } from 'lucide-react';
+import { trackSignup } from '@/lib/ga';
 
 const schema = z.object({
   email: z.string().email(),
@@ -24,6 +25,24 @@ export default function Register() {
   const [loading, setLoading] = useState(false);
   const [showPassword, setShowPassword] = useState(false);
 
+  // Capture referral code from URL
+  const [referralCode, setReferralCode] = useState<string | null>(null);
+  useEffect(() => {
+    if (typeof window !== 'undefined') {
+      const params = new URLSearchParams(window.location.search);
+      const ref = params.get('ref');
+      if (ref) {
+        setReferralCode(ref);
+        // Store in local storage as backup
+        localStorage.setItem('referralCode', ref);
+      } else {
+        // Try local storage
+        const stored = localStorage.getItem('referralCode');
+        if (stored) setReferralCode(stored);
+      }
+    }
+  }, []);
+
   const onSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setError(null); setSuccess(null);
@@ -34,7 +53,16 @@ export default function Register() {
     }
     try {
       setLoading(true);
-      const { data, error } = await supabase.auth.signUp({ email: form.email, password: form.password });
+      const { data, error } = await supabase.auth.signUp({ 
+        email: form.email, 
+        password: form.password,
+        options: {
+          emailRedirectTo: `${window.location.origin}/auth/callback`,
+          data: {
+            referral_code: referralCode // Pass to Supabase metadata
+          }
+        }
+      });
       if (error) throw error;
       
       // Sync user to database
@@ -42,12 +70,20 @@ export default function Register() {
         await fetch('/api/auth/sync', {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ session: data.session })
+            body: JSON.stringify({ session: data.session, referralCode }) // Explicitly pass referralCode
         });
 
+        trackSignup('password');
         router.push('/dashboard');
         return;
       }
+      
+      // Even if session is null (email confirm required), we should try to sync the referral
+      // But we can't sync without a user ID. 
+      // The referral will be handled by the trigger on 'auth.users' insert if using metadata
+      // OR by the callback/sync endpoint when they finally log in.
+      
+      trackSignup('password_pending_email_confirm');
       setSuccess('Registration successful. Please check your email for confirmation.');
     } catch (err: any) {
       setError(err.message || 'Registration failed');

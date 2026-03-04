@@ -75,6 +75,18 @@ export default function AdminTransactions() {
     }
   }
 
+  function formatType(t: string) {
+    if (!t) return '-';
+    const upper = t.toUpperCase();
+    if (upper === 'DEPOSIT') return 'Deposit';
+    if (upper === 'WITHDRAWAL') return 'Withdrawal';
+    if (upper === 'INVESTMENT') return 'Investment';
+    if (upper === 'ROI') return 'ROI';
+    if (upper === 'REFERRAL') return 'Referral';
+    if (upper === 'ADMIN_CREDIT') return 'Admin Credit';
+    return t;
+  }
+
   return (
     <AdminGuard>
       <div className="max-w-7xl mx-auto p-6 space-y-4">
@@ -156,7 +168,7 @@ export default function AdminTransactions() {
               {rows.map((tx) => (
                 <tr key={tx.id} className="border-t border-border hover:bg-muted/50 transition-colors">
                   <td className="px-2 py-1 text-foreground">{tx.profiles?.email || tx.user_id}</td>
-                  <td className="px-2 py-1 text-foreground">{tx.type}</td>
+                  <td className="px-2 py-1 text-foreground">{formatType(tx.type)}</td>
                   <td className="px-2 py-1 text-foreground">{typeof tx.amount_usd === 'number' ? tx.amount_usd : tx.amount}</td>
                   <td className="px-2 py-1 uppercase text-foreground">{tx.currency}</td>
                   <td className="px-2 py-1">

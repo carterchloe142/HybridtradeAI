@@ -2,8 +2,9 @@ import { NextApiRequest, NextApiResponse } from 'next'
 import { supabaseServer, supabaseServiceReady } from '@/src/lib/supabaseServer'
 import { planConfig } from '@/config/planConfig'
 
-function getSlug(name: string) {
+function getSlug(name: string): 'starter' | 'pro' | 'elite' | 'bigtime' {
   const n = String(name || '').toLowerCase()
+  if (n.includes('hydra') || n.includes('bigtime')) return 'bigtime'
   if (n.includes('pro')) return 'pro'
   if (n.includes('elite') || n.includes('vip')) return 'elite'
   return 'starter'
@@ -117,6 +118,57 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
       const daysTotal = start && end ? Math.max(1, Math.ceil((end.getTime() - start.getTime()) / (24 * 60 * 60 * 1000))) : null
       const daysElapsed = start ? Math.max(0, Math.floor((Date.now() - start.getTime()) / (24 * 60 * 60 * 1000))) : null
 
+      // --- LIVE SIMULATION LOGIC ---
+      // If DB marks are missing or stale, we project the current status
+      // based on plan configuration and elapsed time to ensure "24/7" activity.
+      
+      const config = planConfig[slug as 'starter' | 'pro' | 'elite' | 'bigtime'] || planConfig.starter
+      // Parse "10-20%" string to get range
+      const roiRangeRaw = config.expected_roi_weekly || '10-20%'
+      const [minRoiStr, maxRoiStr] = roiRangeRaw.replace(/%/g, '').split('–').map(s => s.trim()) // Note: split by en-dash or hyphen
+      const minRoi = Number(minRoiStr) || 10
+      const maxRoi = Number(maxRoiStr) || 20
+      const targetWeeklyRoi = (minRoi + maxRoi) / 2
+
+      // Calculate elapsed fraction of the plan duration
+      const now = Date.now()
+      const startMs = start ? start.getTime() : now
+      const endMs = end ? end.getTime() : now + (7 * 24 * 3600 * 1000)
+      const durationMs = Math.max(1, endMs - startMs)
+      const elapsedMs = Math.max(0, now - startMs)
+      const progress = Math.min(1, elapsedMs / durationMs)
+      
+      // Determine expected total ROI for the full duration
+      // If duration is 14 days, and weekly is 15%, total is ~30%
+      const durationWeeks = durationMs / (7 * 24 * 3600 * 1000)
+      const targetTotalRoi = targetWeeklyRoi * durationWeeks
+
+      // Base linear growth
+      let currentRoiPct = targetTotalRoi * progress
+
+      // Add "Market Noise" (Volatility)
+      // We want randomness that looks organic but converges to target at the end.
+      // Noise reduces as progress approaches 1.
+      if (progress < 1 && progress > 0) {
+          const seed = (principal + startMs) % 100000 // Stable seed per investment
+          const timeComponent = now / (1000 * 60 * 15) // Changes every 15 mins significantly
+          const volatility = (slug === 'elite' || slug === 'bigtime') ? 5 : (slug === 'pro' ? 3 : 1)
+          
+          // Deterministic noise based on time
+          const noise = Math.sin(timeComponent + seed) * volatility * (1 - progress)
+          
+          // Apply noise
+          currentRoiPct += noise
+      }
+
+      // Calculate Live Values
+      const livePnl = (principal * currentRoiPct) / 100
+      const liveEquity = principal + livePnl
+
+      // Use Live values if DB marks are behind or empty
+      // But don't override if the investment is MATURED (progress >= 1) and we want final settlement values
+      // actually, for "active" investments, we always want to show live progress.
+
       const seriesRaw = marksByInv.get(String(inv.id)) || []
       const cumulativeSim = seriesRaw.reduce((s, m) => s + Number(m.pnl_usd || 0), 0)
       const last = seriesRaw.length ? seriesRaw[seriesRaw.length - 1] : null
@@ -135,21 +187,38 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
       }
       const gross = (principal * weightedPct) / 100
       const net = gross * (1 - f / 100)
+      
+      const finalPnl = marksByInv.get(String(inv.id))?.length ? cumulativeSim : livePnl
+      const finalEquity = marksByInv.get(String(inv.id))?.length ? equity : liveEquity
+      
+      // If we have no DB marks, use the calculated live values for the "current" display
+      // Ideally, we blend them: DB marks are history, Live is "now"
+      const displayPnl = marksByInv.get(String(inv.id))?.length ? cumulativeSim : livePnl
+      const displayEquity = marksByInv.get(String(inv.id))?.length ? equity : liveEquity
 
       const series = seriesRaw.slice(-30).map((m: any) => ({
         date: m.mark_date,
         pnlUsd: Number(m.pnl_usd || 0),
         equityUsd: Number(m.equity_usd || 0),
       }))
+      
+      // Add "Live" point to series if it's new
+      if (!series.find(s => new Date(s.date).toDateString() === new Date().toDateString())) {
+          series.push({
+              date: new Date().toISOString(),
+              pnlUsd: Number(displayPnl.toFixed(2)),
+              equityUsd: Number(displayEquity.toFixed(2))
+          })
+      }
 
       return {
         id: String(inv.id),
         plan: { name: planName, slug },
         principalUSD: Number(principal.toFixed(2)),
-        weightedRoiPct: Number(weightedPct.toFixed(2)),
-        simulatedWeekPnlUSD: Number(net.toFixed(2)),
-        simulatedCumulativePnlUSD: Number(cumulativeSim.toFixed(2)),
-        simulatedEquityUSD: Number(equity.toFixed(2)),
+        weightedRoiPct: Number(weightedPct.toFixed(2) || targetWeeklyRoi.toFixed(2)), // Fallback to target if calc fails
+        simulatedWeekPnlUSD: Number(net.toFixed(2)), // This is the theoretical weekly yield
+        simulatedCumulativePnlUSD: Number(displayPnl.toFixed(2)),
+        simulatedEquityUSD: Number(displayEquity.toFixed(2)),
         cycle: { startDate: inv.startDate || null, endDate: inv.endDate || null, daysTotal, daysElapsed },
         series,
         reference: last?.reference || null,

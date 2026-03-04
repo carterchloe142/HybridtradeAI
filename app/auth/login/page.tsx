@@ -10,6 +10,7 @@ import { useRouter } from 'next/navigation';
 import { motion } from 'framer-motion';
 import FuturisticBackground from '@/components/ui/FuturisticBackground';
 import { Lock, Mail, ArrowRight, Loader2, Eye, EyeOff } from 'lucide-react';
+import { trackLogin } from '@/lib/ga';
 
 const schema = z.object({
   email: z.string().email(),
@@ -55,8 +56,10 @@ export default function Login() {
           .maybeSingle();
         const role = String(profile?.role || '').toLowerCase();
         const isAdmin = Boolean(profile?.is_admin) || role === 'admin';
+        trackLogin('password');
         router.push(isAdmin ? '/admin' : '/dashboard');
       } else {
+        trackLogin('password');
         router.push('/dashboard');
       }
     } catch (err: any) {

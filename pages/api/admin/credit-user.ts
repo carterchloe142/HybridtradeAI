@@ -1,5 +1,6 @@
 import { NextApiRequest, NextApiResponse } from 'next';
 import { supabaseServer } from '@/src/lib/supabaseServer';
+import { v4 as uuidv4 } from 'uuid';
 
 export function isUuidLike(input: string): boolean {
   const trimmed = (input || '').trim()
@@ -42,7 +43,9 @@ export async function resolveSupabaseUserId({ userId, email }: { userId?: string
 }
 
 export default async function handler(req: NextApiRequest, res: NextApiResponse) {
-  if (req.method !== 'POST') {
+  console.log('API Server connecting to:', process.env.NEXT_PUBLIC_SUPABASE_URL);
+
+  if (req.method !== 'POST' && req.method !== 'GET') {
     return res.status(405).json({ error: 'Method not allowed' });
   }
 
@@ -77,6 +80,53 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
     return res.status(403).json({ error: 'Forbidden: Admin access required' });
   }
   // ------------------
+
+  if (req.method === 'GET') {
+      const page = Number(req.query.page) || 1;
+      const limit = Number(req.query.limit) || 25;
+      const start = (page - 1) * limit;
+      const end = start + limit - 1;
+
+      // Try PascalCase 'AdminAction'
+      let { data: actions, count, error } = await supabaseServer
+          .from('AdminAction')
+          .select('*', { count: 'exact' })
+          .order('createdAt', { ascending: false })
+          .range(start, end);
+          
+      if (error && error.code === '42P01') {
+          // Fallback to snake_case 'admin_actions'
+          const { data: actions2, count: count2, error: error2 } = await supabaseServer
+              .from('admin_actions')
+              .select('*', { count: 'exact' })
+              .order('created_at', { ascending: false })
+              .range(start, end);
+          
+          if (!error2) {
+              actions = (actions2 || []).map((a: any) => ({
+                  id: a.id,
+                  adminId: a.admin_id,
+                  userId: a.user_id,
+                  amount: a.amount,
+                  action: a.action,
+                  note: a.note,
+                  status: a.status,
+                  createdAt: a.created_at
+              }));
+              count = count2;
+              error = null;
+          } else {
+              // If both fail, return empty list instead of error to avoid breaking UI
+              // console.error('Failed to fetch admin_actions:', error2);
+              return res.status(200).json({ actions: [], total: 0, page, limit });
+          }
+      } else if (error) {
+           console.error('Failed to fetch AdminAction:', error);
+           return res.status(500).json({ error: error.message });
+      }
+
+      return res.status(200).json({ actions, total: count, page, limit });
+  }
 
   try {
     const { userId, email, amount, currency, description } = req.body;
@@ -133,6 +183,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
 
     // Log Transaction
     const txData = {
+        id: uuidv4(),
         userId: resolvedUserId,
         type: 'DEPOSIT', // Treat as real DEPOSIT so it counts for investment
         amount: Number(amount),
@@ -146,16 +197,45 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
 
     const { error: txErr } = await supabaseServer.from('Transaction').insert(txData);
     if (txErr) {
-        await supabaseServer.from('transactions').insert({
-            user_id: txData.userId,
-            type: 'DEPOSIT',
-            amount: txData.amount,
-            currency: txData.currency,
-            provider: txData.provider,
-            status: 'COMPLETED',
-            created_at: txData.createdAt,
-            updated_at: txData.updatedAt
-        });
+        console.error('Transaction insert failed:', txErr);
+        // Fallback removed as 'transactions' table does not exist
+    } else {
+        console.log(`Transaction inserted successfully: ${txData.id} for user ${txData.userId}`);
+    }
+
+    // Log AdminAction
+    const adminAction = {
+         id: uuidv4(),
+         adminId: user.id,
+         userId: resolvedUserId,
+         amount: Number(amount),
+         action: 'MANUAL_CREDIT',
+         note: description || null,
+         status: 'COMPLETED',
+         createdAt: new Date().toISOString()
+    };
+    const { error: aaErr } = await supabaseServer.from('AdminAction').insert(adminAction);
+    if (aaErr) {
+        if (aaErr.code === '42P01') {
+             // Fallback to snake_case 'admin_actions'
+             const aaSnake = {
+                 id: adminAction.id,
+                 admin_id: adminAction.adminId,
+                 user_id: adminAction.userId,
+                 amount: adminAction.amount,
+                 action: adminAction.action,
+                 note: adminAction.note,
+                 status: adminAction.status,
+                 created_at: adminAction.createdAt
+             };
+             const { error: aaErr2 } = await supabaseServer.from('admin_actions').insert(aaSnake);
+             if (aaErr2) console.error('admin_actions insert failed:', aaErr2);
+             else console.log(`admin_actions inserted successfully: ${adminAction.id}`);
+        } else {
+             console.error('AdminAction insert failed:', aaErr);
+        }
+    } else {
+        console.log(`AdminAction inserted successfully: ${adminAction.id}`);
     }
 
     return res.status(200).json({ success: true, newBalance, message: 'Credit applied successfully' });

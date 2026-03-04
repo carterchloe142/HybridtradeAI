@@ -30,14 +30,17 @@ export default function UpdatePassword() {
   useEffect(() => {
     // Check if we have a session (user is logged in via the magic link)
     const checkSession = async () => {
+      // Wait a moment for session to be established from URL hash
+      await new Promise(resolve => setTimeout(resolve, 500));
+      
       const { data: { session } } = await supabase.auth.getSession();
       if (!session) {
-        // If no session, maybe redirect to login or show error
-        setError("Invalid or expired reset link. Please try again.");
+        setError("Invalid or expired reset link. Redirecting to login...");
+        setTimeout(() => router.push('/auth/login'), 3000);
       }
     };
     checkSession();
-  }, []);
+  }, [router]);
 
   const onSubmit = async (e: React.FormEvent) => {
     e.preventDefault();

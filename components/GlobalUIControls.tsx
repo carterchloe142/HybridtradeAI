@@ -6,6 +6,7 @@ import { ChevronDown, Globe, Moon, Sun, Clock, Monitor } from 'lucide-react'
 import { useTheme } from '@/components/ThemeProvider'
 import { useI18n } from '@/hooks/useI18n'
 import { supportedLocales } from '@/src/utils/locales'
+import ChatWidget from '@/components/ChatWidget'
 
 function classNames(...xs: Array<string | false | null | undefined>) {
   return xs.filter(Boolean).join(' ')
@@ -25,6 +26,7 @@ export default function GlobalUIControls() {
 
   return (
     <div className="fixed right-4 bottom-4 z-50 flex items-center gap-2">
+      <ChatWidget />
       <Menu as="div" className="relative">
         <Menu.Button className="inline-flex items-center gap-2 rounded-full border border-border bg-card/80 backdrop-blur-xl px-4 py-2 text-xs text-foreground shadow-lg hover:bg-card transition-colors">
           <Globe size={16} className="text-primary" />

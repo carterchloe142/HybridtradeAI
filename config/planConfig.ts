@@ -28,6 +28,16 @@ export const planConfig = {
     description: 'Maximum earning potential for high-net-worth investors.',
     expected_roi_weekly: '15–30%',
     risk: 'High'
+  },
+  bigtime: {
+    referralRate: 12,
+    allocations: { trading: 70, copy_trading_ai: 20, staking_yield: 10 },
+    name: 'HYDRA Plan',
+    min: 50000,
+    max: 200000,
+    description: 'Designed for high net-worth investors with larger capital deployments.',
+    expected_roi_weekly: '20–40%',
+    risk: 'High'
   }
 };
 
@@ -69,4 +79,3 @@ export const revenueStreams = {
     risk: 'Low'
   }
 }
-

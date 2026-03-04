@@ -4,7 +4,6 @@ export const dynamic = "force-dynamic";
 
 import RequireAuth from '@/components/RequireAuth';
 import { useEffect, useState } from 'react';
-import { getCurrentUserId, getReferralByUser } from '@/lib/db';
 import { supabase } from '@/lib/supabase';
 import { useI18n } from '@/hooks/useI18n';
 import Link from 'next/link';
@@ -24,12 +23,24 @@ export default function Profile() {
 
   useEffect(() => {
     (async () => {
-      const id = await getCurrentUserId();
-      setUserId(id);
-      if (id) {
-        const ref = await getReferralByUser(id);
-        if (ref?.code) setReferralCode(ref.code);
-        if (ref?.total_earnings) setTotalEarnings(ref.total_earnings);
+      const { data: sessionData } = await supabase.auth.getSession();
+      const token = sessionData?.session?.access_token;
+      const id = sessionData?.session?.user?.id;
+      setUserId(id || null);
+
+      if (id && token) {
+        // Fetch Referral Code from API
+        try {
+            const res = await fetch('/api/referral', {
+                headers: { 'Authorization': `Bearer ${token}` }
+            });
+            if (res.ok) {
+                const data = await res.json();
+                if (data.code) setReferralCode(data.code);
+            }
+        } catch (e) {
+            console.error(e);
+        }
 
         // Fetch KYC Status
         const { data: profile } = await supabase
@@ -68,7 +79,7 @@ export default function Profile() {
         body: JSON.stringify({ userId })
       });
       const data = await res.json();
-      setReferralCode(data.referralCode);
+      setReferralCode(data.code);
     } finally {
       setLoading(false);
     }
@@ -145,14 +156,23 @@ export default function Profile() {
               </div>
               
               {kycStatus === 'approved' || kycStatus === 'verified' ? (
-                <div className="hidden sm:flex items-center gap-2 px-4 py-2 rounded-full bg-primary/10 border border-primary/20">
-                  <ShieldCheck size={16} className="text-primary" />
-                  <span className="text-xs font-bold text-primary uppercase tracking-wider">Verified Account</span>
+                <div className="hidden sm:flex items-center gap-2 px-4 py-2 rounded-full bg-green-500 border border-green-600 shadow-md">
+                  <div className="bg-black/10 rounded-full p-0.5">
+                    <ShieldCheck size={16} className="text-black" fill="currentColor" fillOpacity={0.2} />
+                  </div>
+                  <span className="text-xs font-bold text-black uppercase tracking-wider">Verified</span>
                 </div>
+              ) : kycStatus === 'rejected' ? (
+                <Link href="/kyc" className="hidden sm:flex items-center gap-2 px-4 py-2 rounded-full bg-red-500 border border-red-600 shadow-md hover:scale-105 transition-transform">
+                  <div className="bg-white/20 rounded-full p-0.5">
+                    <AlertCircle size={16} className="text-white" />
+                  </div>
+                  <span className="text-xs font-bold text-white uppercase tracking-wider">Rejected</span>
+                </Link>
               ) : (
-                <Link href="/kyc" className="hidden sm:flex items-center gap-2 px-4 py-2 rounded-full bg-yellow-500/10 border border-yellow-500/20 hover:bg-yellow-500/20 transition-colors">
-                  <AlertCircle size={16} className="text-yellow-500" />
-                  <span className="text-xs font-bold text-yellow-500 uppercase tracking-wider">Verify Now</span>
+                <Link href="/kyc" className="hidden sm:flex items-center gap-2 px-4 py-2 rounded-full bg-yellow-500 border border-yellow-600 shadow-md hover:scale-105 transition-transform animate-pulse">
+                  <AlertCircle size={16} className="text-black" />
+                  <span className="text-xs font-bold text-black uppercase tracking-wider">Verify Now</span>
                 </Link>
               )}
             </div>

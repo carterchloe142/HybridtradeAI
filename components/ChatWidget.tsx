@@ -61,7 +61,7 @@ export default function ChatWidget() {
         body: JSON.stringify({ prompt: userMsg.content })
       });
       const data = await res.json();
-      const msg = String(data.message ?? 'I am here to help.')
+      const msg = String(data.message || 'I am here to help.')
       const extra = data.escalate ? [{ role: 'assistant', content: 'If you need more help, open Support at /support.' } as const] : []
       setMessages((m) => [...m, { role: 'assistant', content: msg }, ...extra]);
     } catch (e) {

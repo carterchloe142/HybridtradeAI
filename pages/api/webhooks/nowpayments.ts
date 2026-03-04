@@ -136,11 +136,12 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
               starter: 'Starter Plan',
               pro: 'Pro Plan',
               elite: 'Elite Plan',
+              bigtime: 'HYDRA Plan',
             }
             const mappedName = slugToName[slug]
             let plan: any = null
             if (mappedName) {
-              const { data: byName } = await supabaseServer.from('InvestmentPlan').select('*').eq('name', mappedName).maybeSingle()
+              const { data: byName } = await supabaseServer.from('InvestmentPlan').select('*').or(`name.eq.${mappedName},id.eq.${slug}`).maybeSingle()
               if (byName) plan = byName
             }
 
@@ -148,7 +149,8 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
               const fallback = {
                 starter: { minAmount: 100, maxAmount: 500, duration: 7, roiMinPct: 10 },
                 pro: { minAmount: 501, maxAmount: 2000, duration: 14, roiMinPct: 15 },
-                elite: { minAmount: 2001, maxAmount: 100000, duration: 30, roiMinPct: 25 },
+                elite: { minAmount: 2001, maxAmount: 10000, duration: 30, roiMinPct: 22.5 },
+                bigtime: { minAmount: 50000, maxAmount: 200000, duration: 14, roiMinPct: 30 },
               } as any
               const f = fallback[slug]
               if (f) {

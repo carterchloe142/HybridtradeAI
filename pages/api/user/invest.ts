@@ -54,7 +54,8 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
     const PLAN_RANGES: any = {
         starter: { min: 100, max: 500 },
         pro: { min: 501, max: 2000 },
-        elite: { min: 2001, max: 10000 }
+        elite: { min: 2001, max: 10000 },
+        bigtime: { min: 50000, max: 200000 }
     };
     
     let min = 0;
@@ -131,15 +132,21 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
     // 3. Create Investment
     let investTable = 'Investment';
     
+    const startDate = new Date();
+    const duration = Number(dbPlan?.duration || dbPlan?.duration || 14);
+    const endDate = new Date(startDate);
+    endDate.setDate(startDate.getDate() + duration);
+
     const investPayload = {
         id: uuidv4(),
         userId: user.id, // Force camelCase for PascalTable
-        planId: planId,
+        planId: dbPlan?.id || planId,
         principal: amt,
         status: 'ACTIVE',
-        startDate: new Date().toISOString(),
-        createdAt: new Date().toISOString(),
-        updatedAt: new Date().toISOString()
+        startDate: startDate.toISOString(),
+        endDate: endDate.toISOString(),
+        createdAt: startDate.toISOString(),
+        updatedAt: startDate.toISOString()
     };
     
     // Attempt insert
@@ -153,10 +160,11 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
         investTable = 'investments';
         const snakePayload = {
             user_id: user.id,
-            plan_id: planId,
+            plan_id: dbPlan?.id || planId,
             principal: amt, 
             status: 'ACTIVE',
-            start_date: new Date().toISOString(),
+            start_date: startDate.toISOString(),
+            end_date: endDate.toISOString(),
         };
         const { error: iErr2 } = await supabaseServer.from('investments').insert(snakePayload);
         if (iErr2) throw iErr2;

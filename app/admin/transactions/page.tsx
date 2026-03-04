@@ -87,6 +87,7 @@ export default function AdminTransactions() {
     if (upper === 'INVESTMENT') return 'Investment';
     if (upper === 'ROI') return 'ROI';
     if (upper === 'REFERRAL') return 'Referral';
+    if (upper === 'ADMIN_CREDIT') return 'Admin Credit';
     return t;
   }
 

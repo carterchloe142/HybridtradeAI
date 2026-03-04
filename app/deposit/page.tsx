@@ -23,7 +23,7 @@ function DepositContent() {
   const uidRef = useRef<string | null>(null)
   const [amount, setAmount] = useState('')
   const [provider, setProvider] = useState('paystack')
-  const [plan, setPlan] = useState<'starter'|'pro'|'elite'>('starter')
+  const [plan, setPlan] = useState<'starter'|'pro'|'elite'|'bigtime'>('starter')
 
   const [msg, setMsg] = useState('')
   const [err, setErr] = useState('')
@@ -49,10 +49,17 @@ function DepositContent() {
     return s || 'usdttrc20'
   }
 
-  const ranges: Record<'starter'|'pro'|'elite', { min: number; max: number; label: string }> = {
+  const ranges: Record<'starter'|'pro'|'elite'|'bigtime', { min: number; max: number; label: string }> = {
     starter: { min: 100, max: 500, label: 'Starter — $100 to $500' },
     pro: { min: 501, max: 2000, label: 'Pro — $501 to $2,000' },
     elite: { min: 2001, max: 10000, label: 'Elite — $2,001 to $10,000' },
+    bigtime: { min: 50000, max: 200000, label: 'HYDRA — $50,000 to $200,000' },
+  }
+  const displayNames: Record<'starter'|'pro'|'elite'|'bigtime', string> = {
+    starter: 'Starter',
+    pro: 'Pro',
+    elite: 'Elite',
+    bigtime: 'HYDRA'
   }
 
   const MOCK_WALLETS: Record<string, string> = {
@@ -65,7 +72,7 @@ function DepositContent() {
     if (searchParams) {
       const qPlan = searchParams.get('plan')
       const qAmount = searchParams.get('amount')
-      if (qPlan && ['starter', 'pro', 'elite'].includes(qPlan)) {
+      if (qPlan && ['starter', 'pro', 'elite', 'bigtime'].includes(qPlan)) {
         setPlan(qPlan as any)
       }
       if (qAmount && !isNaN(Number(qAmount))) {
@@ -340,14 +347,14 @@ function DepositContent() {
                    Select Strategy Tier
                  </div>
                  <div className="grid grid-cols-3 gap-3">
-                   {['starter', 'pro', 'elite'].map((p) => (
+                   {['starter', 'pro', 'elite', 'bigtime'].map((p) => (
                      <button 
                        key={p}
                        onClick={() => setPlan(p as any)}
                        className={`relative p-4 rounded-xl border text-left transition-all duration-300 group overflow-hidden ${plan === p ? 'bg-primary/10 border-primary shadow-[0_0_20px_rgba(var(--primary),0.15)]' : 'bg-muted/10 border-border/10 hover:border-border/20 hover:bg-muted/20'}`}
                      >
                        <div className={`absolute inset-0 bg-gradient-to-br from-primary/0 via-primary/0 to-primary/5 transition-opacity ${plan === p ? 'opacity-100' : 'opacity-0'}`} />
-                       <div className={`font-bold capitalize mb-1 relative z-10 ${plan === p ? 'text-primary' : 'text-muted-foreground group-hover:text-foreground'}`}>{p}</div>
+                       <div className={`font-bold capitalize mb-1 relative z-10 ${plan === p ? 'text-primary' : 'text-muted-foreground group-hover:text-foreground'}`}>{displayNames[p as keyof typeof displayNames]}</div>
                        <div className="text-xs text-muted-foreground/80 relative z-10 group-hover:text-muted-foreground transition-colors">${ranges[p as keyof typeof ranges].min.toLocaleString()} - ${ranges[p as keyof typeof ranges].max.toLocaleString()}</div>
                        {plan === p && <motion.div layoutId="check" className="absolute top-2 right-2 text-primary"><CheckCircle2 size={16} /></motion.div>}
                      </button>
@@ -479,7 +486,7 @@ function DepositContent() {
                        Processing...
                      </>
                    ) : (
-                     `Deploy $${amount || '0'} Capital`
+                     `Deposit $${amount || '0'} Capital`
                    )}
                  </span>
                </button>
@@ -499,7 +506,7 @@ function DepositContent() {
                   <div className="p-2 rounded-lg bg-primary/10 text-primary">
                     <TrendingUp size={18} />
                   </div>
-                  Selected Strategy: <span className="capitalize text-primary ml-auto bg-primary/10 px-3 py-1 rounded-full text-xs">{plan}</span>
+                  Selected Strategy: <span className="capitalize text-primary ml-auto bg-primary/10 px-3 py-1 rounded-full text-xs">{displayNames[plan]}</span>
                 </div>
                 
                 <div className="space-y-4 text-sm">

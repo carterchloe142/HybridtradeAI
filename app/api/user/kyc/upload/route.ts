@@ -11,7 +11,13 @@ export async function POST(request: NextRequest) {
     if (error || !user) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
     if (!supabaseServiceReady) return NextResponse.json({ error: 'Supabase not configured' }, { status: 500 })
 
-    const body = await request.json()
+    let body;
+    try {
+        body = await request.json();
+    } catch (e) {
+        return NextResponse.json({ error: 'Invalid JSON body. Payload too large?' }, { status: 400 });
+    }
+
     // Body contains: idFileDataUrl, selfieNeutralDataUrl, etc. and payload
 
     const files = {

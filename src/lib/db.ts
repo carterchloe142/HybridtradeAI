@@ -26,10 +26,24 @@ async function selectFirstExistingTable(tables: string[], select: (table: string
   let lastError: any = null
   for (const table of tables) {
     const res = await select(table)
-    if (!res.error) return res
-    lastError = res.error
+    if (!res.error) {
+       // If we found data, return it.
+       if (Array.isArray(res.data) && res.data.length > 0) return res
+       // If data is empty, but table exists, we might want to keep looking in other tables 
+       // in case the data is migrated/split. 
+       // However, usually "table exists" means "this is the table".
+       // But in our mixed environment, we should probably check if other tables have data.
+       
+       // Store this empty result as a fallback if no other table has data
+       if (!lastError) lastError = res // Keep the successful (but empty) result
+       continue; 
+    }
+    
+    // If error is NOT "table missing", return the error (e.g. permission denied)
     if (!isMissingRelation(res.error)) return res
   }
+  // If we found a valid empty result, return it. Otherwise return the last error.
+  if (lastError && !lastError.error) return lastError
   return { data: null, error: lastError }
 }
 

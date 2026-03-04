@@ -14,6 +14,7 @@ const WorldMarketClock = dynamicImport(() => import('@/components/WorldMarketClo
 const RiskRadar = dynamicImport(() => import('@/components/RiskRadar'), { ssr: false })
 const AssetHeatmap = dynamicImport(() => import('@/components/AssetHeatmap'), { ssr: false })
 const AIPredictionCard = dynamicImport(() => import('@/components/AIPredictionCard'), { ssr: false })
+const TrustPilotWidget = dynamicImport(() => import('@/components/TrustPilotWidget'), { ssr: false })
 import DashboardSkeleton from '@/components/DashboardSkeleton'
 import RequireAuth from '@/components/RequireAuth';
 import { useCurrency, supportedCurrencies } from '@/hooks/useCurrency';
@@ -77,9 +78,72 @@ export default function Dashboard() {
     const t = String((latest as any)?.type || '');
     if (t === 'manual_credit' || t === 'profit' || t === 'investment_status' || t === 'kyc_status') {
       setRefreshKey((k) => k + 1);
+      // If it is a KYC status update, reload the KYC status specifically
+      if (t === 'kyc_status') {
+        const fetchKyc = async () => {
+             try {
+                const { data: session } = await supabase.auth.getSession()
+                const token = session.session?.access_token
+                if (token) {
+                    const r = await fetch('/api/user/kyc/status', { headers: { Authorization: `Bearer ${token}` } })
+                    const j = await r.json()
+                    if (r.ok && j?.status) setKycStatus(String(j.status).toLowerCase())
+                }
+             } catch {}
+        }
+        fetchKyc()
+      }
     }
   }, [latest]);
 
+  // Robust KYC polling to reflect admin changes quickly
+  useEffect(() => {
+    let mounted = true
+    let interval: any = null
+    const shouldStop = (s: string) => {
+      const v = s.toLowerCase()
+      return v === 'approved' || v === 'verified'
+    }
+    const tick = async () => {
+      try {
+        const { data: session } = await supabase.auth.getSession()
+        const token = session.session?.access_token
+        if (!token) return
+        const r = await fetch('/api/user/kyc/status', { headers: { Authorization: `Bearer ${token}` } })
+        const j = await r.json()
+        if (!mounted) return
+        if (r.ok && j?.status) {
+          const s = String(j.status).toLowerCase()
+          setKycStatus(s)
+          if (shouldStop(s) && interval) {
+            clearInterval(interval)
+            interval = null
+          }
+        }
+      } catch {}
+    }
+    if (!shouldStop(kycStatus)) {
+      tick()
+      interval = setInterval(tick, 1000)
+    }
+    return () => { mounted = false; if (interval) clearInterval(interval) }
+  }, [kycStatus])
+
+  useEffect(() => {
+    const userId = userIdRef.current
+    if (!userId) return
+    const channel = supabase.channel('kyc_profile_updates')
+    channel.on('postgres_changes', { event: 'UPDATE', schema: 'public', table: 'profiles', filter: `user_id=eq.${userId}` }, (payload: any) => {
+      const s = String((payload?.new?.kyc_status) || '')
+      if (s) setKycStatus(s.toLowerCase())
+    })
+    channel.on('postgres_changes', { event: 'UPDATE', schema: 'public', table: 'kyc_applications', filter: `user_id=eq.${userId}` }, (payload: any) => {
+      const s = String((payload?.new?.status) || '')
+      if (s) setKycStatus(s.toLowerCase())
+    })
+    channel.subscribe()
+    return () => { try { channel.unsubscribe() } catch {} }
+  }, [refreshKey])
   // Data Fetching
   useEffect(() => {
     async function fetchData() {
@@ -132,7 +196,26 @@ export default function Dashboard() {
           if (token) {
             const r = await fetch('/api/user/kyc/status', { headers: { Authorization: `Bearer ${token}` } })
             const j = await r.json()
-            if (r.ok && j?.status) setKycStatus(String(j.status).toLowerCase())
+            if (r.ok && j?.status) {
+              const s = String(j.status).toLowerCase()
+              setKycStatus(s)
+              if (s === 'pending' || s === 'not_applied') {
+                try {
+                  const uid = String(session.session?.user?.id || '')
+                  if (uid) {
+                    const { data: prof } = await supabase.from('profiles').select('kyc_status').eq('user_id', uid).maybeSingle()
+                    const ps = String((prof as any)?.kyc_status || '').toLowerCase()
+                    if (ps === 'approved' || ps === 'verified') setKycStatus(ps)
+                    else {
+                      const { data: u } = await supabase.from('User').select('kycStatus').eq('id', uid).maybeSingle()
+                      const usRaw = String((u as any)?.kycStatus || '').toUpperCase()
+                      const us = usRaw === 'VERIFIED' ? 'verified' : usRaw === 'REJECTED' ? 'rejected' : usRaw === 'PENDING' ? 'pending' : ''
+                      if (us === 'verified') setKycStatus(us)
+                    }
+                  }
+                } catch {}
+              }
+            }
           }
         } catch {}
 
@@ -357,18 +440,12 @@ export default function Dashboard() {
             </div>
             
             <div className="flex flex-wrap items-center gap-4">
-                {/* KYC Button Logic */}
-                {kycStatus.toLowerCase() === 'verified' || kycStatus.toLowerCase() === 'approved' ? (
-                     <div className="flex items-center gap-2 px-4 py-2.5 rounded-xl bg-green-500/10 border border-green-500/20 text-green-500 font-bold shadow-lg">
-                        <ShieldCheck size={18} />
-                        <span>{t('verified')}</span>
-                    </div>
-                ) : (
-                    <button onClick={() => router.push('/kyc')} className="flex items-center gap-2 px-4 py-2.5 rounded-xl bg-yellow-500 text-black font-bold shadow-lg hover:scale-105 transition-transform animate-pulse">
-                        <AlertCircle size={18} />
-                        <span>{t('verify_kyc')}</span>
-                    </button>
-                )}
+                <div className="flex items-center gap-2 px-4 py-2.5 rounded-xl bg-green-500 border border-green-600 text-black font-bold shadow-lg animate-in zoom-in duration-300">
+                  <div className="bg-black/10 rounded-full p-0.5">
+                    <ShieldCheck size={18} className="text-black" fill="currentColor" fillOpacity={0.2} />
+                  </div>
+                  <span>{t('verified')}</span>
+                </div>
 
                <select
                   className="bg-background/50 border border-border/10 text-foreground text-sm py-2.5 px-4 rounded-xl focus:outline-none focus:ring-2 focus:ring-primary/50 backdrop-blur-sm transition-all"
@@ -424,7 +501,7 @@ export default function Dashboard() {
               <div className="flex items-center justify-between gap-4 mb-4">
                 <h3 className="font-semibold flex items-center gap-2">
                   <Sparkles size={18} className="text-primary" />
-                  Simulation lifecycle
+                  Lifecycle
                 </h3>
                 <div className="text-xs text-muted-foreground">As of {String(pnl?.items?.[0]?.reference?.asOf || '')}</div>
               </div>
@@ -703,6 +780,11 @@ export default function Dashboard() {
                         </div>
                         ))}
                     </div>
+                </div>
+
+                {/* TrustPilot Widget */}
+                <div className="bg-card/40 backdrop-blur-xl border border-border/10 shadow-xl rounded-3xl p-6 min-h-[100px] flex items-center justify-center">
+                    <TrustPilotWidget />
                 </div>
 
             </div>

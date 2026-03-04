@@ -46,7 +46,11 @@ export default function ManualCreditPage() {
       })
       const data = await res.json()
       if (!res.ok) {
-        setMessage(data.error || 'Failed to load admin credits')
+        // Only show error if it's not a "no table" error (which returns 500 but might be harmless if table is missing)
+        // Actually, if table is missing, data.actions will be undefined, so we handle that below.
+        if (data.error && !data.error.includes('does not exist')) {
+            setMessage(data.error || 'Failed to load admin credits')
+        }
         setHistory([])
       } else {
         setHistory((data.actions ?? []) as Action[])

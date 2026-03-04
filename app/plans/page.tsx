@@ -10,6 +10,7 @@ import { useI18n } from '@/hooks/useI18n'
 import { useRouter } from 'next/navigation'
 import FuturisticBackground from '@/components/ui/FuturisticBackground'
 import { ArrowLeft, Zap, Star, Crown } from 'lucide-react'
+import { trackPlanSelected } from '@/lib/ga'
 
 export default function Plans() {
   const { t } = useI18n()
@@ -56,6 +57,7 @@ export default function Plans() {
         return;
       }
       if (res.ok) {
+        trackPlanSelected(planId, amount)
         router.push('/dashboard') 
         return;
       }
@@ -245,6 +247,55 @@ export default function Plans() {
                 {t('invest_with_plan')}
               </button>
             </motion.div>
+          
+          {/* Bigtime Plan */}
+          <motion.div 
+            initial={{ opacity: 0, y: 20 }}
+            whileInView={{ opacity: 1, y: 0 }}
+            viewport={{ once: true }}
+            transition={{ delay: 0.4 }}
+            className="bg-card/40 backdrop-blur-xl border border-border/10 rounded-3xl p-8 shadow-[0_0_40px_rgba(0,0,0,0.2)] flex flex-col hover:border-amber-500/30 transition-all duration-300 group"
+          >
+            <div className="flex items-center justify-between mb-6">
+              <div className="p-3 rounded-2xl bg-amber-500/10 text-amber-500 group-hover:scale-110 transition-transform duration-300">
+                <Crown size={28} />
+              </div>
+              <div className="px-3 py-1 rounded-full bg-muted/10 border border-border/10 text-xs font-medium text-muted-foreground uppercase tracking-wider">
+                High Net-worth
+              </div>
+            </div>
+            
+            <h3 className="text-2xl font-bold text-foreground mb-2">{t('plan_big_title')}</h3>
+            <div className="text-3xl font-mono text-amber-500 mb-6">$50,000 <span className="text-sm text-muted-foreground font-sans font-normal">min deposit</span></div>
+            
+            <div className="space-y-4 text-sm text-muted-foreground flex-1">
+              <div className="space-y-2">
+                <div className="font-semibold text-foreground">{t('allocation_label')}</div>
+                <ul className="space-y-1">
+                  <li className="flex items-start gap-2"><div className="w-1.5 h-1.5 rounded-full bg-amber-500 mt-1.5" /> 70% Algorithmic Trading</li>
+                  <li className="flex items-start gap-2"><div className="w-1.5 h-1.5 rounded-full bg-amber-500 mt-1.5" /> 20% AI Allocator & Copy‑Trading</li>
+                  <li className="flex items-start gap-2"><div className="w-1.5 h-1.5 rounded-full bg-amber-500 mt-1.5" /> 10% Staking & Yield Farming</li>
+                </ul>
+              </div>
+              
+              <div className="space-y-2 pt-4 border-t border-border/5">
+                <div className="font-semibold text-foreground">{t('expected_weekly_label')}</div>
+                <div className="text-lg font-bold text-green-500">{t('projected_weekly_range', { range: '20–40%' })}</div>
+              </div>
+
+              <div className="pt-4 border-t border-border/5">
+                <div className="font-semibold text-foreground mb-1">{t('benefits_label')}</div>
+                <p className="text-xs text-muted-foreground/80 leading-relaxed">Optimized for large capital with enhanced AI strategies and priority service.</p>
+              </div>
+            </div>
+
+            <button 
+              onClick={() => invest('bigtime', 50000)}
+              className="w-full mt-8 bg-muted/10 hover:bg-amber-500/10 border border-border/10 hover:border-amber-500/50 text-foreground hover:text-amber-500 font-semibold py-3 rounded-xl transition-all"
+            >
+              {t('invest_with_plan')}
+            </button>
+          </motion.div>
           </div>
 
           <div className="text-center text-xs text-muted-foreground/60 max-w-2xl mx-auto">

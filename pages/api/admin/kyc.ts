@@ -69,15 +69,28 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
           const resolveUrl = (path?: string, url?: string) => {
             if (url) return url;
             if (!path) return undefined;
+            // The file might be in 'kyc-documents' bucket or 'kyc' bucket
+            // Let's assume 'kyc-documents' first, but if path starts with user id, it might be scoped
+            // We use getPublicUrl which doesn't check existence, just signs/formats the URL.
+            // But if the bucket is private, we need createSignedUrl
+            
+            // For now, let's try to get a signed URL which is safer and works for private buckets
+            // const { data: signed } = await supabaseServer.storage.from(bucket).createSignedUrl(path, 3600);
+            // return signed?.signedUrl;
+            
+            // Actually, if we use getPublicUrl, the bucket must be public. 
+            // If the user's upload logic put it in a different path, we need to respect that.
+            
             const { data: publicUrlData } = supabaseServer.storage.from(bucket).getPublicUrl(path);
             return publicUrlData.publicUrl;
           };
 
-          fileUrls.idUrl = resolveUrl(f.idPath, f.idUrl);
-          fileUrls.neutralUrl = resolveUrl(f.neutralPath, f.neutralUrl);
-          fileUrls.smileUrl = resolveUrl(f.smilePath, f.smileUrl);
-          fileUrls.leftUrl = resolveUrl(f.leftPath, f.leftUrl);
-          fileUrls.rightUrl = resolveUrl(f.rightPath, f.rightUrl);
+          // Handle case where files might be stored as snake_case in JSON or as Base64 (upload API style)
+          fileUrls.idUrl = resolveUrl(f.idPath || f.id_path, f.idUrl || f.id_url || f.id_front);
+          fileUrls.neutralUrl = resolveUrl(f.neutralPath || f.neutral_path, f.neutralUrl || f.neutral_url || f.selfie_neutral);
+          fileUrls.smileUrl = resolveUrl(f.smilePath || f.smile_path, f.smileUrl || f.smile_url || f.selfie_smile);
+          fileUrls.leftUrl = resolveUrl(f.leftPath || f.left_path, f.leftUrl || f.left_url || f.selfie_left);
+          fileUrls.rightUrl = resolveUrl(f.rightPath || f.right_path, f.rightUrl || f.right_url || f.selfie_right);
         }
 
         return res.status(200).json({ details, files: fileUrls, applicationId: app.id });
@@ -199,7 +212,20 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
              
              await sendEmail(targetUser.user.email, { subject, html });
           }
-      } catch (e) { console.error('Email send failed', e); }
+
+          // Create In-App Notification
+          await supabaseServer.from('Notification').insert({
+              userId: userId,
+              type: 'kyc_status',
+              title: status === 'approved' ? 'KYC Verified' : 'KYC Rejected',
+              message: status === 'approved' 
+                  ? 'Your KYC documents have been approved. You are now verified.' 
+                  : `Your KYC application was rejected. Reason: ${reason || 'See details'}`,
+              link: '/kyc',
+              read: false
+          });
+
+      } catch (e) { console.error('Notification/Email failed', e); }
 
       return res.status(200).json({ success: true });
   }

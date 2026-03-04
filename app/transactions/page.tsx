@@ -90,6 +90,8 @@ export default function UserTransactions() {
     if (t === 'INVESTMENT') return 'Investment';
     if (t === 'ROI') return 'ROI';
     if (t === 'REFERRAL') return 'Referral';
+    // Admin credits are shown as deposits to the user
+    if (t === 'ADMIN_CREDIT') return 'Deposit';
     return tx.type || '-';
   }
 

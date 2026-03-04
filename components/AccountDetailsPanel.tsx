@@ -1,6 +1,7 @@
 'use client'
 
 import { useEffect, useMemo, useRef, useState } from 'react'
+import { createPortal } from 'react-dom'
 import { useRouter } from 'next/navigation'
 import { X, Wallet, ReceiptText, PieChart, Settings, LogOut, Loader2 } from 'lucide-react'
 import { supabase } from '@/lib/supabase'
@@ -137,10 +138,11 @@ export default function AccountDetailsPanel({ open, onClose }: Props) {
 
   if (!open) return null
 
-  return (
-    <div className="fixed inset-0 z-50">
+  // Portal to body to ensure full screen overlay
+  return typeof document !== 'undefined' ? createPortal(
+    <div className="fixed inset-0 z-[100]">
       <button aria-label="Close" onClick={onClose} className="absolute inset-0 bg-black/60 backdrop-blur-sm" />
-      <div className="fixed right-0 top-0 h-full w-full sm:w-[420px] bg-card/95 backdrop-blur-xl border-l border-border/40 shadow-2xl">
+      <div className="fixed right-0 top-0 h-full w-full sm:w-[420px] bg-card/95 backdrop-blur-xl border-l border-border/40 shadow-2xl animate-in slide-in-from-right duration-300">
         <div className="h-full flex flex-col">
           <div className="p-5 border-b border-border/40 flex items-center justify-between gap-3">
             <div className="min-w-0">
@@ -261,5 +263,5 @@ export default function AccountDetailsPanel({ open, onClose }: Props) {
         </div>
       </div>
     </div>
-  )
+  , document.body) : null
 }

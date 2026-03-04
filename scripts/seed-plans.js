@@ -1,54 +1,25 @@
 
 const { createClient } = require('@supabase/supabase-js');
-const fs = require('fs');
-const path = require('path');
+require('dotenv').config({ path: '.env.local' });
 
-// Try dotenv first
-try {
-  require('dotenv').config({ path: path.resolve(__dirname, '../.env.local') });
-} catch (e) {
-  console.log('dotenv not found, falling back to manual parsing');
-  // Read .env.local manually
-  function getEnv() {
-    const envPath = path.resolve(__dirname, '../.env.local');
-    if (!fs.existsSync(envPath)) return {};
-    const content = fs.readFileSync(envPath, 'utf8');
-    const env = {};
-    content.split('\n').forEach(line => {
-      const parts = line.split('=');
-      if (parts.length >= 2) {
-        const key = parts[0].trim();
-        const val = parts.slice(1).join('=').trim().replace(/^["']|["']$/g, ''); // Remove quotes
-        if (key && val) env[key] = val;
-      }
-    });
-    return env;
-  }
-  const manualEnv = getEnv();
-  Object.assign(process.env, manualEnv);
-}
+const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL;
+const supabaseServiceKey = process.env.SUPABASE_SERVICE_ROLE_KEY;
 
-const url = process.env.SUPABASE_URL || process.env.NEXT_PUBLIC_SUPABASE_URL;
-const key = process.env.SUPABASE_SERVICE_ROLE_KEY;
-
-console.log('URL found:', !!url);
-console.log('Key found:', !!key);
-
-if (!url || !key) {
+if (!supabaseUrl || !supabaseServiceKey) {
   console.error('Missing Supabase credentials');
   process.exit(1);
 }
 
-const supabase = createClient(url, key);
+const supabase = createClient(supabaseUrl, supabaseServiceKey);
 
 const plans = [
   {
-    id: 'starter',
+    id: 'starter', // Explicit ID for easier reference
     name: 'Starter Plan',
     minAmount: 100,
     maxAmount: 500,
-    duration: 7,
-    returnPercentage: 5.0,
+    duration: 7, // Days
+    returnPercentage: 15, // Avg of 10-20
     payoutFrequency: 'WEEKLY',
     active: true
   },
@@ -58,7 +29,7 @@ const plans = [
     minAmount: 501,
     maxAmount: 2000,
     duration: 14,
-    returnPercentage: 10.0,
+    returnPercentage: 35, // Avg of 25-45
     payoutFrequency: 'WEEKLY',
     active: true
   },
@@ -67,54 +38,77 @@ const plans = [
     name: 'Elite Plan',
     minAmount: 2001,
     maxAmount: 10000,
-    duration: 30,
-    returnPercentage: 20.0,
+    duration: 30, // Or 14? Frontend implies 30 for Elite in some places, 14 in others. planConfig doesn't say.
+    // Dashboard line 251: inferredDays = planKey === 'starter' ? 7 : planKey === 'pro' ? 14 : planKey === 'elite' ? 30 : 14
+    // Let's use 30.
+    returnPercentage: 22.5, // Avg of 15-30
+    payoutFrequency: 'WEEKLY',
+    active: true
+  },
+  {
+    id: 'bigtime',
+    name: 'HYDRA Plan',
+    minAmount: 50000,
+    maxAmount: 200000,
+    duration: 14, // Dashboard line 251 fallback is 14. Let's stick to 14 or 30?
+    // User said "stick to its investment running days".
+    // Frontend doesn't explicitly say days for Hydra, but implies cycle.
+    // TERMS p2 says "Hybrid cycles run for 14 days."
+    // Let's use 14.
+    returnPercentage: 30, // Avg of 20-40
     payoutFrequency: 'WEEKLY',
     active: true
   }
 ];
 
-async function seed() {
+async function seedPlans() {
   console.log('Seeding plans...');
   
-  for (const plan of plans) {
-    const payload = {
-        ...plan,
-        createdAt: new Date().toISOString(),
-        updatedAt: new Date().toISOString()
-    };
-
-    // Try PascalCase
-    let { error } = await supabase.from('InvestmentPlan').upsert(payload);
+  for (const p of plans) {
+    // Try to find by ID
+    let { data: existing } = await supabase.from('InvestmentPlan').select('id').eq('id', p.id).maybeSingle();
     
-    if (error) {
-        console.log(`First attempt (InvestmentPlan) failed:`, error.message);
+    // Check by name if ID fails (to catch old uuids)
+    if (!existing) {
+        let { data: existingByName } = await supabase.from('InvestmentPlan').select('id').eq('name', p.name).maybeSingle();
+        if (existingByName) {
+             console.log(`Plan ${p.name} exists with ID ${existingByName.id}, skipping insert (or update if needed)`);
+             // Ideally we'd update it to use the new ID, but that breaks FKs.
+             // Better to just ensure 'bigtime' exists.
+        }
     }
 
-    if (error && (error.message.includes('relation') || error.code === '42P01')) {
-        console.log(`Fallback to snake_case for ${plan.id}`);
-        // Fallback to snake_case
-        const snakePlan = {
-            id: plan.id,
-            name: plan.name,
-            min_amount: plan.minAmount,
-            max_amount: plan.maxAmount,
-            duration: plan.duration,
-            return_percentage: plan.returnPercentage,
-            payout_frequency: plan.payoutFrequency,
-            active: plan.active
-        };
-        const { error: err2 } = await supabase.from('investment_plans').upsert(snakePlan);
-        if (err2) console.error(`Error seeding ${plan.id}:`, err2);
-        else console.log(`Seeded ${plan.id} (snake_case)`);
-    } else if (error) {
-        console.error(`Error seeding ${plan.id}:`, error);
+    if (existing) {
+        console.log(`Updating ${p.name}...`);
+        const { error } = await supabase.from('InvestmentPlan').update({
+            name: p.name,
+            minAmount: p.minAmount,
+            maxAmount: p.maxAmount,
+            duration: p.duration,
+            returnPercentage: p.returnPercentage,
+            payoutFrequency: p.payoutFrequency,
+            active: p.active
+        }).eq('id', p.id);
+        
+        if (error) console.error(error);
     } else {
-        console.log(`Seeded ${plan.id} (PascalCase)`);
+        // If not found by ID, insert it with the explicit ID
+        console.log(`Creating ${p.name}...`);
+        const { error } = await supabase.from('InvestmentPlan').insert({
+            id: p.id,
+            name: p.name,
+            minAmount: p.minAmount,
+            maxAmount: p.maxAmount,
+            duration: p.duration,
+            returnPercentage: p.returnPercentage,
+            payoutFrequency: p.payoutFrequency,
+            active: p.active,
+            updatedAt: new Date().toISOString() // Explicitly set updatedAt
+        });
+        if (error) console.error(error);
     }
   }
-  
   console.log('Done.');
 }
 
-seed();
+seedPlans();
