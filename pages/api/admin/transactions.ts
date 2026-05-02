@@ -25,7 +25,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
   // --------------------------
 
   if (req.method === 'GET') {
-      const { type, page = '1', limit = '100' } = req.query;
+      const { type, status, date, page = '1', limit = '100' } = req.query;
       
       const p = parseInt(String(page));
       const l = parseInt(String(limit));
@@ -52,6 +52,20 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
           } else {
              query = query.in('type', types);
           }
+      }
+
+      if (status) {
+          query = query.eq('status', String(status).toUpperCase());
+      }
+      
+      if (date) {
+          // Assuming date is YYYY-MM-DD
+          const start = new Date(String(date));
+          start.setHours(0, 0, 0, 0);
+          const end = new Date(String(date));
+          end.setHours(23, 59, 59, 999);
+          
+          query = query.gte('createdAt', start.toISOString()).lte('createdAt', end.toISOString());
       }
 
       const { data, error, count } = await query;

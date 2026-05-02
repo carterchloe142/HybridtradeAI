@@ -2,7 +2,7 @@
 
 import { Fragment, useMemo, useState } from 'react'
 import { Menu, Transition } from '@headlessui/react'
-import { ChevronDown, Globe, Moon, Sun, Clock, Monitor } from 'lucide-react'
+import { ChevronDown, Globe, Moon, Sun, Clock, Monitor, MessageCircle } from 'lucide-react'
 import { useTheme } from '@/components/ThemeProvider'
 import { useI18n } from '@/hooks/useI18n'
 import { supportedLocales } from '@/src/utils/locales'
@@ -16,6 +16,19 @@ export default function GlobalUIControls() {
   const { preference, theme, setMode, setManualTheme } = useTheme()
   const { lang, setLang, t } = useI18n()
   const [q, setQ] = useState('')
+  const smartsuppEnabled = Boolean(process.env.NEXT_PUBLIC_SMARTSUPP_KEY)
+
+  function openSupport() {
+    try {
+      const w = window as any
+      const fn = w?.smartsupp
+      if (typeof fn === 'function') {
+        try { fn('chat:open') } catch {}
+        try { fn('chat:show') } catch {}
+        return
+      }
+    } catch {}
+  }
 
   const localeItems = useMemo(() => {
     const query = q.trim().toLowerCase()
@@ -26,7 +39,18 @@ export default function GlobalUIControls() {
 
   return (
     <div className="fixed right-4 bottom-4 z-50 flex items-center gap-2">
-      <ChatWidget />
+      {smartsuppEnabled ? (
+        <button
+          type="button"
+          className="btn-neon rounded-full p-4 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-neon-blue"
+          onClick={openSupport}
+          aria-label="Open support chat"
+        >
+          <MessageCircle />
+        </button>
+      ) : (
+        <ChatWidget />
+      )}
       <Menu as="div" className="relative">
         <Menu.Button className="inline-flex items-center gap-2 rounded-full border border-border bg-card/80 backdrop-blur-xl px-4 py-2 text-xs text-foreground shadow-lg hover:bg-card transition-colors">
           <Globe size={16} className="text-primary" />

@@ -32,7 +32,7 @@ export default function AuthCallback() {
     const type = searchParams.get('type'); // 'recovery', 'signup', 'invite'
 
     // Listen to auth state change to handle implicit flows or post-PKCE state
-    const { data: { subscription } } = supabase.auth.onAuthStateChange(async (event, session) => {
+    const { data: { subscription } } = supabase.auth.onAuthStateChange(async (event: any, session: any) => {
         if (event === 'SIGNED_IN' || event === 'PASSWORD_RECOVERY') {
             if (session) {
                 // Sync user if needed - non-blocking
@@ -54,7 +54,8 @@ export default function AuthCallback() {
 
     if (code) {
       supabase.auth.exchangeCodeForSession(code)
-        .then(async ({ data, error }) => {
+        .then(async (res: any) => {
+          const { data, error } = res || {}
           if (error) {
             setError(error.message);
           } else {
@@ -77,11 +78,12 @@ export default function AuthCallback() {
              }
           }
         })
-        .catch((err) => setError(err.message));
+        .catch((err: any) => setError(err.message));
     } else {
        // Implicit flow check
-       supabase.auth.getSession().then(({ data }) => {
-           if (data.session) {
+       supabase.auth.getSession().then((res: any) => {
+           const data = res?.data
+           if (data?.session) {
                const hash = window.location.hash;
                if (type === 'recovery' || (hash && hash.includes('type=recovery'))) {
                    router.push('/auth/update-password');
@@ -92,8 +94,9 @@ export default function AuthCallback() {
                // If no session yet, we wait for onAuthStateChange or timeout
                // But usually implicit flow happens very quickly via client library parsing hash
                setTimeout(() => {
-                   supabase.auth.getSession().then(({ data: d2 }) => {
-                       if (!d2.session) {
+                   supabase.auth.getSession().then((res2: any) => {
+                       const d2 = res2?.data
+                       if (!d2?.session) {
                            // Still no session?
                            // Check if it's a recovery link without session establishment?
                            // Recovery links SHOULD establish a session.

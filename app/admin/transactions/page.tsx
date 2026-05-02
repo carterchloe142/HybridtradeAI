@@ -24,6 +24,7 @@ export default function AdminTransactions() {
   const [loading, setLoading] = useState(true);
   const [typeFilter, setTypeFilter] = useState<string>('');
   const [statusFilter, setStatusFilter] = useState<string>('');
+  const [dateFilter, setDateFilter] = useState<string>('');
   const [page, setPage] = useState(1);
   const [limit, setLimit] = useState(25);
   const [total, setTotal] = useState(0);
@@ -38,6 +39,7 @@ export default function AdminTransactions() {
       const params = new URLSearchParams();
       if (typeFilter) params.set('type', typeFilter);
       if (statusFilter) params.set('status', statusFilter);
+      if (dateFilter) params.set('date', dateFilter);
       params.set('page', String(page));
       params.set('limit', String(limit));
       const res = await fetch(`/api/admin/transactions?${params.toString()}`, {
@@ -59,7 +61,7 @@ export default function AdminTransactions() {
   useEffect(() => {
     fetchTx();
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [typeFilter, statusFilter, page, limit]);
+  }, [typeFilter, statusFilter, dateFilter, page, limit]);
 
   async function updateStatus(id: string, status: 'confirmed' | 'rejected') {
     setMsg('');
@@ -124,6 +126,15 @@ export default function AdminTransactions() {
             <option value="failed">Failed</option>
             <option value="rejected">Rejected</option>
           </select>
+          <div className="flex items-center gap-2 text-sm text-muted-foreground">
+            <label>Date</label>
+            <input 
+              type="date" 
+              value={dateFilter} 
+              onChange={(e) => setDateFilter(e.target.value)} 
+              className="border border-border rounded px-2 py-1 bg-background text-foreground" 
+            />
+          </div>
           <div className="flex items-center gap-2 text-sm text-muted-foreground">
             <label>Page</label>
             <input 

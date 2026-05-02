@@ -1,6 +1,7 @@
 import '@/styles/globals.css'
 import { Providers } from './providers'
 import GlobalUIControls from '@/components/GlobalUIControls'
+import SmartsuppWidget from '@/components/SmartsuppWidget'
 
 export const metadata = {
   title: 'HybridTradeAI – Automated Crypto Wealth Creation',
@@ -70,6 +71,7 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
         <div className="min-h-screen">
           <Providers>
             <AuthErrorListener />
+            <SmartsuppWidget />
             {children}
             <GlobalUIControls />
           </Providers>
