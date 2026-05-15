@@ -16,7 +16,7 @@ export default function AuthErrorListener() {
     if (typeof window === 'undefined') return;
 
     const hash = window.location.hash;
-    if (!hash || !hash.includes('error=')) return;
+    if (!hash || (!hash.includes('error=') && !hash.includes('type=recovery'))) return;
 
     // Parse hash parameters
     // Note: hash includes '#', so substring(1) removes it
@@ -24,6 +24,18 @@ export default function AuthErrorListener() {
     const error = params.get('error');
     const errorCode = params.get('error_code');
     const errorDescription = params.get('error_description');
+    
+    const accessToken = params.get('access_token');
+    const type = params.get('type');
+
+    // Check if it's a successful recovery that got dropped on the wrong page (e.g. root)
+    if (!error && !errorCode && accessToken && type === 'recovery') {
+      if (!window.location.pathname.includes('/auth/callback')) {
+        // Forward the hash to the callback page to complete the sign-in and redirect
+        router.push(`/auth/callback${hash}`);
+        return;
+      }
+    }
 
     if (error || errorCode || errorDescription) {
       // Clear hash to prevent loops or persistent error states on reload
@@ -31,10 +43,10 @@ export default function AuthErrorListener() {
       const newUrl = window.location.pathname + window.location.search;
       window.history.replaceState({}, '', newUrl);
 
-      // Determine redirection target
-      // If it's a password recovery flow failure, maybe send them back to forgot-password?
-      // But login is safer as a general fallback.
-      const target = '/auth/login';
+      const looksLikeRecoveryError =
+        errorCode === 'otp_expired' ||
+        /reset|recovery|password/i.test(`${error || ''} ${errorDescription || ''}`);
+      const target = looksLikeRecoveryError ? '/auth/forgot-password' : '/auth/login';
       
       // Construct query params for the login page
       const q = new URLSearchParams();
