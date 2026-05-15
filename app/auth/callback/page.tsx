@@ -29,30 +29,53 @@ export default function AuthCallback() {
 
     // Handle PKCE code exchange
     const code = searchParams.get('code');
+    const tokenHash = searchParams.get('token_hash');
     const type = searchParams.get('type'); // 'recovery', 'signup', 'invite'
+    const next = searchParams.get('next');
+    const safeNext = next && next.startsWith('/') ? next : null;
+
+    const navigateAfterAuth = (event?: string, currentType?: string | null) => {
+      const isRecoveryFlow = currentType === 'recovery' || event === 'PASSWORD_RECOVERY';
+      const finalTarget = isRecoveryFlow ? (safeNext || '/auth/update-password') : (safeNext || '/dashboard');
+      router.push(finalTarget);
+    };
 
     // Listen to auth state change to handle implicit flows or post-PKCE state
     const { data: { subscription } } = supabase.auth.onAuthStateChange(async (event: any, session: any) => {
         if (event === 'SIGNED_IN' || event === 'PASSWORD_RECOVERY') {
             if (session) {
+                const storedReferral = (() => {
+                  try { return localStorage.getItem('referralCode') } catch { return null }
+                })()
                 // Sync user if needed - non-blocking
                 fetch('/api/auth/sync', {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({ session })
+                    body: JSON.stringify({ session, referralCode: storedReferral })
                 }).catch(console.error);
 
-                // Redirect based on type or event
-                if (type === 'recovery' || event === 'PASSWORD_RECOVERY') {
-                    router.push('/auth/update-password');
-                } else {
-                    router.push('/dashboard');
-                }
+                try { if (storedReferral) localStorage.removeItem('referralCode') } catch {}
+
+                const hash = typeof window !== 'undefined' ? window.location.hash : '';
+                const hashType = hash && hash.includes('type=recovery') ? 'recovery' : type;
+                navigateAfterAuth(event, hashType);
             }
         }
     });
 
-    if (code) {
+    if (tokenHash && type) {
+      supabase.auth.verifyOtp({ type: type as any, token_hash: tokenHash })
+        .then((res: any) => {
+          const { error } = res || {}
+          if (error) {
+            setError(error.message)
+            return
+          }
+
+          navigateAfterAuth(undefined, type)
+        })
+        .catch((err: any) => setError(err.message))
+    } else if (code) {
       supabase.auth.exchangeCodeForSession(code)
         .then(async (res: any) => {
           const { data, error } = res || {}
@@ -64,17 +87,18 @@ export default function AuthCallback() {
              // However, to avoid double redirects, we rely on the state change listener OR manual check.
              // Let's do manual check here to be safe and fast.
              if (data.session) {
+                 const storedReferral = (() => {
+                   try { return localStorage.getItem('referralCode') } catch { return null }
+                 })()
                  fetch('/api/auth/sync', {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({ session: data.session })
+                    body: JSON.stringify({ session: data.session, referralCode: storedReferral })
                  }).catch(console.error);
+
+                 try { if (storedReferral) localStorage.removeItem('referralCode') } catch {}
                  
-                 if (type === 'recovery') {
-                    router.push('/auth/update-password');
-                 } else {
-                    router.push('/dashboard');
-                 }
+                 navigateAfterAuth(undefined, type);
              }
           }
         })
@@ -85,11 +109,8 @@ export default function AuthCallback() {
            const data = res?.data
            if (data?.session) {
                const hash = window.location.hash;
-               if (type === 'recovery' || (hash && hash.includes('type=recovery'))) {
-                   router.push('/auth/update-password');
-               } else {
-                   router.push('/dashboard');
-               }
+               const hashType = hash && hash.includes('type=recovery') ? 'recovery' : type;
+               navigateAfterAuth(undefined, hashType);
            } else {
                // If no session yet, we wait for onAuthStateChange or timeout
                // But usually implicit flow happens very quickly via client library parsing hash
