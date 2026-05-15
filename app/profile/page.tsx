@@ -85,7 +85,7 @@ export default function Profile() {
     }
   };
 
-  const siteUrl = process.env.NEXT_PUBLIC_SITE_URL || 'http://localhost:3000';
+  const siteUrl = typeof window !== 'undefined' ? window.location.origin : (process.env.NEXT_PUBLIC_SITE_URL || 'http://localhost:3000');
   const referralLink = referralCode ? `${siteUrl}/auth/register?ref=${referralCode}` : '';
 
   const copyLink = async () => {
