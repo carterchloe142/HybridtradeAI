@@ -1,6 +1,18 @@
 import { NextApiRequest, NextApiResponse } from 'next';
 import { supabaseServer } from '@/src/lib/supabaseServer';
-import { v4 as uuidv4 } from 'uuid';
+import { createClient } from '@supabase/supabase-js';
+
+function newId() {
+  try {
+    return crypto.randomUUID()
+  } catch {
+    const bytes = Array.from({ length: 16 }, () => Math.floor(Math.random() * 256))
+    bytes[6] = (bytes[6] & 0x0f) | 0x40
+    bytes[8] = (bytes[8] & 0x3f) | 0x80
+    const hex = bytes.map((b) => b.toString(16).padStart(2, '0')).join('')
+    return `${hex.slice(0, 8)}-${hex.slice(8, 12)}-${hex.slice(12, 16)}-${hex.slice(16, 20)}-${hex.slice(20)}`
+  }
+}
 
 export function isUuidLike(input: string): boolean {
   const trimmed = (input || '').trim()
@@ -43,28 +55,35 @@ export async function resolveSupabaseUserId({ userId, email }: { userId?: string
 }
 
 export default async function handler(req: NextApiRequest, res: NextApiResponse) {
-  console.log('API Server connecting to:', process.env.NEXT_PUBLIC_SUPABASE_URL);
+  try {
+    console.log('API Server connecting to:', process.env.NEXT_PUBLIC_SUPABASE_URL);
 
-  if (req.method !== 'POST' && req.method !== 'GET') {
-    return res.status(405).json({ error: 'Method not allowed' });
-  }
+    if (req.method !== 'POST' && req.method !== 'GET') {
+      return res.status(405).json({ error: 'Method not allowed' });
+    }
 
-  // --- Auth Check ---
-  const authHeader = req.headers.authorization || '';
-  const token = authHeader.startsWith('Bearer ') ? authHeader.slice(7).trim() : '';
+    // --- Auth Check ---
+    const authHeader = req.headers.authorization || '';
+    const token = authHeader.startsWith('Bearer ') ? authHeader.slice(7).trim() : '';
 
-  if (!token) {
-    return res.status(401).json({ error: 'Missing authorization token' });
-  }
+    if (!token) {
+      return res.status(401).json({ error: 'Missing authorization token' });
+    }
 
-  if (!supabaseServer) {
-    return res.status(500).json({ error: 'Supabase not configured' });
-  }
+    const url = process.env.NEXT_PUBLIC_SUPABASE_URL || process.env.SUPABASE_URL || '';
+    const key = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY || process.env.SUPABASE_ANON_KEY || '';
+    if (!url || !key) return res.status(500).json({ error: 'Supabase not configured' });
 
-  const { data: { user }, error: userErr } = await supabaseServer.auth.getUser(token);
-  if (userErr || !user) {
-    return res.status(401).json({ error: 'Invalid or expired token' });
-  }
+    const supabaseAuth = createClient(url, key);
+    const { data: { user }, error: userErr } = await supabaseAuth.auth.getUser(token);
+    
+    if (userErr || !user) {
+      return res.status(401).json({ error: 'Invalid or expired token' });
+    }
+
+    if (!supabaseServer) {
+      return res.status(500).json({ error: 'Supabase admin client not configured' });
+    }
 
   // Check Admin Role
   const { data: profile } = await supabaseServer
@@ -128,13 +147,8 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
       return res.status(200).json({ actions, total: count, page, limit });
   }
 
-  try {
     const { userId, email, amount, currency, description } = req.body;
     const resolvedUserId = await resolveSupabaseUserId({ userId, email });
-
-    if (!supabaseServer) {
-        return res.status(500).json({ error: 'Supabase not configured' });
-    }
 
     // Check if wallet exists
     let walletId = '';
@@ -183,7 +197,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
 
     // Log Transaction
     const txData = {
-        id: uuidv4(),
+        id: newId(),
         userId: resolvedUserId,
         type: 'DEPOSIT', // Treat as real DEPOSIT so it counts for investment
         amount: Number(amount),
@@ -205,7 +219,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
 
     // Log AdminAction
     const adminAction = {
-         id: uuidv4(),
+         id: newId(),
          adminId: user.id,
          userId: resolvedUserId,
          amount: Number(amount),
@@ -240,7 +254,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
 
     return res.status(200).json({ success: true, newBalance, message: 'Credit applied successfully' });
   } catch (error: any) {
-    console.error('Credit error:', error);
+    console.error('API Error:', error);
     return res.status(500).json({ error: error.message || 'Internal server error' });
   }
 }
